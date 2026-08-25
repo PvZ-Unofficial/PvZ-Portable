@@ -928,19 +928,32 @@ bool IsFileInPakFile(const std::string& theFilePath)
 bool DefinitionIsCompiled(const std::string& theXMLFilePath)
 {
 	std::string aCompiledFilePath = DefinitionGetCompiledFilePathFromXMLFilePath(theXMLFilePath);
-	if (IsFileInPakFile(aCompiledFilePath))
-		return true;
+	PFILE* aCompiledResource = p_fopen(aCompiledFilePath.c_str(), "rb");
+	if (aCompiledResource)
+	{
+		bool aCompiledInPak = !aCompiledResource->mFP;
+		p_fclose(aCompiledResource);
+		if (aCompiledInPak)
+			return true;
+
+		std::filesystem::file_time_type aCompiledFileTime{};
+		if (!DefinitionGetFileModTime(Sexy::GetResourcePath(aCompiledFilePath), aCompiledFileTime))
+			return true;
+
+		std::filesystem::file_time_type aXMLFileTime{};
+		if (!DefinitionGetFileModTime(Sexy::GetResourcePath(theXMLFilePath), aXMLFileTime))
+			return true;
+
+		return aXMLFileTime <= aCompiledFileTime;
+	}
 
 	std::string aFullCompiledPath = DefinitionGetCompiledCacheFullPath(aCompiledFilePath);
 	std::filesystem::file_time_type aCompiledFileTime{};
 	if (!DefinitionGetFileModTime(aFullCompiledPath, aCompiledFileTime))
-	{
-		if (!DefinitionGetFileModTime(aCompiledFilePath, aCompiledFileTime))
-			return false;
-	}
+		return false;
 
 	std::filesystem::file_time_type aXMLFileTime{};
-	if (!DefinitionGetFileModTime(theXMLFilePath, aXMLFileTime))
+	if (!DefinitionGetFileModTime(Sexy::GetResourcePath(theXMLFilePath), aXMLFileTime))
 	{
 		PvzpTrace("Can't find source file to compile '%s'", theXMLFilePath.c_str());
 		return false;
