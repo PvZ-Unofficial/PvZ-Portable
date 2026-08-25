@@ -482,6 +482,134 @@ bool DefMapReadFromCache(void*& theReadPtr, const DefMap* theDefMap, void* theDe
 	return true;
 }
 
+// Definitions in the original PAK contain raw 32-bit structures followed by their pointed-to data.
+static int DefinitionGetLegacyFieldSize(DefFieldType theFieldType)
+{
+	switch (theFieldType)
+	{
+	case DefFieldType::DT_INT:
+	case DefFieldType::DT_FLOAT:
+	case DefFieldType::DT_STRING:
+	case DefFieldType::DT_ENUM:
+	case DefFieldType::DT_FLAGS:
+	case DefFieldType::DT_IMAGE:
+	case DefFieldType::DT_FONT:
+		return 4;
+	case DefFieldType::DT_VECTOR2:
+	case DefFieldType::DT_ARRAY:
+	case DefFieldType::DT_TRACK_FLOAT:
+		return 8;
+	default:
+		return 0;
+	}
+}
+
+static int DefinitionGetLegacyFieldOffset(const DefMap* theDefMap, const DefField* theField)
+{
+	int anOffset = 0;
+	for (const DefField* aField = theDefMap->mMapFields; *aField->mFieldName != '\0'; aField++)
+		if (aField->mFieldOffset < theField->mFieldOffset)
+			anOffset += DefinitionGetLegacyFieldSize(aField->mFieldType);
+	return anOffset;
+}
+
+static int DefinitionGetLegacyDefSize(const DefMap* theDefMap)
+{
+	int aDefSize = 0;
+	for (const DefField* aField = theDefMap->mMapFields; *aField->mFieldName != '\0'; aField++)
+		aDefSize += DefinitionGetLegacyFieldSize(aField->mFieldType);
+	if (theDefMap == &gReanimatorDefMap)
+		aDefSize += 4;  // ReanimatorDefinition::mReanimAtlas is not part of its field map.
+	return aDefSize;
+}
+
+static bool DefMapReadFromLegacyCache(void*& theReadPtr, const void* theLegacyDefinition, const DefMap* theDefMap, void* theDefinition);
+
+static bool DefReadFromLegacyCacheArray(void*& theReadPtr, DefinitionArrayDef* theArray, const DefMap* theDefMap)
+{
+	int aDefSize;
+	SMemR(theReadPtr, &aDefSize, sizeof(int));
+	if (aDefSize != DefinitionGetLegacyDefSize(theDefMap))
+	{
+		PvzpTrace("cache has old def: array size");
+		return false;
+	}
+	if (theArray->mArrayCount == 0)
+		return true;
+
+	const void* aLegacyArray = theReadPtr;
+	theReadPtr = static_cast<char*>(theReadPtr) + aDefSize * theArray->mArrayCount;
+	theArray->mArrayData = DefinitionAlloc(theDefMap->mDefSize * theArray->mArrayCount);
+	for (int i = 0; i < theArray->mArrayCount; i++)
+	{
+		const void* aLegacyDefinition = static_cast<const char*>(aLegacyArray) + aDefSize * i;
+		void* aDefinition = static_cast<char*>(theArray->mArrayData) + theDefMap->mDefSize * i;
+		if (!DefMapReadFromLegacyCache(theReadPtr, aLegacyDefinition, theDefMap, aDefinition))
+			return false;
+	}
+	return true;
+}
+
+static bool DefMapReadFromLegacyCache(void*& theReadPtr, const void* theLegacyDefinition, const DefMap* theDefMap, void* theDefinition)
+{
+	if (theDefMap->mConstructorFunc)
+		theDefMap->mConstructorFunc(theDefinition);
+	else
+		DefinitionFillWithDefaults(theDefMap, theDefinition);
+
+	for (const DefField* aField = theDefMap->mMapFields; *aField->mFieldName != '\0'; aField++)
+	{
+		const char* aSource = static_cast<const char*>(theLegacyDefinition) + DefinitionGetLegacyFieldOffset(theDefMap, aField);
+		char* aDest = static_cast<char*>(theDefinition) + aField->mFieldOffset;
+		switch (aField->mFieldType)
+		{
+		case DefFieldType::DT_INT:
+		case DefFieldType::DT_FLOAT:
+		case DefFieldType::DT_ENUM:
+		case DefFieldType::DT_FLAGS:
+			memcpy(aDest, aSource, 4);
+			break;
+		case DefFieldType::DT_VECTOR2:
+			memcpy(aDest, aSource, 8);
+			break;
+		case DefFieldType::DT_ARRAY:
+			memcpy(aDest + sizeof(void*), aSource + 4, sizeof(int));
+			break;
+		default:
+			break;
+		}
+	}
+
+	for (const DefField* aField = theDefMap->mMapFields; *aField->mFieldName != '\0'; aField++)
+	{
+		bool aSucceed = true;
+		void* aDest = static_cast<char*>(theDefinition) + aField->mFieldOffset;
+		switch (aField->mFieldType)
+		{
+		case DefFieldType::DT_STRING:
+			aSucceed = DefReadFromCacheString(theReadPtr, (const char**)aDest);
+			break;
+		case DefFieldType::DT_ARRAY:
+			aSucceed = DefReadFromLegacyCacheArray(theReadPtr, (DefinitionArrayDef*)aDest, (const DefMap*)aField->mExtraData);
+			break;
+		case DefFieldType::DT_IMAGE:
+			aSucceed = DefReadFromCacheImage(theReadPtr, (Image**)aDest);
+			break;
+		case DefFieldType::DT_FONT:
+			aSucceed = DefReadFromCacheFont(theReadPtr, (_Font**)aDest);
+			break;
+		case DefFieldType::DT_TRACK_FLOAT:
+			aSucceed = DefReadFromCacheFloatTrack(theReadPtr, (FloatParameterTrack*)aDest);
+			break;
+		default:
+			break;
+		}
+		if (!aSucceed)
+			return false;
+	}
+	return true;
+}
+
 uint DefinitionCalcHashSymbolMap(int aSchemaHash, const DefSymbol* theSymbolMap)
 {
 	while (theSymbolMap->mSymbolName != nullptr)
@@ -529,6 +657,42 @@ uint DefinitionCalcHash(const DefMap* theDefMap)
 
 	// PvzpList destructor is called upon it going out of scope.
 	return aResult;
+}
+
+static uint DefinitionCalcLegacyHashDefMap(int aSchemaHash, const DefMap* theDefMap, PvzpList<const DefMap*>& theProgressMaps)
+{
+	for (PvzpListNode<const DefMap*>* aNode = theProgressMaps.mHead; aNode != nullptr; aNode = aNode->mNext)
+		if (aNode->mValue == theDefMap)
+			return aSchemaHash;
+	theProgressMaps.AddTail(theDefMap);
+
+	int aDefSize = DefinitionGetLegacyDefSize(theDefMap);
+	aSchemaHash = crc32(aSchemaHash, (Bytef*)&aDefSize, sizeof(int));
+	for (const DefField* aField = theDefMap->mMapFields; *aField->mFieldName != '\0'; aField++)
+	{
+		aSchemaHash = crc32(aSchemaHash, (Bytef*)&aField->mFieldType, sizeof(DefFieldType));
+		int aFieldOffset = DefinitionGetLegacyFieldOffset(theDefMap, aField);
+		aSchemaHash = crc32(aSchemaHash, (Bytef*)&aFieldOffset, sizeof(int));
+		switch (aField->mFieldType)
+		{
+		case DefFieldType::DT_ENUM:
+		case DefFieldType::DT_FLAGS:
+			aSchemaHash = DefinitionCalcHashSymbolMap(aSchemaHash, (const DefSymbol*)aField->mExtraData);
+			break;
+		case DefFieldType::DT_ARRAY:
+			aSchemaHash = DefinitionCalcLegacyHashDefMap(aSchemaHash, (const DefMap*)aField->mExtraData, theProgressMaps);
+			break;
+		default:
+			break;
+		}
+	}
+	return aSchemaHash;
+}
+
+static uint DefinitionCalcLegacyHash(const DefMap* theDefMap)
+{
+	PvzpList<const DefMap*> aProgressMaps;
+	return DefinitionCalcLegacyHashDefMap(crc32(0L, (Bytef*)Z_NULL, 0) + 1, theDefMap, aProgressMaps);
 }
 
 void* DefinitionUncompressCompiledBuffer(void* theCompressedBuffer, size_t theCompressedBufferSize, size_t& theUncompressedSize, const std::string& theCompiledFilePath)
@@ -581,20 +745,18 @@ bool DefinitionReadCompiledFile(const std::string& theCompiledFilePath, const De
 	aTimer.Start();
 
 	std::string aFullCompiledPath = DefinitionGetCompiledCacheFullPath(theCompiledFilePath);
-	std::ifstream aFileStream(Sexy::PathFromU8(aFullCompiledPath), std::ios::binary);
-	if (!aFileStream)
-	{
-		aFileStream.open(Sexy::PathFromU8(theCompiledFilePath), std::ios::binary);
-	}
+	PFILE* aFile = p_fopen(aFullCompiledPath.c_str(), "rb");
+	if (!aFile)
+		aFile = p_fopen(theCompiledFilePath.c_str(), "rb");
+	if (!aFile)
+		return false;
 
-	if (!aFileStream) return false;
-
-	aFileStream.seekg(0, std::ios::end);
-	size_t aCompressedSize = (size_t)aFileStream.tellg();
-	aFileStream.seekg(0, std::ios::beg);
+	p_fseek(aFile, 0, SEEK_END);
+	size_t aCompressedSize = static_cast<size_t>(p_ftell(aFile));
+	p_fseek(aFile, 0, SEEK_SET);
 	std::vector<char> aCompressedBuffer(aCompressedSize);
-	aFileStream.read(aCompressedBuffer.data(), (std::streamsize)aCompressedSize);
-	bool aReadCompressedFailed = !aFileStream || (size_t)aFileStream.gcount() != aCompressedSize;
+	bool aReadCompressedFailed = p_fread(aCompressedBuffer.data(), 1, static_cast<int>(aCompressedSize), aFile) != aCompressedSize;
+	p_fclose(aFile);
 	if (aReadCompressedFailed) {
 		PvzpTrace("Failed to read compiled file: %s\n", theCompiledFilePath.c_str());
 		return false;
@@ -605,27 +767,42 @@ bool DefinitionReadCompiledFile(const std::string& theCompiledFilePath, const De
 		static_cast<char*>(DefinitionUncompressCompiledBuffer(aCompressedBuffer.data(), aCompressedSize, aUncompressedSize, theCompiledFilePath)));
 	if (!aUncompressedBuffer) return false;
 
-	uint aDefHash = DefinitionCalcHash(theDefMap);  // CRC checked against the stored hash below
-	if (aUncompressedSize < theDefMap->mDefSize + sizeof(uint)) {
+	if (aUncompressedSize < sizeof(uint)) {
 		PvzpTrace("Compiled file size too small: %s\n", theCompiledFilePath.c_str());
 		return false;
-	} // must hold the definition data plus the stored hash
-
+	}
 
 	// aBufferPtr advances while reading; the original pointer is kept to measure the read size
 	void* aBufferPtr = aUncompressedBuffer.get();
 	uint aCashHash;
 	SMemR(aBufferPtr, &aCashHash, sizeof(uint));  // read the stored CRC hash
-	if (aCashHash != aDefHash) {
+	uint aDefHash = DefinitionCalcHash(theDefMap);
+	bool aLegacyDefinition = aCashHash != aDefHash && aCashHash == DefinitionCalcLegacyHash(theDefMap);
+	int aDefSize = aLegacyDefinition ? DefinitionGetLegacyDefSize(theDefMap) : theDefMap->mDefSize;
+	if (aUncompressedSize < aDefSize + sizeof(uint)) {
+		PvzpTrace("Compiled file size too small: %s\n", theCompiledFilePath.c_str());
+		return false;
+	}
+	if (aCashHash != aDefHash && !aLegacyDefinition) {
 		PvzpTrace("Compiled file schema wrong: %s\n", theCompiledFilePath.c_str());
 		return false;
 	} // a hash mismatch means the cached data is stale
 
-	// Bulk-read the raw definition data: non-pointer members are read correctly,
-	// while pointer members become wild pointers fixed up by DefMapReadFromCache() below
-	SMemR(aBufferPtr, theDefinition, theDefMap->mDefSize);
-	// Fix up the wild pointers; the result is returned below
-	bool aResult = DefMapReadFromCache(aBufferPtr, theDefMap, theDefinition);
+	bool aResult;
+	if (aLegacyDefinition)
+	{
+		const void* aLegacyData = aBufferPtr;
+		aBufferPtr = static_cast<char*>(aBufferPtr) + aDefSize;
+		aResult = DefMapReadFromLegacyCache(aBufferPtr, aLegacyData, theDefMap, theDefinition);
+	}
+	else
+	{
+		// Bulk-read the raw definition data: non-pointer members are read correctly,
+		// while pointer members become wild pointers fixed up by DefMapReadFromCache() below
+		SMemR(aBufferPtr, theDefinition, theDefMap->mDefSize);
+		// Fix up the wild pointers; the result is returned below
+		aResult = DefMapReadFromCache(aBufferPtr, theDefMap, theDefinition);
+	}
 	size_t aReadMemSize = (uintptr_t)aBufferPtr - (uintptr_t)aUncompressedBuffer.get();
 	if (aResult && aReadMemSize != aUncompressedSize) {
 		PvzpTrace("Compiled file wrong size: %s\n", theCompiledFilePath.c_str());
