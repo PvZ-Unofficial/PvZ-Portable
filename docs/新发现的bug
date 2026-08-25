@@ -67,7 +67,7 @@ PvZ-Portable 中的实际修复提交号。本文件不保留已完成项。
 
 - 状态：已确认待修。
 - 问题介绍：`src/Lawn/Challenge.cpp` 当前在僵尸水族馆中只要
-  `mZombiquariumMouseDownCount > 0` 就调用 `ZombiquariumMouseDown`，没有
+  函数参数 `theClickCount > 0` 就调用 `ZombiquariumMouseDown`，没有
   要求点击测试结果为空；而未进入该分支时还返回 `false`。历史提交
   `08452331162c95b667066caf8aded2cba96db26a` 虽调整过此处，却没有完整恢复
   官方控制流。

@@ -75,7 +75,7 @@
 
 ## D6. `Board::NextWaveComing` 打僵尸模式过早播放警报
 
-- 状态：已确认待修。
+- 状态：已确认待修；本项只改变警报音触发，不计入本轮核心游戏逻辑审阅。
 - 问题介绍：反编译源码的条件
   `(IsWhackAZombieLevel() && finalWave) || IsFlagWave(currentWave)` 会让打僵尸
   模式的普通旗帜波也播放警报；PvZ-Portable 历史提交
@@ -370,20 +370,24 @@
 - 待办：恢复 100—500 的闭区间、四向坐标判断和 50 的移动计数，并分别
   验证四个方向。
 
-## D24. 植物僵尸（ZomBotany）中的高坚果头使用了普通坚果头盔
+## D24. 植物僵尸（ZomBotany）高坚果头显示了普通坚果的受伤裂纹
 
-- 状态：已确认待修。
+- 状态：已确认待修；本项只影响受伤显示，不计入本轮核心游戏逻辑审阅。
 - 问题介绍：反编译源码的 `Zombie::ZombieInitialize` 给高坚果头僵尸设置
   `HELMTYPE_WALLNUT`；PvZ-Portable 历史提交
   `51b7cfea7ac970dbcbd01dcde95c27d2a008d749` 改为
-  `HELMTYPE_TALLNUT`，当前 Portable 仍保留该修正。
+  `HELMTYPE_TALLNUT`，当前 Portable 仍保留该修正。这里的头盔枚举供后续
+  `TakeHelmDamage` 选择裂纹贴图；初始头部动画本来就是 `REANIM_TALLNUT`。
 - 反编译/二进制证据：1051 的 `Zombie::ZombieInitialize` 在识别僵尸类型
   `0x1f = ZOMBIE_TALLNUT_HEAD` 后，于 `0x52394D` 写入头盔类型
-  `9 = HELMTYPE_TALLNUT`，并设置与高坚果头对应的耐久。反编译源码使用的
-  普通坚果头盔枚举与二进制不符。
-- 实际游戏行为差异：错误源码会让高坚果头僵尸套用普通坚果头的外观、耐久
-  与受伤阶段逻辑，而非原版的高坚果头属性。
-- 待办：改用 `HELMTYPE_TALLNUT`，并校验初始化耐久、受伤阶段与显示资源。
+  `9 = HELMTYPE_TALLNUT`，并于 `0x523957` 另行写入
+  `0x898 = 2200` 点耐久。错误源码虽然写成普通坚果枚举，耐久仍独立设置为
+  2200，因此不能把本项描述成耐久错误。
+- 实际游戏行为差异：高坚果头的初始外观和 2200 点耐久都不变；只有进入两档
+  受伤阶段时，错误枚举会让 `TakeHelmDamage` 选择普通坚果而非高坚果的裂纹
+  贴图。
+- 待办：改用 `HELMTYPE_TALLNUT`，并校验两档受伤裂纹；不要改动现有 2200 点
+  耐久或初始 `REANIM_TALLNUT` 动画。
 
 ## D25. 疯狂戴夫赠送树肥时写入了错误商店槽位
 
