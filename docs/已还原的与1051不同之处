@@ -188,6 +188,64 @@
   20 秒启动与首帧加载验证。
 - 修改提交号：`6b6a9c1953601fd35aebb8983a74e2edd3ca7559`。
 
+## V7. 恢复 I, Zombie 的官方判负时点
+
+- 问题介绍：历史提交 `f38877a97ed2fe56b6c6e1905cfdac1a3c6f3359` 在
+  `Challenge::IZombieUpdate` 的官方失败条件之外，增加了场上不存在未收集
+  阳光的要求。
+- 原版证据：1051 的 `Challenge::IZombieUpdate@0x42B340` 在
+  `0x42B4A1`—`0x42B4D7` 检查场上无僵尸、阳光少于 50、无关卡奖励且无仍在
+  结算的植物特效后直接进入失败流程，没有遍历阳光币。
+- 年度版证据：1.2.0.1073 的对应函数 `@0x436740` 使用同一组失败条件，也没有
+  未收集阳光检查；该差异是 Portable 后加的非官方行为修正。
+- 实际游戏行为差异：还原前即使僵尸耗尽且持有阳光不足 50，只要地面仍有
+  阳光就会继续等待；两个官方版本会立即判负。
+- 还原：删除 `aHasAvailableSun` 遍历及其失败条件，恢复官方判负时点。
+- 修改文件：`src/Lawn/Challenge.cpp`。
+- 验证：源码契约确认失败条件不再引用地面阳光；MSYS2 UCRT64 构建成功。
+- 修改提交号：`356fbc7369919b1768c1630c8a15838df3dd3a7a`。
+
+## V8. 冒险特殊关卡 helper 恢复读取资料等级
+
+- 问题介绍：提交 `63ec1c6303a8a6adc3b84b9b757cdc5b56a11895` 为年度版
+  成就结算改写了八个特殊关卡 helper，使冒险关判断读取 `mBoard->mLevel`，
+  而非原有的 `mPlayerInfo->mLevel`。
+- 原版证据：1051 的这些 helper 位于 `0x453840`—`0x4539FF`，均从
+  `LawnApp + 0x82C` 取得 `PlayerInfo` 并比较等级字段。
+- 年度版证据：1.2.0.1073 的对应 helper 位于 `0x460C30`—`0x460DE9`，同样
+  读取 `PlayerInfo + 0x4C`；年度版自身也没有使用棋盘等级。
+- 实际游戏行为差异：资料等级在结算时已经推进、或棋盘等级与资料等级暂时
+  不同时，还原前仍把刚结束的棋盘识别为特殊关；两个官方版本按资料当前等级
+  选择分支。
+- 还原：`IsWallnutBowlingLevel`、`IsWhackAZombieLevel`、
+  `IsLittleTroubleLevel`、`IsScaryPotterLevel`、`IsStormyNightLevel`、
+  `IsBungeeBlitzLevel`、`IsMiniBossLevel` 和 `IsFinalBossLevel` 的冒险分支
+  恢复读取 `mPlayerInfo->mLevel`；独立挑战模式枚举判断保持不变。
+- 修改文件：`src/LawnApp.cpp`。
+- 验证：源码契约覆盖等级 5、10、15、20、25、30、35、40、45、50；MSYS2
+  UCRT64 构建成功。
+- 修改提交号：`356fbc7369919b1768c1630c8a15838df3dd3a7a`。
+
+## V9. 恢复原版舞王举手舞步的左右交替阶段
+
+- 问题介绍：历史提交 `f0b2dc6b452fc9b6ccaa12add0bd18a74df5bd7e8b9d`
+  按年度版状态机删除了 `PHASE_DANCER_RAISE_RIGHT_1` 和
+  `PHASE_DANCER_RAISE_RIGHT_2` 的产生、同步、停步和镜像处理。
+- 原版证据：1051 的 `Zombie::GetDancerPhase@0x52DFE0` 将帧 13—15、16—18、
+  19—21 和其余后段依次映射为 RIGHT_1、LEFT_1、RIGHT_2、LEFT_2；舞王、
+  伴舞、`ZombieNotWalking` 和 `UpdateReanim` 均处理两个 RIGHT 阶段。
+- 年度版证据：1.2.0.1073 的对应函数 `@0x549D40` 将帧 13—18 全部映射为
+  LEFT_1，19 之后映射为 LEFT_2，不再产生两个 RIGHT 阶段。
+- 实际游戏行为差异：原版舞王和伴舞在举手舞步的两个短区间切换到相反朝向；
+  年度版状态机始终使用左向举手阶段。两者在整段举手期间都会停止行走。
+- 还原：恢复六段帧映射，并把两个 RIGHT 阶段重新加入舞王/伴舞同步、停止
+  行走和 `UpdateReanim` 镜像条件；保留共同正确的
+  `mSummonCounter == 0` 召唤检查。
+- 修改文件：`src/ConstEnums.h`、`src/Lawn/Zombie.cpp`。
+- 验证：源码契约确认两个 RIGHT 阶段各覆盖五处状态机使用，并确认 D34 的
+  `== 0` 未改变；MSYS2 UCRT64 构建成功。
+- 修改提交号：`356fbc7369919b1768c1630c8a15838df3dd3a7a`。
+
 ## 记录格式
 
 <!--

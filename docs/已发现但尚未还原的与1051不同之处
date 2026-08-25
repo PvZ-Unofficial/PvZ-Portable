@@ -13,79 +13,8 @@ PvZ-Portable 中的实际修改提交号。本文件不保留已完成项。
 PvZ Wiki 的 `pages/教程/下载资源.txt` 将 1.2.0.1073 相对原版的主要差异概括为：
 修复裂荚双射和“上界之风”、替换舞王及伴舞形象并缩短舞王入场滑步，以及增加
 成就。该页对 1.2.0.1065 的说明还指出，这一版本没有成就和僵尸大头贴，且舞王
-形象、滑步距离同原版。当前已经确认并完成的 V2—V6 项见
+形象、滑步距离同原版。当前已经确认并完成的 V2—V9 项见
 `已还原的与1051不同之处`；这里继续保留该基线，供后续审阅使用。
-
-## V7. I, Zombie 会等待场上未收集的阳光再判负
-
-- 状态：已确认待还原；这是 Portable 后加的非官方行为修正，不是年度版差异。
-- 问题介绍：当前 `Challenge::IZombieUpdate` 在“场上没有僵尸、持有阳光少于
-  50、没有关卡奖励且没有仍在结算的植物特效”之外，还要求场上不存在未开始
-  收集且未死亡的阳光币，才会让僵尸方失败。该附加条件来自提交
-  `f38877a97ed2fe56b6c6e1905cfdac1a3c6f3359`。
-- 原版证据：1051 的 `Challenge::IZombieUpdate@0x42B340` 在
-  `0x42B4A1`—`0x42B4D7` 完成上述官方条件后直接进入失败流程，没有遍历或
-  检查阳光币。
-- 年度版证据：1.2.0.1073 的 `Challenge::IZombieUpdate@0x436740` 在
-  `0x4368A1`—`0x4368D7` 使用同一组失败条件，也没有未收集阳光检查；后续
-  才处理需要清除的场上钱币。
-- 实际游戏行为差异：两个官方版本会在僵尸已耗尽且当前阳光不足 50 时立即
-  判负，即使场上还有可以点击的阳光。当前 Portable 会继续等待，让玩家有
-  机会收集这些阳光并再放一只僵尸。
-- 待办：从判负条件中移除 `aHasAvailableSun`，恢复官方判负时点，并以“阳光
-  小于 50、无僵尸、地面仍有一枚阳光”作为回归场景。
-
-## V8. 冒险特殊关卡 helper 改用棋盘关卡号
-
-- 状态：已确认待还原；这是 Portable 为年度版成就逻辑加入的非官方行为修正。
-- 问题介绍：提交 `63ec1c6303a8a6adc3b84b9b757cdc5b56a11895` 把
-  `IsWallnutBowlingLevel`、`IsWhackAZombieLevel`、`IsLittleTroubleLevel`、
-  `IsScaryPotterLevel`、`IsStormyNightLevel`、`IsBungeeBlitzLevel`、
-  `IsMiniBossLevel` 和 `IsFinalBossLevel` 的冒险关判断，从
-  `mPlayerInfo->mLevel` 改成 `mBoard->mLevel`。其直接目的，是避免结算时资料
-  等级已经推进后误授年度版成就；本分支已经移除成就，但源码差异仍在。
-- 原版证据：1051 的这些 helper 位于 `0x453840`—`0x4539FF`。例如
-  `IsWallnutBowlingLevel@0x453840` 和 `IsWhackAZombieLevel@0x453890` 都从
-  `LawnApp + 0x82C` 取得 `PlayerInfo`，再比较其等级字段，而不是读取
-  `Board::mLevel`；其余冒险特殊关 helper 使用同一数据来源。
-- 年度版证据：1.2.0.1073 的对应 helper 位于
-  `0x460C30`—`0x460DE9`，同样从 `LawnApp + 0x950` 取得 `PlayerInfo` 并比较
-  `PlayerInfo + 0x4C` 的等级。年度版也没有改用棋盘关卡号。
-- 实际游戏行为差异：正常进行关卡时两个等级通常相同；在结算已经推进资料
-  等级、或棋盘与资料等级暂时不同的路径中，当前 Portable 仍把刚刚进行的
-  棋盘关识别为特殊关，两个官方版本则按资料中的当前冒险等级判断。这会让
-  依赖这些 helper 的特殊规则在边界时点选择不同分支。
-- 待办：在确认所有调用点不再依赖已移除的成就补丁后，把上述 helper 的冒险
-  关判断恢复为 `mPlayerInfo->mLevel`；独立挑战模式的枚举判断保持不变，并
-  覆盖正常关内与结算推进等级后的两种状态。
-
-## V9. 年度版舞王删除了举手舞步中的左右交替阶段
-
-- 状态：已确认待还原。
-- 问题介绍：PvZ-Portable 历史提交
-  `f0b2dc6b452fc9b6ccaa12add0bd18a74df5bd7e` 按年度版表现改写
-  `Zombie::GetDancerPhase`，不再产生 `PHASE_DANCER_RAISE_RIGHT_1` 和
-  `PHASE_DANCER_RAISE_RIGHT_2`，并从伴舞同步、停止行走和镜像判断中删除这两个
-  阶段；当前 Portable 仍保留该年度版状态机。
-- 原版证据：1051 的 `Zombie::GetDancerPhase@0x52DFE0` 将舞步帧 13—15 映射
-  为 `0x2F = PHASE_DANCER_RAISE_RIGHT_1`、16—18 映射为
-  `0x2E = PHASE_DANCER_RAISE_LEFT_1`、19—21 映射为
-  `0x31 = PHASE_DANCER_RAISE_RIGHT_2`，其余后段映射为
-  `0x30 = PHASE_DANCER_RAISE_LEFT_2`。原版的 `UpdateZombieDancer`、
-  `UpdateZombieBackupDancer`、`ZombieNotWalking` 和 `UpdateReanim` 也都明确
-  处理两个 RIGHT 阶段，其中 `UpdateReanim` 会在 RIGHT 阶段翻转朝向。
-- 年度版证据：1.2.0.1073 的 `Zombie::GetDancerPhase@0x549D40` 把帧 13—18
-  都映射为 `0x2E = PHASE_DANCER_RAISE_LEFT_1`，19 之后直接映射为
-  `0x30 = PHASE_DANCER_RAISE_LEFT_2`，完全不产生 0x2F、0x31；这与当前
-  Portable 的四段表达式和后续分支一致。
-- 实际游戏行为差异：原版舞王及伴舞在举手舞步的两个短区间会切换到相反
-  朝向；年度版状态机始终使用左向举手阶段，不发生这两次镜像。两个版本最终
-  都会在整段举手期间停止行走：年度版映射产生的 LEFT 阶段本来就在
-  `ZombieNotWalking` 中，因此不能把本项描述成实际停步结果不同。该差异独立
-  于 V4 已处理的模型、缩放和入场滑步资源差异。
-- 待办：恢复原版六段 `GetDancerPhase` 映射，并把两个 RIGHT 阶段重新加入
-  舞王/伴舞阶段切换、`ZombieNotWalking` 与 `UpdateReanim` 的镜像条件；同时
-  保留 D34 所述“倒计时减到 0 才检查”的共同正确逻辑。
 
 ## V10. 打僵尸最终波把当前波次钳在总波数
 
