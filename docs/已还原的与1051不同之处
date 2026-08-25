@@ -27,6 +27,148 @@
   仓库中不再存在 `DO_FIX_BUGS` 引用。
 - 修改提交号：`b83569471d7e600796a2ebf92671a82495acaeae`。
 
+## V2. 恢复裂荚射手前向双发 bug
+
+- 问题介绍：历史提交 `540259b4cb70acd71a0388b70628eafd643c5232` 为对齐
+  年度版改写了 `Plant::UpdateShooter()`，并在 `Plant::UpdateShooting()` 的
+  前向头部发射条件中加入 `mLaunchCounter > 25`，从而消除了原版裂荚射手的
+  前向双发。
+- 原版证据：1051 反编译实现与二进制一致。使用
+  `C:\msys64\ucrt64\bin\objdump.exe` 核对
+  `Plant::UpdateShooter@0x45F8A0`，本轮起点只启动后向武器，
+  `mLaunchCounter == 25` 时同时启动前、后向武器；
+  `Plant::UpdateShooting@0x464820` 的前向头部判断也没有年度版加入的计数器
+  限制。
+- 年度版证据：PvZ Wiki 的 `pages/教程/下载资源.txt` 和
+  `pages/教程/植物图鉴.txt` 均记载年度版修复了裂荚双射；上述历史提交也明确
+  以对齐年度版为目的引入还原前的实现。
+- 实际游戏行为差异：原版在裂荚前后都有目标时会向前连续发射两颗豌豆，
+  年度版和还原前的 Portable 只向前发射一颗；后向均为两颗。
+- 还原：恢复 1051 的两阶段武器启动顺序，并删除前向头部射击的额外
+  `mLaunchCounter` 限制；未改动 Portable 的动画和对象管理代码。
+- 修改文件：`src/Lawn/Plant.cpp`。
+- 验证：逐项对照上述两个 1051 函数的反编译与 objdump 控制流；MSYS2 UCRT64
+  构建成功。
+- 修改提交号：`4e0954ada660327bd4208c066bf36acb5ad6c3d7`。
+
+## V3. 恢复屋顶玉米炮“上界之风”
+
+- 问题介绍：还原前的 `Projectile::UpdateMotion()` 在计算屋顶坡度高度差后，
+  对 `PROJECTILE_COBBIG` 专门把差值清零，消除了原版玉米炮弹随炮尾列数产生的
+  落点和飞行时间偏移。
+- 原版证据：1051 反编译实现与二进制
+  `Projectile::UpdateMotion@0x46DC70` 均不含玉米炮清零特判，而是继续把坡度
+  高度差应用到投掷物。Wiki 的 `pages/攻略/斜坡与上界之风.txt` 将其确认为
+  1051 特有 bug，并列出炮尾第 1—7 列飞行时间
+  359、362、364、367、369、372、373cs；第 8 列同第 7 列。
+- 年度版证据：Wiki 的 `pages/教程/下载资源.txt` 明确记载年度版修复了
+  “上界之风”；Portable 原有的四行清零分支就是这项年度版修正。
+- 实际游戏行为差异：原版屋顶斜坡炮会根据炮尾列数向上偏移爆心，并改变炮弹
+  落地时刻；还原前的 Portable 将其统一为没有该偏移的年度版行为。
+- 还原：删除玉米炮专用清零分支，使其与其他投掷物一样使用屋顶坡度高度差。
+- 修改文件：`src/Lawn/Projectile.cpp`。
+- 验证：用 objdump 核对 1051 函数中坡度差的后续使用和分支结构；MSYS2 UCRT64
+  构建成功。尚未把 Wiki 各炮尾列的实战计时作为自动化测试。
+- 修改提交号：`19d579b9876151a9e6fbf01ccabe44a52ea11a14`。
+
+## V4. 恢复原版舞王、伴舞形象与入场表现
+
+- 问题介绍：还原前的 Portable 面向年度版资源，给舞王和伴舞设置
+  `mScaleZombie = 0.8f`，使用 `Zombie_disco`、`Zombie_backup` 动画及 Disco、
+  Backup 图片资源；这同时改变外观、受伤部件和依赖 `_ground` 轨道的入场滑步。
+- 原版证据：1051 二进制的舞王初始化分支 `0x5234DF` 不改写缩放，沿用
+  `1.0f`；`Zombie::UpdateZombieWalking@0x52AA40` 读取 `_ground` 轨道速度并
+  乘以该缩放。原版 `main.pak` 的
+  `compiled/reanim/Zombie_Jackson.reanim.compiled` 与反编译项目所收文件的
+  SHA-256 都是
+  `26F66417ECEBDC411F1E2201207514BB742FAA45B9B5363758FDE3FD6EC962C8`；
+  `anim_moonwalk` 第 0—26 帧的 `_ground` 横坐标从 `-9.8` 到 `-89.8`，
+  一轮位移为 `-80.0`。原版映射还使用 `Zombie_Jackson.reanim`、
+  `Zombie_dancer.reanim` 及相应断头断臂图片。
+- 年度版证据：1.2.0.1073 二进制的初始化分支约在 `0x53EF25`，明确写入
+  `0.8f`；行走分支 `0x5467CC`—`0x5467E1` 同样读取 `_ground` 速度再乘缩放。
+  年度版 PAK 的 `Zombie_disco` 轨道一轮位移为 `-68.8`，缩放后有效位移约为
+  原版的 `68.8%`。历史提交 `7a32293a422d4c47ddde93f2f2338567737c96f9`
+  和 `9fe3300d6df4f096226a570c4cc7c2cc452d0be9` 正是年度版资源与缩放的来源。
+- 实际游戏行为差异：两个版本显示不同的舞王和伴舞形象；原版舞王入场滑步
+  更快，并在更靠左的位置开始召唤伴舞。差异来自动画轨道和缩放共同作用，
+  不能只改 `mVelX`。
+- 还原：将舞王、伴舞动画映射和受伤资源恢复为 Jackson/原版 Dancer，移除
+  两类僵尸的 `0.8` 缩放；保留已经与二进制一致的 `mVelX = 0.5f`、
+  `mPhaseCounter = 300 + Rand(12)` 和入场动画速率 `24.0f`。此外让 compiled
+  定义通过已有 PAK 接口读取，并按原版 PAK 的 32 位结构布局解码，使 64 位
+  Portable 可以直接使用未修改的 1051 `main.pak`。
+- 修改文件：`src/Lawn/Zombie.cpp`、`src/PvzpLib/Reanimator.cpp`、
+  `src/Resources.cpp`、`src/Resources.h`、`src/PvzpLib/Definition.cpp`。
+- 验证：使用用户提供、SHA-256 为
+  `2FC4E9E8E1ECF40F7C53C03DF5CC5A3D553DBABC63A1A833C4656975CCB8A933` 的
+  原版 `main.pak` 和配套 `properties/` 启动；程序持续运行 20 秒，完成首帧和
+  reanim、resource、trail 加载，日志没有缺失资源、schema 错误或尺寸错误。
+  MSYS2 UCRT64 构建成功。
+- 修改提交号：`2ce62d45a990cabb0b803b133c9e8bdfca915d84`、
+  `3f92f6145c5a30ecedb2d87e6507d59766ffb248`。
+
+## V5. 移除年度版成就系统
+
+- 问题介绍：还原前的 Portable 包含 `AchievementsScreen`、
+  `ReportAchievement`、成就上报、菜单入口、玩家记录和成就专属资源，
+  并把这些年度版状态接入关卡结算和存档。
+- 原版证据：1051 反编译源码没有上述系统。objdump 核对表明原版
+  `LawnApp::ShowAwardScreen()` 只接收奖励类型，`CheckForGameEnd()` 从关卡
+  状态直接进入原版结算分支；`PlayerInfo::SyncDetails@0x469300–0x4693F1`
+  在盆栽数组之后结束，没有逐项成就状态尾部。原版资源表也没有成就 UI 资源。
+- 年度版证据：Wiki 的 `pages/教程/下载资源.txt` 将“添加成就”列为
+  1.2.0.1073 的差异，并指出 1.2.0.1065 没有成就；还原前的
+  `AchievementsScreen.cpp` 定义了完整列表和授予逻辑。
+- 实际游戏行为差异：年度版会在满足条件时授予、提示并展示成就长卷；原版
+  完全没有成就入口、提示或进度。
+- 还原：删除成就界面、上报调用、棋盘计数、玩家数据尾部和专属资源，恢复
+  原版奖励页与关卡结束路径。保留 `AWARD_ACHIEVEMENTONLY` 枚举值，因为它本身
+  存在于 1051 二进制/反编译基线，并不等于年度版成就系统。棋盘存档中被删除
+  字段的编号保留为 94—99 的空洞，后续 Portable 字段编号不变，旧存档中的
+  已移除字段由现有带 ID 读取机制略过；新存档不再写入它们。玩家资料则不再
+  读写年度版成就尾部，以 1051 格式为准。
+- 修改文件：`src/Lawn/Widget/AchievementsScreen.cpp/.h`（删除）、
+  `src/Lawn/Board.cpp/.h`、`src/Lawn/Challenge.cpp`、`src/Lawn/Coin.cpp`、
+  `src/Lawn/MessageWidget.cpp`、`src/Lawn/Plant.cpp`、
+  `src/Lawn/Projectile.cpp`、`src/Lawn/System/PlayerInfo.cpp/.h`、
+  `src/Lawn/System/SaveGame.cpp`、`src/Lawn/Widget/AwardScreen.cpp/.h`、
+  `src/Lawn/Widget/GameSelector.cpp/.h`、`src/Lawn/Widget/StoreScreen.cpp`、
+  `src/LawnApp.cpp/.h`、`src/ConstEnums.h`、`src/Resources.cpp/.h`。
+- 验证：源码中不再存在成就系统引用（仅保留上述原版枚举值）；生成资源 ID
+  与 1051 `properties/resources.xml` 均为 626 项，集合完全相同。MSYS2 UCRT64
+  构建成功，并通过同一未修改 1051 PAK 的 20 秒启动与首帧加载验证。
+- 修改提交号：`6b6a9c1953601fd35aebb8983a74e2edd3ca7559`。
+
+## V6. 移除年度版僵尸大头贴（Zombatar）
+
+- 问题介绍：还原前的 Portable 实现了 Zombatar 编辑器、条款界面、头像渲染、
+  主菜单入口、玩家数据序列化和整套资源加载；这些内容均不属于 1051。
+- 原版证据：1051 的 `GameSelector` 构造函数 `0x448CB0–0x449D00` 恰有
+  11 次按钮创建，更新函数 `0x44B2A0–0x44BB20` 恰有 11 次按钮轨道定位，
+  木牌只使用 `woodsign2`，没有 Zombatar 或条款入口。上述
+  `PlayerInfo::SyncDetails` 尾部也没有头像记录；原版资源表不含其部件。
+- 年度版证据：Wiki 的 `pages/教程/下载资源.txt` 指出 1.2.0.1065 没有
+  “僵尸大头贴”；面向 1.2.0.1073 的还原前源码则在 `GameSelector`、
+  `PlayerInfo`、`Zombie` 和三个 Zombatar 模块中接入了完整功能。
+- 实际游戏行为差异：年度版可以从主菜单制作、保存并显示自定义僵尸头像；
+  原版没有入口，也不会在玩家数据和僵尸渲染中维护头像。
+- 还原：删除 Zombatar 数据、编辑器、条款、菜单按钮、僵尸渲染/死亡路径、
+  玩家资料尾部及所有专属资源，并清除主菜单不再引用的年度版 Quick Play、
+  More Ways To Play 资源；保留 Portable 自己的控件所有权和平台适配结构。
+- 修改文件：`src/Lawn/System/Zombatar.cpp/.h`、
+  `src/Lawn/Widget/ZombatarWidget.cpp/.h`、
+  `src/Lawn/Widget/ZombatarTOS.cpp/.h`（均删除），以及
+  `src/Lawn/System/PlayerInfo.cpp/.h`、`src/Lawn/System/SaveGame.cpp`、
+  `src/Lawn/Widget/GameSelector.cpp/.h`、`src/Lawn/Widget/NewOptionsDialog.cpp`、
+  `src/Lawn/Zombie.cpp/.h`、`src/LawnApp.cpp/.h`、`src/ConstEnums.h`、
+  `src/PvzpLib/Reanimator.cpp`、`src/Resources.cpp/.h`、`README.md`。
+- 验证：当前 `GameSelector` 源码与原版一样各有 11 次 `MakeNewButton()` 和
+  `TrackButton()`；仓库中不再存在 Zombatar/条款实现引用，资源 ID 与 1051
+  资源表完全一致。MSYS2 UCRT64 构建成功，并通过同一未修改 1051 PAK 的
+  20 秒启动与首帧加载验证。
+- 修改提交号：`6b6a9c1953601fd35aebb8983a74e2edd3ca7559`。
+
 ## 记录格式
 
 <!--
@@ -38,5 +180,6 @@
 - 实际游戏行为差异：用一至两句话说明还原前两个版本中玩家可观察到的不同。
 - 还原：说明采用的原版逻辑。
 - 修改文件：`path/to/file.cpp`。
+- 验证：说明构建、二进制核对或真实运行结果，不写入未实际执行的测试。
 - 修改提交号：`完整的 40 位提交号`。
 -->
