@@ -93,7 +93,7 @@ constinit const ReanimationParams gLawnReanimationArray[ReanimationType::NUM_REA
 	{ .mReanimationType = ReanimationType::REANIM_BLOVER, .mReanimFileName = "reanim/Blover.reanim", .mReanimParamFlags = 0 },
 	{ .mReanimationType = ReanimationType::REANIM_FLOWER_POT, .mReanimFileName = "reanim/Pot.reanim", .mReanimParamFlags = 0 },
 	{ .mReanimationType = ReanimationType::REANIM_CACTUS, .mReanimFileName = "reanim/Cactus.reanim", .mReanimParamFlags = 0 },
-	{ .mReanimationType = ReanimationType::REANIM_DANCER, .mReanimFileName = "reanim/Zombie_disco.reanim", .mReanimParamFlags = 0 }, // GOTY uses a different reanim file name
+	{ .mReanimationType = ReanimationType::REANIM_DANCER, .mReanimFileName = "reanim/Zombie_Jackson.reanim", .mReanimParamFlags = 0 },
 	{ .mReanimationType = ReanimationType::REANIM_TANGLEKELP, .mReanimFileName = "reanim/Tanglekelp.reanim", .mReanimParamFlags = 0 },
 	{ .mReanimationType = ReanimationType::REANIM_STARFRUIT, .mReanimFileName = "reanim/Starfruit.reanim", .mReanimParamFlags = 0 },
 	{ .mReanimationType = ReanimationType::REANIM_POLEVAULTER, .mReanimFileName = "reanim/Zombie_polevaulter.reanim", .mReanimParamFlags = 0 },
@@ -104,7 +104,7 @@ constinit const ReanimationParams gLawnReanimationArray[ReanimationType::NUM_REA
 	{ .mReanimationType = ReanimationType::REANIM_DIGGER_DIRT, .mReanimFileName = "reanim/Digger_rising_dirt.reanim", .mReanimParamFlags = 0 },
 	{ .mReanimationType = ReanimationType::REANIM_ZOMBIE_DOLPHINRIDER, .mReanimFileName = "reanim/Zombie_dolphinrider.reanim", .mReanimParamFlags = 0 },
 	{ .mReanimationType = ReanimationType::REANIM_POGO, .mReanimFileName = "reanim/Zombie_pogo.reanim", .mReanimParamFlags = 0 },
-	{ .mReanimationType = ReanimationType::REANIM_BACKUP_DANCER, .mReanimFileName = "reanim/Zombie_backup.reanim", .mReanimParamFlags = 0 }, // GOTY uses a different reanim file name
+	{ .mReanimationType = ReanimationType::REANIM_BACKUP_DANCER, .mReanimFileName = "reanim/Zombie_dancer.reanim", .mReanimParamFlags = 0 },
 	{ .mReanimationType = ReanimationType::REANIM_BOBSLED, .mReanimFileName = "reanim/Zombie_bobsled.reanim", .mReanimParamFlags = 0 },
 	{ .mReanimationType = ReanimationType::REANIM_JACKINTHEBOX, .mReanimFileName = "reanim/Zombie_jackbox.reanim", .mReanimParamFlags = 0 },
 	{ .mReanimationType = ReanimationType::REANIM_SNORKEL, .mReanimFileName = "reanim/Zombie_snorkle.reanim", .mReanimParamFlags = 0 },
