@@ -4,6 +4,51 @@
 PvZ-Portable 自身错误的 bug。年度版与原版的版本差异改动记录在
 `已还原的与1051不同之处`。
 
+## B2. `Plant::FindTargetAndFire` 普通头部射击提前 2cs
+
+- 问题介绍：`src/Lawn/Plant.cpp` 的普通 `anim_shooting` 头部射击分支把
+  `mShootingCounter` 设为 `33`，应为 `35`；重复射手、裂荚射手、左射手和机枪
+  射手后续覆盖的 `26` 或 `100` 不受影响。
+- 年度版证据：1.2.0.1073 的 `Plant::FindTargetAndFire@0x46D240` 在
+  `0x46D390` 向 `Plant + 0x90` 写入 `0x23`，即 35；原版对应指令位于
+  `0x45F045`，同样写入 35。
+- 实际游戏行为差异：普通头部射击植物在 `mShootingCounter == 1` 时生成子弹；
+  修复前会比原版和年度版提前 2cs 发射，使弹道与头部射击动画错位 2cs。
+- 修正：把普通头部射击分支的初始计数改为 `35`，保留特殊射手的后续覆盖值。
+- 修改文件：`src/Lawn/Plant.cpp`。
+- 修改提交号：`17191f974c8945fce75a908ce0809514201f98a9`
+
+## B3. `Challenge::UpdateZombieSpawning` 返回类型为 `int`
+
+- 问题介绍：`src/Lawn/Challenge.h` 和 `src/Lawn/Challenge.cpp` 把
+  `UpdateZombieSpawning()` 声明、定义为 `int`，而两个官方版本的函数契约都是
+  只返回真假。
+- 年度版证据：1.2.0.1073 的 `Challenge::UpdateZombieSpawning@0x431860`
+  在 `0x43188C` 用 `mov al, 1` 返回 true，在 `0x4318F7` 用 `xor al, al`
+  返回 false；调用点 `0x41FEC5` 调用后在 `0x41FECA` 执行 `test al, al`。
+  原版在 `0x4265AC`、`0x426617` 和调用点 `0x413DF5` 具有相同的 bool 语义。
+- 实际游戏行为差异：修复前的各分支同样生成完整的 0/1，现有调用点也只作条件
+  判断，因此没有已确认的玩家可观察差异；本项修正的是源码返回类型契约。
+- 修正：把声明和定义的返回类型统一改为 `bool`，调用点无需改写。
+- 修改文件：`src/Lawn/Challenge.h`、`src/Lawn/Challenge.cpp`。
+- 修改提交号：`17191f974c8945fce75a908ce0809514201f98a9`
+
+## B4. `Plant::UpdateSquash` 下落误用缓入缓出曲线
+
+- 问题介绍：`src/Lawn/Plant.cpp` 的 `STATE_SQUASH_FALLING` 分支把 10cs 下落
+  写成 `PvzpCurves::CURVE_EASE_IN_OUT`，官方实现使用线性曲线；上升段仍应保留
+  `CURVE_EASE_IN_OUT`。
+- 年度版证据：1.2.0.1073 的 `Plant::UpdateSquash@0x46ED90` 在下落分支
+  `0x46F036` 执行 `push 1`，随后在 `0x46F044` 调用
+  `TodAnimateCurve@0x526F20`，其中 `1 = CURVE_LINEAR`。原版对应指令为
+  `0x460C6C push 1`、`0x460C7A call TodAnimateCurve@0x511C40`。
+- 实际游戏行为差异：修复前倭瓜下落前半段偏慢、后半段偏快，显示轨迹与原版和
+  年度版不一致；伤害仍由固定的 `mStateCountdown == 5` 触发，本项主要影响下落
+  动画位置而不是伤害时机。
+- 修正：仅把 `STATE_SQUASH_FALLING` 分支改为 `PvzpCurves::CURVE_LINEAR`。
+- 修改文件：`src/Lawn/Plant.cpp`。
+- 修改提交号：`17191f974c8945fce75a908ce0809514201f98a9`
+
 ## 记录格式
 
 <!--
