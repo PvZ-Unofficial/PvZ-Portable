@@ -69,6 +69,9 @@
 - 二进制：
   `C:\Users\123\Desktop\Plants_Vs_Zombies_V1.0.0\Plants_Vs_Zombies_V1.0.0.1051_EN\PlantsVsZombies.exe`
 - SHA-256：`F9669AF338964787A3785A7895791297D599295B8BB669B0DB49443F736A1322`
+- 原版 PAK：
+  `C:\Users\123\Desktop\Plants_Vs_Zombies_V1.0.0\Plants_Vs_Zombies_V1.0.0.1051_EN\main.pak`
+- PAK SHA-256：`2FC4E9E8E1ECF40F7C53C03DF5CC5A3D553DBABC63A1A833C4656975CCB8A933`
 - 已校正的反编译源码错误见
   [`已经修改的反汇编项目bug合集.md`](../PlantsVsZombies-decompilation/已经修改的反汇编项目bug合集.md)。
 

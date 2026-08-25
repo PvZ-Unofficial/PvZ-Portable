@@ -70,7 +70,7 @@ Note about writable data and caches:
 - The game will read resources (like `main.pak` and `properties/`) from the executable directory by default, so you can launch the binary from any working directory and it will still find them.
 - Per-user writable files (settings, savegames, compiled caches, screenshots) are stored in the **OS-recommended application data path**. With the current build these are under `io.github.wszqkzqk/PvZPortable` and include subfolders such as:
   - `userdata/` — Player save files.
-  - `cache64/` if you use the 64-bit version or `cache32/` if you use the 32-bit version — Compiled binary caches (reanimation / compiled definitions). These caches are **local startup** artifacts (**native layout**), not portable files; when cache/schema checks fail, the game transparently recompiles from source data.
+  - `cache64/` if you use the 64-bit version or `cache32/` if you use the 32-bit version — Compiled binary caches (reanimation / compiled definitions). These caches are **local startup** artifacts (**native layout**), not portable files; when cache/schema checks fail and source definitions are available, the game transparently recompiles them. Compiled definitions supplied by the original `main.pak` are authoritative and are not shadowed by these caches.
   - `registry.regemu` — Settings/registry emulation.
 
 Examples:
@@ -257,6 +257,7 @@ As a result, legacy saves are generally not guaranteed to load across those vari
 - Add new fields as new TLV IDs; do not reuse IDs.
 - Keep defaults for missing fields when loading older saves.
 - Avoid raw struct dumps for data that may change layout; prefer explicit per-field sync with fixed-width primitives.
+- If a serialized numeric ID table is reordered, bump the v4 header version and provide an explicit old-to-new mapping. Header v1 used the annual-edition resource table; header v2 uses the restored 1.0.0.1051 table, and the loader accepts both.
 
 ### Save Editing & Conversion Tool
 
