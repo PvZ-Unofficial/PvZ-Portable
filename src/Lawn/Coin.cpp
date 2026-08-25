@@ -36,7 +36,6 @@
 #include "../PvzpLib/PvzpDebug.h"
 #include "../PvzpLib/Reanimator.h"
 #include "../PvzpLib/Attachment.h"
-#include "Widget/AchievementsScreen.h"
 
 Coin::Coin()
 {
@@ -446,12 +445,6 @@ void Coin::ScoreCoin()
 		if (mBoard)
 		{
 			mBoard->mCoinsCollected += aCoinValue;
-
-			if (mType == CoinType::COIN_SILVER || mType == CoinType::COIN_GOLD) {
-				mBoard->mLevelCoinsCollected++;
-				if (mBoard->mLevelCoinsCollected == 30 && mApp->mPlayerInfo->mCoins != 0)
-					ReportAchievement::GiveAchievement(mApp, PennyPincher, true);
-			}
 		}
 	}
 

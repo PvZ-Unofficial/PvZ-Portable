@@ -42,7 +42,6 @@
 #include "../../PvzpLib/PvzpStringFile.h"
 #include "graphics/ImageFont.h"
 #include "widget/WidgetManager.h"
-#include "AchievementsScreen.h"
 #include <algorithm>
 
 constexpr const int STORESCREEN_ITEMOFFSET_1_X = 422;
@@ -1056,20 +1055,6 @@ void StoreScreen::PurchaseItem(StoreItem theStoreItem)
 			if (mApp->mSeedChooserScreen)
 			{
 				mApp->mSeedChooserScreen->UpdateAfterPurchase();
-			}
-
-			// Only give the achievement if the player bought a plant and has all plants purchased
-			bool aGiveAchievement = theStoreItem >= STORE_ITEM_PLANT_GATLINGPEA && theStoreItem <= STORE_ITEM_PLANT_IMITATER;
-			if (aGiveAchievement) {
-				for (int aSeedType = SeedType::SEED_GATLINGPEA; aSeedType <= SeedType::SEED_IMITATER; aSeedType++) {
-					if (!mApp->HasSeedType(SeedType(aSeedType)))
-						aGiveAchievement = false;
-				}
-			}
-
-			if (aGiveAchievement) {
-				ReportAchievement::GiveAchievement(mApp, Morticulturalist, aGiveAchievement);
-				SetBubbleText(4000, 800, false);
 			}
 
 			mApp->WriteCurrentUserConfig();

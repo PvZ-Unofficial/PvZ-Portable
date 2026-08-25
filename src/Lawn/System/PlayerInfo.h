@@ -24,12 +24,9 @@
 
 constexpr const int MAX_POTTED_PLANTS = 200;
 constexpr const int PURCHASE_COUNT_OFFSET = 1000;
-constexpr const int ZOMBATAR_RECORD_SIZE = 0x48;
-constexpr const int MAX_ZOMBATAR_HEADS = 100;
 
 #include <cstdint>
 #include <ctime>
-#include <vector>
 #include "../../ConstEnums.h"
 #include "../../SexyAppFramework/Common.h"
 
@@ -99,13 +96,6 @@ public:
 	int32_t             mPlaceHolderPlayerStats;            //+0x??????
 	int32_t             mNumPottedPlants;                   //+0x350
 	PottedPlant         mPottedPlant[MAX_POTTED_PLANTS];    //+0x358
-	bool                mEarnedAchievements[20];            //+0x24
-	bool                mShownAchievements[20];
-	unsigned char       mZombatarAccepted;                  //+0x28
-	uint32_t            mZombatarHeadCount;                 //+0x29
-	std::vector<unsigned char> mZombatarData;               // raw 0x48 * count
-	// mini-game completion flags (20 bytes in the save after the Zombatar records) are derived from mChallengeRecords at save time; no runtime field
-	unsigned char       mZombatarCreatedBefore;             // created at least one Zombatar (0/1)
 
 public:
 	PlayerInfo();

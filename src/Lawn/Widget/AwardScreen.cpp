@@ -35,54 +35,15 @@
 #include "../../PvzpLib/PvzpFoley.h"
 #include "../../PvzpLib/PvzpCommon.h"
 #include "../../PvzpLib/PvzpStringFile.h"
-#include "AchievementsScreen.h"
 
-AwardScreen::AwardScreen(LawnApp* theApp, AwardType theAwardType, bool theShowingAchievements)
+AwardScreen::AwardScreen(LawnApp* theApp, AwardType theAwardType)
 {
 	mApp = theApp;
 	mClip = false;
 	mFadeInCounter = 180;
-	mAchievementAnimTime = 0;
 	mAwardType = theAwardType;
-	mShowingAchievements = theShowingAchievements;
 
 	mLoadedResourceNames.push_back("DelayLoad_AwardScreen");
-
-	if (!theShowingAchievements) {
-		mShowingAchievements = false;
-	}
-	else {
-		mLoadedResourceNames.push_back("DelayLoad_ChallengeScreen");
-
-		for (int i = 0; i < MAX_ACHIEVEMENTS; i++) {
-			if (mApp->mPlayerInfo->mEarnedAchievements[i] && !mApp->mPlayerInfo->mShownAchievements[i]) {
-				mApp->mPlayerInfo->mShownAchievements[i] = true;
-
-				AchievementScreenItem aAchievementItem{};
-				aAchievementItem.mId = i;
-				aAchievementItem.mStartAnimTime = 100 * mAchievementItems.size() + 150;
-				aAchievementItem.mEndAnimTime = aAchievementItem.mStartAnimTime + 100;
-				aAchievementItem.mStartY = 750;
-				aAchievementItem.mY = aAchievementItem.mStartY;
-				mAchievementItems.push_back(aAchievementItem);
-			}
-		}
-
-		if (!mAchievementItems.empty()) {
-			//int aDestY = 284 - ((76 * mAchievementItems.size()) >> 1);
-			int aDestY = 284 - ((76 * mAchievementItems.size()) / 2);
-
-			for (size_t j = 0; j < mAchievementItems.size(); j++) {
-				mAchievementItems[j].mDestY = aDestY;
-				aDestY += 76;
-			}
-		}
-		else {
-			mShowingAchievements = false;
-		}
-
-		mApp->WriteCurrentUserConfig();
-	}
 
 	int aLevel = mApp->mPlayerInfo->GetLevel();
 	if (mAwardType == AWARD_CREDITS_ZOMBIENOTE)
@@ -146,21 +107,6 @@ AwardScreen::AwardScreen(LawnApp* theApp, AwardType theAwardType, bool theShowin
 	mStartButton->Resize(324, 500, 156, 42);
 	mStartButton->mTextOffsetY = -1;
 
-	mContinueButton = std::make_unique<GameButton>(AwardScreen::AwardScreen_Start);
-	mContinueButton->mButtonImage = Sexy::IMAGE_SEEDCHOOSER_BUTTON;
-	mContinueButton->mOverImage = nullptr;
-	mContinueButton->mDownImage = nullptr;
-	mContinueButton->mDisabledImage = Sexy::IMAGE_SEEDCHOOSER_BUTTON_DISABLED;
-	mContinueButton->mOverOverlayImage = Sexy::IMAGE_SEEDCHOOSER_BUTTON_GLOW;
-	mContinueButton->SetFont(Sexy::FONT_DWARVENTODCRAFT15);
-	mContinueButton->mColors[ButtonWidget::COLOR_LABEL] = Color(213, 159, 43);
-	mContinueButton->mColors[ButtonWidget::COLOR_LABEL_HILITE] = Color(213, 159, 43);
-	mContinueButton->Resize(324, 515, 156, 42);
-	mContinueButton->mParentWidget = this;
-	mContinueButton->mTextOffsetY = -1;
-	mContinueButton->mBtnNoDraw = true;
-	mContinueButton->mDisabled = true;
-
 	mMenuButton = std::make_unique<GameButton>(AwardScreen::AwardScreen_Menu);
 	mMenuButton->SetLabel("[AWARD_MAIN_MENU_BUTTON]");
 	mMenuButton->mButtonImage = Sexy::IMAGE_SEEDCHOOSER_BUTTON2;
@@ -208,9 +154,8 @@ AwardScreen::AwardScreen(LawnApp* theApp, AwardType theAwardType, bool theShowin
 		mMenuButton->mBtnNoDraw = true;
 		mMenuButton->mDisabled = true;
 	}
-	else if (aLevel == 1 && mApp->HasFinishedAdventure())
+	else if (aLevel == 1)
 	{
-		ReportAchievement::GiveAchievement(mApp, HomeSecurity, false);
 		mStartButton->SetLabel("[CONTINUE_BUTTON]");
 		mMenuButton->mBtnNoDraw = true;
 		mMenuButton->mDisabled = true;
@@ -222,24 +167,10 @@ AwardScreen::AwardScreen(LawnApp* theApp, AwardType theAwardType, bool theShowin
 	else
 		mStartButton->SetLabel("[NEXT_LEVEL_BUTTON]");
 
-	if (mApp->IsAdventureMode() && mApp->EarnedGoldTrophy()) {
-		ReportAchievement::GiveAchievement(mApp, NovelPeasPrize, false);
-	}
-
 	if (mApp->IsFirstTimeAdventureMode() && aLevel == 25 && mApp->IsTrialStageLocked() && !mApp->mPlayerInfo->mHasSeenUpsell)
 	{
 		mMenuButton->mBtnNoDraw = true;
 		mMenuButton->mDisabled = true;
-	}
-
-	if (mShowingAchievements) {
-		mShowStartButtonAfterAchievements = !mStartButton->mBtnNoDraw;
-		mShowMenuButtonAfterAchievements = !mMenuButton->mBtnNoDraw;
-		mStartButton->mBtnNoDraw = true;
-		mStartButton->mDisabled = true;
-		mMenuButton->mBtnNoDraw = true;
-		mMenuButton->mDisabled = true;
-		mContinueButton->SetLabel("[CONTINUE_BUTTON]");
 	}
 
 	if (IsPaperNote())
@@ -292,9 +223,7 @@ void AwardScreen::Draw(Graphics* g)
 	g->SetLinearBlend(true);
 
 	int aLevel = mApp->mPlayerInfo->GetLevel();
-	if (mShowingAchievements)
-		DrawAchievements(g);
-	else if (mAwardType == AWARD_CREDITS_ZOMBIENOTE)
+	if (mAwardType == AWARD_CREDITS_ZOMBIENOTE)
 	{
 		g->SetColor(Color(125, 200, 255, 255));
 		g->SetColorizeImages(true);
@@ -311,7 +240,7 @@ void AwardScreen::Draw(Graphics* g)
 		g->DrawImage(Sexy::IMAGE_ZOMBIE_NOTE, 80, 80);
 		g->DrawImage(Sexy::IMAGE_ZOMBIE_NOTE_HELP, 131, 132);
 	}
-	else if (mAwardType != AWARD_ACHIEVEMENTONLY)
+	else
 	{
 		if (!mApp->IsAdventureMode())
 		{
@@ -415,7 +344,6 @@ void AwardScreen::Draw(Graphics* g)
 
 	mStartButton->Draw(g);
 	mMenuButton->Draw(g);
-	mContinueButton->Draw(g);
 
 	int aFadeInAlpha = PvzpAnimateCurve(180, 0, mFadeInCounter, 255, 0, CURVE_LINEAR);
 	g->SetColor(IsPaperNote() ? Color(0, 0, 0, aFadeInAlpha) : Color(255, 255, 255, aFadeInAlpha));
@@ -425,26 +353,10 @@ void AwardScreen::Draw(Graphics* g)
 void AwardScreen::Update()
 {
 	Widget::Update();
-	if (mShowingAchievements) {
-		mAchievementAnimTime++;
-
-		for (size_t i = 0; i < mAchievementItems.size(); i++) {
-			if (mAchievementAnimTime >= mAchievementItems[i].mStartAnimTime) {
-				mAchievementItems[i].mY = PvzpAnimateCurve(mAchievementItems[i].mStartAnimTime, mAchievementItems[i].mEndAnimTime, mAchievementAnimTime, mAchievementItems[i].mStartY, mAchievementItems[i].mDestY, CURVE_EASE_IN_OUT);
-			}
-
-			if (mAchievementItems[mAchievementItems.size() - 1].mY == mAchievementItems[mAchievementItems.size() - 1].mDestY) {
-				mContinueButton->mBtnNoDraw = false;
-				mContinueButton->mDisabled = false;
-			}
-		}
-	}
-
 	if (mApp->GetDialogCount() > 0) return;
 	mStartButton->Update();
 	mMenuButton->Update();
-	mContinueButton->Update();
-	mApp->SetCursor(mStartButton->IsMouseOver() || mMenuButton->IsMouseOver() || mContinueButton->IsMouseOver() ? CURSOR_HAND : CURSOR_POINTER);
+	mApp->SetCursor(mStartButton->IsMouseOver() || mMenuButton->IsMouseOver() ? CURSOR_HAND : CURSOR_POINTER);
 	MarkDirty();
 	if (mFadeInCounter > 0) mFadeInCounter--;
 }
@@ -509,7 +421,7 @@ void AwardScreen::StartButtonPressed()
 			mApp->KillAwardScreen();
 			if (mApp->HasFinishedAdventure())
 			{
-				mApp->ShowAwardScreen(AWARD_CREDITS_ZOMBIENOTE, false);
+				mApp->ShowAwardScreen(AWARD_CREDITS_ZOMBIENOTE);
 			}
 			else
 			{
@@ -575,7 +487,7 @@ void AwardScreen::StartButtonPressed()
 void AwardScreen::MouseDown([[maybe_unused]] int x, [[maybe_unused]] int y, int theClickCount)
 {
 	if (theClickCount == 1) {
-		if (mStartButton->IsMouseOver() || mMenuButton->IsMouseOver() || mContinueButton->IsMouseOver())
+		if (mStartButton->IsMouseOver() || mMenuButton->IsMouseOver())
 			mApp->PlaySample(Sexy::SOUND_TAP);
 	}
 }
@@ -586,71 +498,10 @@ void AwardScreen::MouseUp([[maybe_unused]] int x, [[maybe_unused]] int y, int th
 	{
 		if (mStartButton->IsMouseOver())
 			StartButtonPressed();
-		if (mContinueButton->IsMouseOver())
-			AchievementsContinuePressed();
 		if (mMenuButton->IsMouseOver())
 		{
 			mApp->KillAwardScreen();
 			mApp->ShowGameSelector();
-		}
-	}
-}
-
-void AwardScreen::DrawAchievements(Graphics* g) {
-	g->SetColorizeImages(true);
-	// Rect aTextWrap = Rect(0, 0, 0, 77); // unused
-	g->SetColor(Color(255, 255, 255));
-	g->FillRect(0, 0, mWidth, mHeight);
-	g->SetColorizeImages(false);
-
-	g->DrawImage(IMAGE_CHALLENGE_BACKGROUND, 0, 0);
-
-	PvzpDrawString(g, mApp->GetString("ACHIEVEMENTS_TITLE", "ACHIEVEMENTS"), BOARD_WIDTH / 2, 58, FONT_HOUSEOFTERROR28, Color(220, 220, 220), DS_ALIGN_CENTER);
-
-	for (size_t i = 0; i < mAchievementItems.size(); i++) {
-		std::string aAchievementName = std::string(gAchievementList[mAchievementItems[i].mId].name);
-		std::string aAchievementDesc = std::string(gAchievementList[mAchievementItems[i].mId].description);
-		aAchievementName.append(" Earned!");
-
-		Rect aSrcRect = Rect(70 * (mAchievementItems[i].mId % 7), 70 * (mAchievementItems[i].mId / 7), 70, 70);
-		Rect aDestRect = Rect(220, mAchievementItems[i].mY + 10, 70, 70);
-		Rect aTextRect = Rect(300, mAchievementItems[i].mY + 20, 300, 60);
-
-		g->DrawImage(IMAGE_ACHEESEMENTS_ICONS, aDestRect, aSrcRect);
-
-		PvzpDrawString(g, aAchievementName, 450, mAchievementItems[i].mY + 25, FONT_DWARVENTODCRAFT15, Color(224, 187, 98), DS_ALIGN_CENTER);
-		PvzpDrawStringWrapped(g, aAchievementDesc, aTextRect, FONT_DWARVENTODCRAFT12, Color(255, 255, 255), DS_ALIGN_CENTER_VERTICAL_MIDDLE);
-	}
-}
-
-void AwardScreen::AchievementsContinuePressed() {
-	if (mAwardType == AWARD_ACHIEVEMENTONLY) {
-		mApp->KillAwardScreen();
-		if (mApp->IsAdventureMode()) {
-			mApp->PreNewGame(mApp->mGameMode, false);
-		}
-		else if (mApp->IsSurvivalMode()) {
-			mApp->ShowChallengeScreen(ChallengePage::CHALLENGE_PAGE_SURVIVAL);
-		}
-		else if (mApp->IsPuzzleMode()) {
-			mApp->ShowChallengeScreen(ChallengePage::CHALLENGE_PAGE_PUZZLE);
-		}
-		else {
-			mApp->ShowChallengeScreen(ChallengePage::CHALLENGE_PAGE_CHALLENGE);
-		}
-	}
-	else {
-		mStartButton->mBtnNoDraw = !mShowStartButtonAfterAchievements;
-		mStartButton->mDisabled = !mShowStartButtonAfterAchievements;
-		mMenuButton->mBtnNoDraw = !mShowMenuButtonAfterAchievements;
-		mMenuButton->mDisabled = !mShowMenuButtonAfterAchievements;
-		mContinueButton->mDisabled = true;
-		mContinueButton->mBtnNoDraw = true;
-		mShowingAchievements = false;
-		int level = mApp->mPlayerInfo->GetLevel();
-		if (mApp->IsAdventureMode() && level == 1 && mApp->HasFinishedAdventure()) {
-			mApp->KillAwardScreen();
-			mApp->ShowAwardScreen(AWARD_CREDITS_ZOMBIENOTE, false);
 		}
 	}
 }

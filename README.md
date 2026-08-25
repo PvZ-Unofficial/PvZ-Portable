@@ -6,7 +6,7 @@
 
 [![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/wszqkzqk/PvZ-Portable)
 
-A **cross-platform** community-driven reimplementation of Plants vs. Zombies: Game of the Year Edition, aiming to bring the **100% authentic experience** of Plants vs. Zombies to every platform.
+A **cross-platform** community-driven reimplementation of Plants vs. Zombies 1.0.0.1051, aiming to bring the **100% authentic experience** of the original release to every platform.
 
 | 🌿 Authentic | 🎮 Portable | 🛠️ Open |
 | :---: | :---: | :---: |
@@ -16,12 +16,12 @@ A **cross-platform** community-driven reimplementation of Plants vs. Zombies: Ga
 
 **⚠️ Notice:**
 
-* This repository does **NOT** contain any copyrighted game assets (such as images, music, or fonts) owned by PopCap Games or Electronic Arts. Users must provide their own `main.pak` and `properties/` folder from a **legally purchased copy** of Plants vs. Zombies: GOTY Edition.
+* This repository does **NOT** contain any copyrighted game assets (such as images, music, or fonts) owned by PopCap Games or Electronic Arts. Users must provide their own `main.pak` and `properties/` folder from a legally obtained copy of Plants vs. Zombies **1.0.0.1051**.
 * The codebase is a manual reimplementation derived from community research (such as [植物大战僵尸吧](https://tieba.baidu.com/f?ie=utf-8&kw=%E6%A4%8D%E7%89%A9%E5%A4%A7%E6%88%98%E5%83%B5%E5%B0%B8), [PVZ Wiki](https://wiki.pvz1.com/doku.php?id=home) and [PvZ Tools](https://pvz.tools/memory/)). It is written to utilize portable backends like SDL2 and OpenGL ES 2.0 (with desktop OpenGL 2.1 fallback). The author (wszqkzqk) **NEVER reverse engineered** the program; the author wrote it solely based on publicly available information and game testing. Also, code generated directly through reverse engineering will **not be accepted**.
 * This project is intended solely for **educational purposes**, focusing on **cross-platform porting techniques**, engine modernization, and learning how classic game logic can be adapted to various hardware architectures.
 * Non-Commercial: This project is not affiliated with, authorized, or endorsed by PopCap Games or Electronic Arts.
 * Project icons and platform-specific logos are created by me (wszqkzqk) with the help of AI image generation tools and are not official assets of PopCap/EA.
-* To play the game using this project you **MUST** have access to the original game files by purchasing it on [EA's official website](https://www.ea.com/games/plants-vs-zombies/plants-vs-zombies) or [Steam](https://store.steampowered.com/app/3590/Plants_vs_Zombies_GOTY_Edition/).
+* To play the game using this project you **MUST** own Plants vs. Zombies and have lawful access to the 1.0.0.1051 data files. This project does not provide those files or convert data from another release.
 
 ## Features
 
@@ -31,14 +31,14 @@ A **cross-platform** community-driven reimplementation of Plants vs. Zombies: Ga
 - [x] Implement a cross-platform audio system based on [SDL Mixer X](https://github.com/WohlSoft/SDL-Mixer-X)
   - This project uses a fork of SDL Mixer X that adds compatibility with the MO3 format by using libopenmpt. This fork is located under SexyAppFramework/sound/SDL-Mixer-X
 - [x] Save more memory by disabling caching for console platforms that have very limited RAM
-- [x] **Compatible** with original PvZ GOTY Edition's ***global user data*** (profile info, adventure progress, coins, Zen Garden, etc., stored in `user*.dat`)
+- [x] **Compatible** with original PvZ 1.0.0.1051 ***global user data*** (profile info, adventure progress, coins, Zen Garden, etc., stored in `user*.dat`)
   - [x] Fix 2038 year problem while keeping compatibility
 - [x] **Portable mid-level save game** format `.v4` support (share **mid-level saves** between Windows, Linux, macOS, Android, Switch, etc.)
   - [x] Support export/import of `.v4` save files to/from human-readable YAML format for easy editing
 - [x] Implement with `std::thread` for cross-platform threading support
 - [x] Implement with `std::filesystem` for cross-platform file system support
 - [x] Unified use of UTF-8 encoding within the program
-- [x] **Multilingual Support**: Supports game resource data from official GOTY editions in various languages, including **Chinese, German, Spanish, French, and Italian**.
+- [x] Localized string loading and optional property overrides
 - [x] 32 and 64-bit builds support
 - [x] Different CPU architectures support (i686, x86_64, aarch64, riscv64, loongarch64, etc.)
 - [x] Unicode path support on all platforms
@@ -63,7 +63,7 @@ This project supports the following platforms (including but not limited to):
 | Web (WASM)      | Browser IndexedDB (saves); resources uploaded at runtime    | Works (requires a HTTP server) |
 | Nintendo Switch | sdmc:/switch/PvZPortable | Works on real hardware. Kenji-NX crashes on boot.                           |
 
-To play the game, you need the game data from PvZ GOTY. Place `main.pak` and the `properties/` folder next to the `pvz-portable` executable (the game will search for resources relative to the executable's directory). You can also use extracted data instead of `main.pak` if you prefer.
+To play the game, you need the game data from PvZ 1.0.0.1051. Place `main.pak` and the `properties/` folder next to the `pvz-portable` executable (the game will search for resources relative to the executable's directory). You can also use extracted data instead of `main.pak` if you prefer.
 
 Note about writable data and caches:
 
@@ -85,7 +85,7 @@ You can customize these paths via command-line parameters:
 
 ### Special Instructions for Android
 
-Download the APK from the [Releases](https://github.com/wszqkzqk/PvZ-Portable/releases) page or build it yourself. Because this project **does not include** any game assets, you will need to **import the game resources** from a **legally purchased copy** of Plants vs. Zombies: GOTY Edition.
+Download the APK from the [Releases](https://github.com/wszqkzqk/PvZ-Portable/releases) page or build it yourself. Because this project **does not include** any game assets, you will need to import legally obtained Plants vs. Zombies 1.0.0.1051 resources.
 
 #### First Launch
 
@@ -129,26 +129,13 @@ You can also [download the WASM build](https://github.com/wszqkzqk/PvZ-Portable/
 
 ## Game Version Compatibility
 
-This project is designed and tested against Plants vs. Zombies **GOTY Edition 1.2.0.1073** EN (the standalone PopCap release). **Non-English GOTY editions** (1.2.0.1093 DE/ES/FR/IT or 1.1.0.1056 ZH based on 1.2.0.1073) and the **Steam GOTY Edition 1.2.0.1096** are also fully playable — all game mechanics work correctly. The only differences are minor cosmetic UI text issues caused by renamed string keys across versions, and these can be **easily fixed** by the user via a custom `properties/default.xml` (see below).
+This branch is designed and tested against the English Plants vs. Zombies **1.0.0.1051** release. Use that release's unmodified `main.pak` and `properties/` folder for the reference experience.
 
-**Recommendation:** use the **1.2.0.1073 EN** asset package for the best **out-of-box** experience.
+Game of the Year / annual-edition data is not the behavioral reference for this branch. Annual-edition-only gameplay, UI, save fields, and resources have been removed; compatibility with those data packages is not guaranteed.
 
-<details>
-<summary>Known cosmetic differences with non-1.2.0.1073 EN assets (click to expand)</summary>
+### Localized Strings
 
-| Issue (Non-1.2.0.1073 EN only) | Cause |
-| :---: | :---: |
-| **Almanac blue description text missing** | In 1.2.0.1096, the plain-text introductory paragraph was split out from `[XXX_DESCRIPTION]` into a new `[XXX_DESCRIPTION_HEADER]` key. The engine only reads `[XXX_DESCRIPTION]`, so the header text is never displayed. |
-| **"Restart" button label missing** | The key `[RESTART_LEVEL]` (used for the button label) was renamed to `[RESTART_LEVEL_BUTTON]` in 1.2.0.1096. |
-| **Unencountered zombie shows `???`** instead of `(not encountered yet)` | The string `[NOT_ENCOUNTERED_YET]` changed its value to `???` in 1.2.0.1096; the old text was moved to a new key `[NOT_ENCOUNTERED_YET_DESCRIPTION]`. |
-| **Crazy Dave's plant sell price shows 1/10 of the correct value** | In 1.2.0.1073, the string template `[CRAZY_DAVE_1700]` contains a trailing `0` after `{SELL_PRICE}` (i.e. `${SELL_PRICE}0`) because the engine passes the price divided by 10. In 1.2.0.1096 the trailing `0` was removed, so the displayed price becomes 1/10 of the intended amount. |
-
-All of the above can be resolved by adding the missing or corrected string entries to a `properties/default.xml` file placed alongside the game data.
-</details>
-
-### Multilingual Support
-
-PvZ-Portable supports game resource data from **non-English versions** of Plants vs. Zombies **GOTY Edition**. The engine handles BOM-encoded text files and converts legacy Windows-1252 encodings to UTF-8, so localized files will be loaded correctly. If `properties/default.xml` and/or `properties/Layout.xml` exist in the game data, they are loaded **after** `LawnStrings.txt` and can override any string value. Both files are optional; when absent, built-in English defaults are used.
+The engine handles BOM-encoded text files and converts legacy Windows-1252 encodings to UTF-8. If `properties/default.xml` and/or `properties/Layout.xml` exist in the game data, they are loaded **after** `LawnStrings.txt` and can override any string value. Both files are optional; when absent, built-in English defaults are used.
 
 Since `default.xml` takes priority over `LawnStrings.txt`, users can also **create or edit their own `properties/default.xml`** to add or override any string key, making it easy to fix version-specific display issues without modifying the engine.
 

@@ -160,10 +160,6 @@ void MessageWidget::SetLabel(std::string_view theNewLabel, MessageStyle theMessa
 			mDuration = 750;
 			break;
 
-		case MessageStyle::MESSAGE_STYLE_ACHIEVEMENT:
-			mDuration = 250;
-			break;
-
 		default:
 			PVZP_ASSERT(false);
 			break;
@@ -347,7 +343,6 @@ _Font* MessageWidget::GetFont()
 	case MessageStyle::MESSAGE_STYLE_HOUSE_NAME:
 	case MessageStyle::MESSAGE_STYLE_HUGE_WAVE:
 	case MessageStyle::MESSAGE_STYLE_ZEN_GARDEN_LONG:
-	case MessageStyle::MESSAGE_STYLE_ACHIEVEMENT:
 		return Sexy::FONT_HOUSEOFTERROR28;
 
 	case MessageStyle::MESSAGE_STYLE_SLOT_MACHINE:
@@ -397,7 +392,6 @@ void MessageWidget::Draw(Graphics* g)
 	case MessageStyle::MESSAGE_STYLE_HINT_TALL_FAST:
 	case MessageStyle::MESSAGE_STYLE_HINT_TALL_UNLOCKMESSAGE:
 	case MessageStyle::MESSAGE_STYLE_HINT_TALL_LONG:
-	case MessageStyle::MESSAGE_STYLE_ACHIEVEMENT:
 		aPosY = 476;
 		aRectHeight = 100;
 		aTextOffsetY = -4;

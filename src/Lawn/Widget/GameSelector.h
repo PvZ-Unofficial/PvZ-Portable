@@ -25,13 +25,11 @@
 #include "../../ConstEnums.h"
 #include "widget/Widget.h"
 #include "widget/ButtonListener.h"
-#include "AchievementsScreen.h"
 #include "GameButton.h"
 #include <memory>
 
 class LawnApp;
 class ToolTipWidget;
-class ZombatarWidget;
 namespace Sexy
 {
 	class DialogButton;
@@ -62,9 +60,7 @@ private:
 		GameSelector_Store,
 		GameSelector_Almanac,
 		GameSelector_ZenGarden,
-		GameSelector_Survival,
-		GameSelector_Zombatar,
-		GameSelector_Achievements
+		GameSelector_Survival
 	};
 
 public:
@@ -81,8 +77,6 @@ public:
 	NewLawnButton*              mZenGardenButton;
 	NewLawnButton*              mSurvivalButton;
 	NewLawnButton*              mChangeUserButton;
-	NewLawnButton*              mZombatarButton;             //+0xC0
-	NewLawnButton*              mAchievementsButton;        //+0xC4
 	Widget*                     mOverlayWidget;
 	bool                        mStartingGame;
 	int                         mStartingGameCounter;
@@ -104,13 +98,6 @@ public:
 	std::unique_ptr<ToolTipWidget>      mToolTip;
 	bool                        mHasTrophy;
 	bool                        mUnlockSelectorCheat;
-	int                         mSlideCounter;              //+0x154
-	int                         mStartX;                    //+0x158
-	int                         mStartY;                    //+0x15C
-	int                         mDestX;                     //+0x160
-	int                         mDestY;                     //+0x164
-	std::unique_ptr<ZombatarWidget>     mZombatarWidget;       //+0x168
-	std::unique_ptr<AchievementsWidget> mAchievementsWidget;   //+0x16C
 
 public:
 	GameSelector(LawnApp* theApp);
@@ -120,9 +107,6 @@ public:
 	void                        Draw(Graphics* g) override;
 	void                        DrawOverlay(Graphics* g) override;
 	void                        Update() override;
-	void                        AddedToManager(WidgetManager* theWidgetManager) override;
-	void                        RemovedFromManager(WidgetManager* theWidgetManager) override;
-	void                        OrderInManagerChanged() override;
 	void                        ButtonMouseEnter(int theId) override;
 	void                        ButtonPress(int theId) override;
 	void                        ButtonDepress(int theId) override;
@@ -139,9 +123,6 @@ public:
 	void                        UpdateTooltip();
 	bool             ShouldDoZenTuturialBeforeAdventure();
 	void                        AddPreviewProfiles();
-	void             SlideTo(int theX, int theY);
-	void                        ShowZombatarScreen();
-	void                        ShowAchievementsScreen();
 };
 
 class GameSelectorOverlay : public Widget

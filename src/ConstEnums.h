@@ -318,8 +318,6 @@ enum Dialogs : int32_t
 	DIALOG_MESSAGE,                             // 48: generic message (loading, mode not unlocked, ...)
 	DIALOG_IMITATER,                            // 49
 	DIALOG_PURCHASE_PACKET_SLOT,                // 50
-	DIALOG_ZOMBATAR_TOS,                        // 51: terms of service
-	DIALOG_ZOMBATAR_DELETE,                     // 52
 	NUM_DIALOGS
 };
 enum DebugTextMode : int32_t
@@ -600,8 +598,7 @@ enum MessageStyle : int32_t
 	MESSAGE_STYLE_HOUSE_NAME,
 	MESSAGE_STYLE_HUGE_WAVE,
 	MESSAGE_STYLE_SLOT_MACHINE,
-	MESSAGE_STYLE_ZEN_GARDEN_LONG,
-	MESSAGE_STYLE_ACHIEVEMENT
+	MESSAGE_STYLE_ZEN_GARDEN_LONG
 };
 enum MowerHeight : int32_t
 {
@@ -960,7 +957,6 @@ enum ReanimationType : uint32_t {
 	REANIM_CREDITS_WEARETHEUNDEAD,
 	REANIM_CREDITS_DISCOLIGHTS,
 	REANIM_FLAG,
-	REANIM_ZOMBATAR_HEAD,
 	NUM_REANIMS
 };
 enum ReanimLoopType : int32_t

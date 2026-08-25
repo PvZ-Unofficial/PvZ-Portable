@@ -61,7 +61,6 @@
 #include "Lawn/System/ReanimationLawn.h"
 #include "Lawn/Widget/ChallengeScreen.h"
 #include "Lawn/Widget/NewOptionsDialog.h"
-#include "Lawn/Widget/ZombatarTOS.h"
 #include "Lawn/Widget/SeedChooserScreen.h"
 #include "widget/WidgetManager.h"
 #include "misc/ResourceManager.h"
@@ -76,24 +75,6 @@ bool gSlowMo = false;
 bool gFastMo = false;
 LawnApp* gLawnApp = nullptr;
 int gSlowMoCounter = 0;
-
-static bool HasUnshownAchievements(PlayerInfo* thePlayerInfo)
-{
-	if (thePlayerInfo == nullptr)
-	{
-		return false;
-	}
-
-	for (int i = 0; i < MAX_ACHIEVEMENTS; i++)
-	{
-		if (thePlayerInfo->mEarnedAchievements[i] && !thePlayerInfo->mShownAchievements[i])
-		{
-			return true;
-		}
-	}
-
-	return false;
-}
 
 bool LawnGetCloseRequest()
 {
@@ -554,10 +535,10 @@ void LawnApp::KillGameSelector()
 	}
 }
 
-void LawnApp::ShowAwardScreen(AwardType theAwardType, bool theShowAchievements)
+void LawnApp::ShowAwardScreen(AwardType theAwardType)
 {
 	mGameScene = GameScenes::SCENE_AWARD;
-	mAwardScreen = new AwardScreen(this, theAwardType, theShowAchievements);
+	mAwardScreen = new AwardScreen(this, theAwardType);
 	mAwardScreen->Resize(0, 0, mWidth, mHeight);
 	mWidgetManager->AddWidget(mAwardScreen);
 	mWidgetManager->BringToBack(mAwardScreen);
@@ -706,14 +687,6 @@ void LawnApp::DoNewOptions(bool theFromGameSelector)
 	NewOptionsDialog* aDialog = new NewOptionsDialog(this, theFromGameSelector);
 	CenterDialog(aDialog, IMAGE_OPTIONS_MENUBACK->mWidth, IMAGE_OPTIONS_MENUBACK->mHeight);
 	AddDialog(Dialogs::DIALOG_NEWOPTIONS, aDialog);
-	mWidgetManager->SetFocus(aDialog);
-}
-
-void LawnApp::ShowZombatarTOS()
-{
-	ZombatarTOS* aDialog = new ZombatarTOS(this);
-	CenterDialog(aDialog, aDialog->mWidth, aDialog->mHeight);
-	AddDialog(Dialogs::DIALOG_ZOMBATAR_TOS, aDialog);
 	mWidgetManager->SetFocus(aDialog);
 }
 
@@ -1366,7 +1339,6 @@ bool LawnApp::UpdatePlayerProfileForFinishingLevel()
 			{
 				mPlayerInfo->mNeedsMessageOnGameSelector = 1;
 			}
-			ReportAchievement::GiveAchievement(this, HomeSecurity, false);
 		}
 		else
 		{
@@ -1430,23 +1402,6 @@ bool LawnApp::UpdatePlayerProfileForFinishingLevel()
 				mPlayerInfo->mHasNewMiniGame = 1;
 			}
 		}
-
-		int aNumTrophies = GetNumTrophies(ChallengePage::CHALLENGE_PAGE_CHALLENGE);
-		if (aNumTrophies == 20)
-			ReportAchievement::GiveAchievement(this, BeyondTheGrave, false);
-	}
-
-	if ((IsAdventureMode() || IsSurvivalMode()) && !IsScaryPotterLevel() && !IsWhackAZombieLevel()) {
-		if (mBoard->StageIsDayWithPool() && !mBoard->mPeaShooterUsed) {
-			ReportAchievement::GiveAchievement(this, DontPea, false);
-		} else if (mBoard->StageHasRoof() && !mBoard->HasConveyorBeltSeedBank() && !mBoard->mCatapultPlantsUsed) {
-			ReportAchievement::GiveAchievement(this, Grounded, false);
-		} else if (mBoard->StageIsDayWithoutPool() && mBoard->mMushroomAndCoffeeBeansOnly) {
-			ReportAchievement::GiveAchievement(this, GoodMorning, false);
-		}
-		if (mBoard->StageIsNight() && !mBoard->mMushroomsUsed) {
-			ReportAchievement::GiveAchievement(this, NoFungusAmongUs, false);
-		}
 	}
 
 	WriteCurrentUserConfig();
@@ -1468,26 +1423,22 @@ void LawnApp::CheckForGameEnd()
 
 		if (IsFirstTimeAdventureMode() && aLevel < 50)
 		{
-			ShowAwardScreen(AwardType::AWARD_FORLEVEL, true);
+			ShowAwardScreen(AwardType::AWARD_FORLEVEL);
 		}
 		else if (aLevel == FINAL_LEVEL)
 		{
 			if (mPlayerInfo->mFinishedAdventure == 1)
 			{
-				ShowAwardScreen(AwardType::AWARD_FORLEVEL, true);
+				ShowAwardScreen(AwardType::AWARD_FORLEVEL);
 			}
 			else
 			{
-				ShowAwardScreen(AwardType::AWARD_CREDITS_ZOMBIENOTE, true);
+				ShowAwardScreen(AwardType::AWARD_CREDITS_ZOMBIENOTE);
 			}
 		}
 		else if (aLevel == 9 || aLevel == 19 || aLevel == 29 || aLevel == 39 || aLevel == 49)
 		{
-			ShowAwardScreen(AwardType::AWARD_FORLEVEL, true);
-		}
-		else if (HasUnshownAchievements(mPlayerInfo))
-		{
-			ShowAwardScreen(AwardType::AWARD_ACHIEVEMENTONLY, true);
+			ShowAwardScreen(AwardType::AWARD_FORLEVEL);
 		}
 		else
 		{
@@ -1502,11 +1453,7 @@ void LawnApp::CheckForGameEnd()
 
 			if (aUnlockedNewChallenge && HasFinishedAdventure())
 			{
-				ShowAwardScreen(AwardType::AWARD_FORLEVEL, true);
-			}
-			else if (HasUnshownAchievements(mPlayerInfo))
-			{
-				ShowAwardScreen(AwardType::AWARD_ACHIEVEMENTONLY, true);
+				ShowAwardScreen(AwardType::AWARD_FORLEVEL);
 			}
 			else
 			{
@@ -1526,11 +1473,7 @@ void LawnApp::CheckForGameEnd()
 
 		if (aUnlockedNewChallenge)
 		{
-			ShowAwardScreen(AwardType::AWARD_FORLEVEL, true);
-		}
-		else if (HasUnshownAchievements(mPlayerInfo))
-		{
-			ShowAwardScreen(AwardType::AWARD_ACHIEVEMENTONLY, true);
+			ShowAwardScreen(AwardType::AWARD_FORLEVEL);
 		}
 		else
 		{
@@ -1543,11 +1486,7 @@ void LawnApp::CheckForGameEnd()
 
 		if (aUnlockedNewChallenge && HasFinishedAdventure())
 		{
-			ShowAwardScreen(AwardType::AWARD_FORLEVEL, true);
-		}
-		else if (HasUnshownAchievements(mPlayerInfo))
-		{
-			ShowAwardScreen(AwardType::AWARD_ACHIEVEMENTONLY, true);
+			ShowAwardScreen(AwardType::AWARD_FORLEVEL);
 		}
 		else
 		{
@@ -1699,7 +1638,6 @@ void LawnApp::LoadingThreadProc()
 		return;
 
 	PvzpStringListLoad("Properties/LawnStrings.txt");
-	PvzpStringListReadFile("Properties/ZombatarTOS.txt");
 
 	// Load localized properties AFTER LawnStrings so they can override string values
 	LoadProperties("properties/default.xml", false, false);

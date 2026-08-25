@@ -30,16 +30,6 @@ using namespace Sexy;
 class LawnApp;
 class GameButton;
 
-class AchievementScreenItem {
-public:
-	int mId; //+0x00
-	int mStartAnimTime; //+0x04
-	int mEndAnimTime; //+0x08
-	int mDestY; //+0x0C
-	int mStartY; //+0x10
-	int mY; //+0x14
-};
-
 class AwardScreen : public Widget
 {
 private:
@@ -55,15 +45,9 @@ public:
 	LawnApp*							mApp;
 	int									mFadeInCounter;
 	AwardType							mAwardType;				//+0xB8
-	std::unique_ptr<GameButton>		mContinueButton;		//+0xA8
-	bool								mShowStartButtonAfterAchievements;	//+0xAC
-	bool								mShowMenuButtonAfterAchievements;	//+0xAD
-	int									mAchievementAnimTime;	//+0xBC
-	bool								mShowingAchievements;	//+0xD8
-	std::vector<AchievementScreenItem>	mAchievementItems;		//+0xC0
 
 public:
-	AwardScreen(LawnApp* theApp, AwardType theAwardType, bool theShowingAchievements = false);
+	AwardScreen(LawnApp* theApp, AwardType theAwardType);
 	~AwardScreen() override;
 
 	bool		IsPaperNote();
@@ -78,8 +62,6 @@ public:
 	void				StartButtonPressed();
 	void				MouseDown(int x, int y, int theClickCount) override;
 	void				MouseUp(int x, int y, int theClickCount) override;
-	void				DrawAchievements(Graphics* g);
-	void				AchievementsContinuePressed();
 };
 
 #endif

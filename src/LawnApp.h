@@ -179,7 +179,7 @@ public:
 	void							PreNewGame(GameMode theGameMode, bool theLookForSavedGame);
 	void							ShowGameSelector();
 	void							KillGameSelector();
-	void							ShowAwardScreen(AwardType theAwardType, bool theShowAchievements);
+	void							ShowAwardScreen(AwardType theAwardType);
 	void							KillAwardScreen();
 	void							ShowSeedChooserScreen();
 	void							KillSeedChooserScreen();
@@ -187,7 +187,6 @@ public:
 	void							DoBackToMain();
 	void							DoConfirmBackToMain();
 	void							DoNewOptions(bool theFromGameSelector);
-	void							ShowZombatarTOS();
 	void							DoRegister();
 	void							DoRegisterError();
 	bool							CanDoRegisterDialog();

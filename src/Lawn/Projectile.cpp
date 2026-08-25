@@ -31,7 +31,6 @@
 #include "../PvzpLib/PvzpDebug.h"
 #include "../PvzpLib/Reanimator.h"
 #include "../PvzpLib/Attachment.h"
-#include "Widget/AchievementsScreen.h"
 #include <algorithm>
 
 constinit const ProjectileDefinition gProjectileDefinition[] = {
@@ -622,13 +621,7 @@ void Projectile::UpdateLobMotion()
 	}
 	else if (mProjectileType == ProjectileType::PROJECTILE_COBBIG)
 	{
-		int aBeforeGargantuarCount = mBoard->GetLiveGargantuarCount();
 		mBoard->KillAllZombiesInRadius(mRow, mPosX + 80, mPosY + 40, 115, 1, true, mDamageRangeFlags);
-		int aAfterGargantuarCount = mBoard->GetLiveGargantuarCount();
-		mBoard->mGargantuarsKillsByCornCob += aBeforeGargantuarCount - aAfterGargantuarCount;
-		if (mBoard->mGargantuarsKillsByCornCob >= 2)
-			ReportAchievement::GiveAchievement(mApp, PopcornParty, true);
-
 		DoImpact(nullptr);
 	}
 	else

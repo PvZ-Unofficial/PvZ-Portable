@@ -128,87 +128,6 @@ void PlayerInfo::SyncDetails(DataSync& theSync)
 		theSync.SyncBytes(&mPottedPlant[i], sizeof(PottedPlant));
 		PottedPlantFromLE(mPottedPlant[i]);
 	}
-
-	// achievements are stored as 20 x 16-bit values (0/1): https://plantsvszombies.fandom.com/wiki/User_file_format
-	for (int i = 0; i < 20; i++)
-	{
-		uint16_t aAchievementValue = mEarnedAchievements[i] ? 1 : 0;
-		theSync.SyncUInt16(aAchievementValue);
-		if (theSync.GetReader())
-		{
-			mEarnedAchievements[i] = (aAchievementValue != 0);
-			mShownAchievements[i] = mEarnedAchievements[i];
-		}
-	}
-
-	if (theSync.GetReader())
-	{
-		try
-		{
-			uint8_t aZombatarAccepted = 0;
-			theSync.SyncUInt8(aZombatarAccepted);
-			mZombatarAccepted = aZombatarAccepted ? 1 : 0;
-
-			uint32_t aZombatarHeadCount = 0;
-			theSync.SyncUInt32(aZombatarHeadCount);
-			if (aZombatarHeadCount > MAX_ZOMBATAR_HEADS)
-			{
-				throw DataReaderException();
-			}
-
-			mZombatarHeadCount = aZombatarHeadCount;
-			mZombatarData.resize(static_cast<size_t>(mZombatarHeadCount) * ZOMBATAR_RECORD_SIZE);
-			if (!mZombatarData.empty())
-			{
-				theSync.SyncBytes(mZombatarData.data(), static_cast<uint32_t>(mZombatarData.size()));
-			}
-			{
-				unsigned char aMiniGameFlags[0x14]; // consumed and discarded: derived from mChallengeRecords on save
-				theSync.SyncBytes(aMiniGameFlags, sizeof(aMiniGameFlags));
-			}
-
-			uint8_t aZombatarCreatedBefore = 0;
-			theSync.SyncUInt8(aZombatarCreatedBefore);
-			mZombatarCreatedBefore = aZombatarCreatedBefore ? 1 : 0;
-		}
-		catch (DataReaderException&)
-		{
-			mZombatarAccepted = 0;
-			mZombatarHeadCount = 0;
-			mZombatarData.clear();
-			mZombatarCreatedBefore = 0;
-		}
-		return;
-	}
-
-	uint8_t aZombatarAccepted = mZombatarAccepted ? 1 : 0;
-	theSync.SyncUInt8(aZombatarAccepted);
-	mZombatarAccepted = aZombatarAccepted;
-
-	mZombatarHeadCount = static_cast<uint32_t>(mZombatarData.size() / ZOMBATAR_RECORD_SIZE);
-	if (mZombatarHeadCount > MAX_ZOMBATAR_HEADS)
-	{
-		mZombatarHeadCount = MAX_ZOMBATAR_HEADS;
-		mZombatarData.resize(static_cast<size_t>(mZombatarHeadCount) * ZOMBATAR_RECORD_SIZE);
-	}
-	uint32_t aZombatarDataBytes = mZombatarHeadCount * ZOMBATAR_RECORD_SIZE;
-	theSync.SyncUInt32(mZombatarHeadCount);
-	if (aZombatarDataBytes > 0)
-	{
-		theSync.SyncBytes(mZombatarData.data(), aZombatarDataBytes);
-	}
-	{
-		unsigned char aMiniGameFlags[0x14] = {};
-		for (int i = 0; i < 20; i++)
-		{
-			aMiniGameFlags[i] = mChallengeRecords[i + 0x0F] > 0 ? 1 : 0;
-		}
-		theSync.SyncBytes(aMiniGameFlags, sizeof(aMiniGameFlags));
-	}
-
-	uint8_t aZombatarCreatedBefore = mZombatarCreatedBefore ? 1 : 0;
-	theSync.SyncUInt8(aZombatarCreatedBefore);
-	mZombatarCreatedBefore = aZombatarCreatedBefore;
 }
 
 void PlayerInfo::LoadDetails()
@@ -289,12 +208,6 @@ void PlayerInfo::Reset()
 	mPlaceHolderPlayerStats = 0;
 	memset(mPottedPlant, 0, sizeof(mPottedPlant));
 	mNumPottedPlants = 0;
-	memset(mEarnedAchievements, 0, sizeof(mEarnedAchievements));
-	memset(mShownAchievements, 0, sizeof(mShownAchievements));
-	mZombatarAccepted = 0;
-	mZombatarHeadCount = 0;
-	mZombatarData.clear();
-	mZombatarCreatedBefore = 0;
 }
 
 void PlayerInfo::AddCoins(int theAmount)

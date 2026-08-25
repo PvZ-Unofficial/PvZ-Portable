@@ -848,7 +848,6 @@ static void SyncZombieTailPortable(PortableSaveContext& theContext, Zombie& theZ
 	theContext.SyncBool(theZombie.mIsFireBall);
 	SyncEnumU32(theContext, theZombie.mMoweredReanimID);
 	theContext.SyncInt32(theZombie.mLastPortalX);
-	SyncEnumU32(theContext, theZombie.mZombatarHeadReanimID);
 }
 
 static void SyncPlantTailPortable(PortableSaveContext& theContext, Plant& thePlant)
@@ -1580,12 +1579,13 @@ enum BoardBaseFieldId : uint32_t
 	BOARD_FIELD_GRAVES_CLEARED,
 	BOARD_FIELD_PLANTS_EATEN,
 	BOARD_FIELD_PLANTS_SHOVELED,
-	BOARD_FIELD_PEA_SHOOTER_USED,
-	BOARD_FIELD_CATAPULT_PLANTS_USED,
-	BOARD_FIELD_MUSHROOM_AND_COFFEE_BEANS_ONLY,
-	BOARD_FIELD_MUSHROOMS_USED,
-	BOARD_FIELD_LEVEL_COINS_COLLECTED,
-	BOARD_FIELD_GARGANTUARS_KILLS_BY_CORN_COB,
+	// Reserved so saves written by earlier PvZ-Portable builds keep their following field IDs.
+	BOARD_FIELD_RESERVED_94 = 94,
+	BOARD_FIELD_RESERVED_95,
+	BOARD_FIELD_RESERVED_96,
+	BOARD_FIELD_RESERVED_97,
+	BOARD_FIELD_RESERVED_98,
+	BOARD_FIELD_RESERVED_99,
 	BOARD_FIELD_COINS_COLLECTED,
 	BOARD_FIELD_DIAMONDS_COLLECTED,
 	BOARD_FIELD_POTTED_PLANTS_COLLECTED,
@@ -1694,27 +1694,11 @@ static constexpr BoardBaseFieldEntry gBoardBaseFields[] = {
 	{ BOARD_FIELD_GRAVES_CLEARED, [](PortableSaveContext& c, Board* theBoard){ c.SyncUInt32(theBoard->mGravesCleared); } },
 	{ BOARD_FIELD_PLANTS_EATEN, [](PortableSaveContext& c, Board* theBoard){ c.SyncUInt32(theBoard->mPlantsEaten); } },
 	{ BOARD_FIELD_PLANTS_SHOVELED, [](PortableSaveContext& c, Board* theBoard){ c.SyncUInt32(theBoard->mPlantsShoveled); } },
-	{ BOARD_FIELD_PEA_SHOOTER_USED, [](PortableSaveContext& c, Board* theBoard){ c.SyncBool(theBoard->mPeaShooterUsed); } },
-	{ BOARD_FIELD_CATAPULT_PLANTS_USED, [](PortableSaveContext& c, Board* theBoard){ c.SyncBool(theBoard->mCatapultPlantsUsed); } },
-	{ BOARD_FIELD_MUSHROOM_AND_COFFEE_BEANS_ONLY, [](PortableSaveContext& c, Board* theBoard){ c.SyncBool(theBoard->mMushroomAndCoffeeBeansOnly); } },
-	{ BOARD_FIELD_MUSHROOMS_USED, [](PortableSaveContext& c, Board* theBoard){ c.SyncBool(theBoard->mMushroomsUsed); } },
-	{ BOARD_FIELD_LEVEL_COINS_COLLECTED, [](PortableSaveContext& c, Board* theBoard){ c.SyncUInt32(theBoard->mLevelCoinsCollected); } },
-	{ BOARD_FIELD_GARGANTUARS_KILLS_BY_CORN_COB, [](PortableSaveContext& c, Board* theBoard){ c.SyncUInt32(theBoard->mGargantuarsKillsByCornCob); } },
 	{ BOARD_FIELD_COINS_COLLECTED, [](PortableSaveContext& c, Board* theBoard){ c.SyncUInt32(theBoard->mCoinsCollected); } },
 	{ BOARD_FIELD_DIAMONDS_COLLECTED, [](PortableSaveContext& c, Board* theBoard){ c.SyncUInt32(theBoard->mDiamondsCollected); } },
 	{ BOARD_FIELD_POTTED_PLANTS_COLLECTED, [](PortableSaveContext& c, Board* theBoard){ c.SyncUInt32(theBoard->mPottedPlantsCollected); } },
 	{ BOARD_FIELD_CHOCOLATE_COLLECTED, [](PortableSaveContext& c, Board* theBoard){ c.SyncUInt32(theBoard->mChocolateCollected); } },
 };
-
-// The enum is contiguous starting at 1: the table must cover every id, in id order, so readers can index it directly.
-static_assert([]{
-	if (sizeof(gBoardBaseFields) / sizeof(gBoardBaseFields[0]) != BOARD_FIELD_COUNT - 1)
-		return false;
-	for (uint32_t i = 0; i < sizeof(gBoardBaseFields) / sizeof(gBoardBaseFields[0]); i++)
-		if (gBoardBaseFields[i].mFieldId != i + 1)
-			return false;
-	return true;
-}(), "gBoardBaseFields must cover every BoardBaseFieldId in id order");
 
 static void SyncBoardBasePortable(PortableSaveContext& theContext, Board* theBoard)
 {
@@ -1733,10 +1717,13 @@ static void SyncBoardBasePortable(PortableSaveContext& theContext, Board* theBoa
 			const unsigned char* aFieldData = nullptr;
 			if (!aReader.ReadBytes(aFieldData, aFieldSize))
 				break;
-			if (aFieldId >= 1 && aFieldId <= sizeof(gBoardBaseFields) / sizeof(gBoardBaseFields[0]))
+			for (const BoardBaseFieldEntry& aField : gBoardBaseFields)
 			{
-				const BoardBaseFieldEntry& aField = gBoardBaseFields[aFieldId - 1];
-				ApplyFieldWithSync(aFieldData, aFieldSize, [&](PortableSaveContext& c){ aField.mSync(c, theBoard); });
+				if (aField.mFieldId == aFieldId)
+				{
+					ApplyFieldWithSync(aFieldData, aFieldSize, [&](PortableSaveContext& c){ aField.mSync(c, theBoard); });
+					break;
+				}
 			}
 		}
 	}
