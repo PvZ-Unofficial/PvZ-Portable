@@ -166,7 +166,7 @@ unsigned int DefGetSizeFont(_Font** theValue);
 unsigned int DefinitionGetDeepSize(const DefMap* theDefMap, void* theDefinition);
 unsigned int DefinitionGetSize(const DefMap* theDefMap, void* theDefinition);
 void*        DefinitionAlloc(int theSize);
-void*                   DefinitionUncompressCompiledBuffer(void* theCompressedBuffer, size_t theCompressedBufferSize, size_t& theUncompressedSize, const std::string& theCompiledFilePath);
+void*                   DefinitionUncompressCompiledBuffer(void* theCompressedBuffer, size_t theCompressedBufferSize, size_t& theUncompressedSize, const std::string& theCompiledFilePath, bool& theLittleEndian);
 uint                    DefinitionCalcHashSymbolMap(int aSchemaHash, const DefSymbol* theSymbolMap);
 uint                    DefinitionCalcHashDefMap(int aSchemaHash, const DefMap* theDefMap, PvzpList<const DefMap*>& theProgressMaps);
 uint                    DefinitionCalcHash(const DefMap* theDefMap);
