@@ -842,15 +842,13 @@ bool DefinitionReadCompiledFile(const std::string& theCompiledFilePath, const De
 	PerfTimer aTimer;
 	aTimer.Start();
 
-	bool aCompiledInPak = IsFileInPakFile(theCompiledFilePath);
-	PFILE* aFile = nullptr;
-	if (!aCompiledInPak)
+	PFILE* aFile = p_fopen(theCompiledFilePath.c_str(), "rb");
+	bool aCompiledInPak = aFile && !aFile->mFP;
+	if (!aFile)
 	{
 		std::string aFullCompiledPath = DefinitionGetCompiledCacheFullPath(theCompiledFilePath);
 		aFile = p_fopen(aFullCompiledPath.c_str(), "rb");
 	}
-	if (!aFile)
-		aFile = p_fopen(theCompiledFilePath.c_str(), "rb");
 	if (!aFile)
 		return false;
 
