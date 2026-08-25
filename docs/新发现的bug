@@ -1,0 +1,110 @@
+# 新发现的 bug
+
+记录 PvZ-Portable 中即使相对年度版 1.2.0.x 也存在、并且在历史修复中没有
+找到对应修复的 bug。本文件不记录年度版与原版之间的真实版本差异。
+
+完成修复后，把对应记录移到 `已经修复的bug合集`，并在那里记录
+PvZ-Portable 中的实际修复提交号。本文件不保留已完成项。
+
+## 反汇编项目已修项落实审阅
+
+- 审阅基线：`PlantsVsZombies-decompilation@f6b387e24053e6d2f20bf500a36a1062adf7c05d`
+  的 28 项已修记录，对照 `PvZ-Portable@3c784d1fda4e04b0b63651ebd495edd83e3bb499`。
+- 结论：第 1—19、22—26 项已经直接落实或由等价实现覆盖；第 20 项
+  尚有源码契约差异，但常规游戏路径已被调用点特判覆盖；第 21、27、28 项
+  尚未完整落实，记录如下。
+- 等价实现说明：第 16 项中的点数变量不参与僵尸类型选择，Portable 删除该段
+  无效预算代码后行为等价；第 25 项由 `Plant::Update()` 统一递减
+  `mDoSpecialCountdown` 并在归零时调用 `DoSpecial()`，无需把旧判断重新放回
+  `UpdateBlover()`。
+
+## B1. `ZombieTypeCanGoInPool` 漏掉气球
+
+- 状态：已确认待做源码归一；对应反汇编项目已修合集第 20 项。
+- 问题介绍：`src/Lawn/Zombie.cpp` 的 `Zombie::ZombieTypeCanGoInPool()` 没有
+  `ZOMBIE_BALLOON`。`src/Lawn/Board.cpp` 的 `Board::RowCanHaveZombieType()` 对气球
+  作了调用点补偿，但没有修正公共 helper。红眼巨人本来就不能出现在
+  水路，不应加入该 helper。
+- 年度版证据：1.2.0.1073 的 `ZombieTypeCanGoInPool@0x54DDF0` 在
+  `0x54DE08` 比较 `0x10 = ZOMBIE_BALLOON` 并返回 true；`0x54DE03`
+  比较的 `0x21` 实际是年度版新增的 `ZOMBATAR_FLAG_ZOMBIE`。年度版
+  僵尸定义表 `0x747B70` 中，`REDEYED_GARGANTUAR` 表项的类型值明确为
+  `0x20`，而 helper 中没有接受 `0x20` 的分支。原版同一 helper 在
+  `0x532073` 也明确接受 `0x10 = ZOMBIE_BALLOON`，但不接受
+  `0x20 = ZOMBIE_REDEYE_GARGANTUAR`。
+- 实际游戏行为差异：常规出怪选行中，气球已由 `RowCanHaveZombieType()`
+  的局部特判允许分配到水路；`CheckForPool()` 中飞行气球也会由
+  `IsFlying()` 排除，落到水路则由 `LandFlyer()` 直接死亡。因此目前未发现
+  常规游戏路径的玩家可观察差异，但公共 helper 的返回契约仍与两个官方
+  版本不一致。
+- 历史检查：公共 helper 的遗漏来自 Patoke 初始提交
+  `42be5bdde899b26ed666ed4652df341d1d82c57f`；提交
+  `8281a1968e1e5dbb7940908634fbbb6c27c8cc8e` 只在
+  `RowCanHaveZombieType()` 补偿气球，历史中没有修正 helper 的提交。
+- 待办：在 `ZombieTypeCanGoInPool()` 中仅加入气球，并删除
+  `RowCanHaveZombieType()` 的气球特判，使所有调用点统一使用正确的 helper。
+
+## B2. `Plant::FindTargetAndFire` 普通头部射击提前 2cs
+
+- 状态：已确认待修；对应反汇编项目已修合集第 21 项。
+- 问题介绍：`src/Lawn/Plant.cpp` 的普通 `anim_shooting` 头部射击分支把
+  `mShootingCounter` 设为 `33`，应为 `35`；重复射手、裂荚射手、左射手和机枪
+  射手后续覆盖的 `26` 或 `100` 不受影响。
+- 年度版证据：1.2.0.1073 的 `Plant::FindTargetAndFire@0x46D240` 在
+  `0x46D390` 向 `Plant + 0x90` 写入 `0x23`，即 35；原版对应指令位于
+  `0x45F045`，同样写入 35。
+- 实际游戏行为差异：普通头部射击植物在 `mShootingCounter == 1` 时生成子弹；
+  当前实现会比原版和年度版提前 2cs 发射，使弹道与头部射击动画错位 2cs。
+- 历史检查：`git log -S "mShootingCounter = 33"` 只追溯到 Patoke 初始源码和
+  后续目录移动，没有找到把该值校正为 35 的历史提交。
+- 待办：把普通头部射击分支的初始计数改为 `35`，保留特殊射手的后续覆盖值。
+
+## B3. `Challenge::UpdateZombieSpawning` 返回类型仍为 `int`
+
+- 状态：已确认待修；对应反汇编项目已修合集第 27 项。
+- 问题介绍：`src/Lawn/Challenge.h` 和 `src/Lawn/Challenge.cpp` 仍把
+  `UpdateZombieSpawning()` 声明、定义为 `int`，而两个官方版本的函数契约都是
+  只在 AL 中返回真假。
+- 年度版证据：1.2.0.1073 的 `Challenge::UpdateZombieSpawning@0x431860`
+  在 `0x43188C` 用 `mov al, 1` 返回 true，在 `0x4318F7` 用 `xor al, al`
+  返回 false；调用点 `0x41FEC5` 调用后在 `0x41FECA` 执行 `test al, al`。
+  原版在 `0x4265AC`、`0x426617` 和调用点 `0x413DF5` 具有相同的 bool 语义。
+- 实际游戏行为差异：当前 Portable 的各分支会生成完整的 0/1，现有调用点也只
+  作条件判断，因此暂未形成稳定的玩家可观察差异；但源码返回契约不忠实，若以后
+  按官方 AL-only 实现重写或增加 ABI 调用，会把未定义高位误当成 `int` 的一部分。
+- 历史检查：返回类型来自 Patoke 初始提交；提交
+  `08452331b79266862697fa96617e9df7a0b4633d` 只补上打地鼠分支的 `return true`，
+  没有修改声明和定义的类型。
+- 待办：把声明和定义统一改为 `bool`；调用点无需改写。
+
+## B4. `Plant::UpdateSquash` 下落误用缓入缓出曲线
+
+- 状态：已确认待修；对应反汇编项目已修合集第 28 项。
+- 问题介绍：`src/Lawn/Plant.cpp` 的 `STATE_SQUASH_FALLING` 分支把 10cs 下落
+  写成 `PvzpCurves::CURVE_EASE_IN_OUT`，官方实现使用线性曲线；上升段仍应保留
+  `CURVE_EASE_IN_OUT`。
+- 年度版证据：1.2.0.1073 的 `Plant::UpdateSquash@0x46ED90` 在下落分支
+  `0x46F036` 执行 `push 1`，随后在 `0x46F044` 调用
+  `TodAnimateCurve@0x526F20`，其中 `1 = CURVE_LINEAR`。原版对应指令为
+  `0x460C6C push 1`、`0x460C7A call TodAnimateCurve@0x511C40`。
+- 实际游戏行为差异：当前倭瓜下落前半段偏慢、后半段偏快，显示轨迹与原版和
+  年度版不一致；伤害仍由固定的 `mStateCountdown == 5` 触发，本项主要影响下落
+  动画位置而不是伤害时机。
+- 历史检查：`git log -S "PvzpCurves::CURVE_EASE_IN_OUT"` 没有找到把下落分支
+  改为线性的提交；当前值由初始源码继承，并只经历过枚举重命名和目录移动。
+- 待办：仅把 `STATE_SQUASH_FALLING` 分支改为 `PvzpCurves::CURVE_LINEAR`。
+
+## 记录格式
+
+<!--
+## Bn. 简短标题
+
+- 状态：待复核 / 已确认待修。
+- 问题介绍：涉及的函数、文件和可疑实现。
+- 年度版证据：简述年度版反编译、二进制或真实运行结果；必要时列函数地址、
+  关键指令、常量或分支方向。
+- 实际游戏行为差异：用一至两句话说明玩家可观察到的影响。
+- 历史检查：说明查过的提交、`git blame` 或搜索结果，以及为何判断历史中没有
+  对应修复。
+- 待办：仍需确认或修改的内容。
+-->
