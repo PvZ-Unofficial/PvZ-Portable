@@ -101,8 +101,9 @@
   两类僵尸的 `0.8` 缩放；保留已经与二进制一致的 `mVelX = 0.5f`、
   `mPhaseCounter = 300 + Rand(12)` 和入场动画速率 `24.0f`；同时恢复舞王卡片、
   I-Zombie、图鉴和烧焦动画的原版缩放/偏移。让 compiled 定义通过已有 PAK
-  接口读取，按原版 PAK 的 32 位小端结构布局解码，并在 PAK 提供定义时忽略
-  共享本地缓存，使 Portable 可以直接使用未修改的 1051 `main.pak`。
+  接口读取，按原版 PAK 的 32 位小端结构布局解码，并让 PAK 或解包资源提供的
+  定义优先于共享本地缓存，使 Portable 可以直接使用未修改的 1051 `main.pak`
+  或其解包资源。
 - 修改文件：`src/Lawn/Plant.cpp`、`src/Lawn/SeedPacket.cpp`、
   `src/Lawn/Widget/AlmanacDialog.cpp`、`src/Lawn/Zombie.cpp`、
   `src/PvzpLib/Reanimator.cpp`、`src/Resources.cpp`、`src/Resources.h`、
@@ -111,13 +112,16 @@
   `2FC4E9E8E1ECF40F7C53C03DF5CC5A3D553DBABC63A1A833C4656975CCB8A933` 的
   原版 `main.pak` 和配套 `properties/` 启动；程序持续运行 20 秒，完成首帧和
   reanim、resource、trail 加载，日志没有缺失资源、schema 错误或尺寸错误；
-  另在独立存档目录放入损坏的同名 compiled 缓存后重复启动，程序仍运行 20 秒
-  并完成首帧，损坏缓存保持未改写。上述四处显示逻辑还使用指定 objdump 逐项
-  核对 1051 二进制。MSYS2 UCRT64 构建成功。
+  另在独立存档目录放入损坏的同名 compiled 缓存后分别使用原版 PAK 和完整
+  解包资源重复启动；两种情况下程序均运行 20 秒并完成首帧，损坏缓存保持
+  未改写，其中解包资源测试的首帧耗时为 2443 ms、资源加载耗时为 8113 ms。
+  上述四处显示逻辑还使用指定 objdump 逐项核对 1051 二进制。MSYS2 UCRT64
+  构建成功。
 - 修改提交号：`2ce62d45a990cabb0b803b133c9e8bdfca915d84`、
   `3f92f6145c5a30ecedb2d87e6507d59766ffb248`、
   `e486ed41ee869a612d803b23bad801f2936f067d`、
-  `a2b37fbcfb48d615eab1357fd569ee0568911056`。
+  `a2b37fbcfb48d615eab1357fd569ee0568911056`、
+  `06cc7733e5e5ec9a28f6bc7752b31232fea7b7eb`。
 
 ## V5. 移除年度版成就系统
 
