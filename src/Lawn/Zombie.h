@@ -387,7 +387,6 @@ public:
 	static bool          ZombieTypeCanGoOnHighGround(ZombieType theZombieType);
 	static bool          ZombieTypeCanGoInPool(ZombieType theZombieType);
 	void                            SetupWaterTrack(const char* theTrackName);
-	void                            BurnRow(int theRow);
 	void                            SetupReanimForLostHead();
 	void                            SetupReanimForLostArm(unsigned int theDamageFlags);
 	bool                            IsSquashTarget(Plant* theExcept);

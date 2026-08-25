@@ -1251,18 +1251,6 @@ void Zombie::BungeeLiftTarget()
 	if (aPlant == nullptr)
 		return;
 
-#ifdef DO_FIX_BUGS
-	for (Zombie* aZombie : mBoard->mZombies)
-	{
-		if (aZombie->mDead)
-			continue;
-		if (aZombie->mZombieType == ZombieType::ZOMBIE_BUNGEE && aZombie != this && aZombie->mTargetPlantID == mTargetPlantID)
-		{
-			aZombie->mTargetPlantID = PlantID::PLANTID_NULL;  // fixes the IZ bungee sun-farming bug
-		}
-	}
-#endif
-
 	aPlant->mOnBungeeState = PlantOnBungeeState::RISING_WITH_BUNGEE;
 	mApp->PlayFoley(FoleyType::FOLEY_FLOOP);
 
@@ -2083,18 +2071,6 @@ void Zombie::UpdateZombieGargantuar()
 		Reanimation* aBodyReanim = mApp->ReanimationGet(mBodyReanimID);
 		if (aBodyReanim->ShouldTriggerTimedEvent(0.64f))
 		{
-#ifdef DO_FIX_BUGS
-			if (mMindControlled)  // hypnotized gargantuars smash zombies
-			{
-				Zombie* aZombie = FindZombieTarget();
-				if (aZombie)
-				{
-					int aDamage = mZombieType == ZombieType::ZOMBIE_REDEYE_GARGANTUAR ? 1000 : 500;
-					aZombie->TakeDamage(aDamage, 0U);
-				}
-			}
-			else
-#endif
 			{
 				Plant* aPlant = FindPlantTarget(ZombieAttackType::ATTACKTYPE_CHEW);
 				if (aPlant)
@@ -2184,24 +2160,7 @@ void Zombie::UpdateZombieGargantuar()
 			aZombieImp->mAltitude = 88.0f;
 			aZombieImp->mRenderOrder = mRenderOrder + 1;
 			aZombieImp->mZombiePhase = ZombiePhase::PHASE_IMP_GETTING_THROWN;
-#ifdef DO_FIX_BUGS
-			aZombieImp->mScaleZombie = mScaleZombie;
-			aZombieImp->mBodyHealth *= mScaleZombie * mScaleZombie;
-			aZombieImp->mBodyMaxHealth *= mScaleZombie * mScaleZombie;
-
-			if (mMindControlled)
-			{
-				aZombieImp->mPosX = mPosX + mWidth;
-				aZombieImp->StartMindControlled();
-				aZombieImp->mVelX = -3.0f;
-			}
-			else
-			{
-				aZombieImp->mVelX = 3.0f;
-			}
-#else
 			aZombieImp->mVelX = 3.0f;
-#endif
 			aZombieImp->mChilledCounter = mChilledCounter;
 			aZombieImp->mVelZ = 0.5f * (aThrowingDistance / aZombieImp->mVelX) * THOWN_ZOMBIE_GRAVITY;
 			aZombieImp->PlayZombieReanim("anim_thrown", ReanimLoopType::REANIM_PLAY_ONCE_AND_HOLD, 0, 18.0f);
@@ -2228,32 +2187,6 @@ void Zombie::UpdateZombieGargantuar()
 		return;
 	}
 
-#ifdef DO_FIX_BUGS
-	bool doSmash = false;
-	if (mMindControlled)
-	{
-		doSmash = FindZombieTarget() != nullptr;
-	}
-	else if (FindPlantTarget(ZombieAttackType::ATTACKTYPE_CHEW))
-	{
-		doSmash = true;
-	}
-	else if (mApp->IsScaryPotterLevel())
-	{
-		int aGridX = mBoard->PixelToGridX(mPosX, mPosY);
-		if (mBoard->GetScaryPotAt(aGridX, mRow))
-		{
-			doSmash = true;
-		}
-	}
-	else if (mApp->IsIZombieLevel())
-	{
-		if (mBoard->mChallenge->IZombieGetBrainTarget(this))
-		{
-			doSmash = true;
-		}
-	}
-#else
 	bool doSmash = false;
 	if (FindPlantTarget(ZombieAttackType::ATTACKTYPE_CHEW))
 	{
@@ -2274,7 +2207,6 @@ void Zombie::UpdateZombieGargantuar()
 			doSmash = true;
 		}
 	}
-#endif
 
 	if (doSmash)
 	{
@@ -2336,54 +2268,10 @@ void Zombie::UpdateZombiePeaHead()
 
 		float aOriginX = mPosX + aTransform.mTransX - 9.0f;
 		float aOriginY = mPosY + aTransform.mTransY + 6.0f - mAltitude;
-#ifdef DO_FIX_BUGS
-		if (mMindControlled)  // hypnotized: fire a friendly pea instead
-		{
-			aOriginX += 90.0f * mScaleZombie;
-			Projectile* aProjectile = mBoard->AddProjectile(aOriginX, aOriginY, mRenderOrder, mRow, ProjectileType::PROJECTILE_PEA);
-			aProjectile->mDamageRangeFlags = 1;
-		}
-		else
-		{
-			Projectile* aProjectile = mBoard->AddProjectile(aOriginX, aOriginY, mRenderOrder, mRow, ProjectileType::PROJECTILE_ZOMBIE_PEA);
-			aProjectile->mMotionType = ProjectileMotion::MOTION_BACKWARDS;
-		}
-#else
 		Projectile* aProjectile = mBoard->AddProjectile(aOriginX, aOriginY, mRenderOrder, mRow, ProjectileType::PROJECTILE_ZOMBIE_PEA);
 		aProjectile->mMotionType = ProjectileMotion::MOTION_BACKWARDS;
-#endif
 
 		mPhaseCounter = 150;
-	}
-}
-
-void Zombie::BurnRow(int theRow)  // only used by the DO_FIX_BUGS jalapeno zombie fix
-{
-	for (Zombie* aZombie : mBoard->mZombies)
-	{
-		if (aZombie->mDead)
-			continue;
-		if ((aZombie->mZombieType == ZombieType::ZOMBIE_BOSS || aZombie->mRow == theRow) && aZombie->EffectedByDamage(127))
-		{
-			aZombie->RemoveColdEffects();
-			aZombie->ApplyBurn();
-		}
-	}
-
-	for (GridItem* aGridItem : mBoard->mGridItems)
-	{
-		if (aGridItem->mDead)
-			continue;
-		if (aGridItem->mGridY == theRow && aGridItem->mGridItemType == GridItemType::GRIDITEM_LADDER)
-		{
-			aGridItem->GridItemDie();
-		}
-	}
-
-	Zombie* aBossZombie = mBoard->GetBossZombie();
-	if (aBossZombie && aBossZombie->mFireballRow == theRow)
-	{
-		aBossZombie->BossDestroyIceballInRow();
 	}
 }
 
@@ -2399,26 +2287,6 @@ void Zombie::UpdateZombieJalapenoHead()
 		mBoard->DoFwoosh(mRow);
 		mBoard->ShakeBoard(3, -4);
 
-#ifdef DO_FIX_BUGS
-		if (mMindControlled)
-		{
-			BurnRow(mRow);
-		}
-		else
-		{
-			for (Plant* aPlant : mBoard->mPlants)
-			{
-				if (aPlant->mDead)
-					continue;
-				//Rect aPlantRect = aPlant->GetPlantRect();
-				if (aPlant->mRow == mRow && !aPlant->NotOnGround())
-				{
-					mBoard->mPlantsEaten++;
-					aPlant->Die();
-				}
-			}
-		}
-#else
 		for (Plant* aPlant : mBoard->mPlants)
 		{
 			if (aPlant->mDead)
@@ -2430,7 +2298,6 @@ void Zombie::UpdateZombieJalapenoHead()
 				aPlant->Die();
 			}
 		}
-#endif
 		DieNoLoot();
 	}
 }
@@ -2456,22 +2323,8 @@ void Zombie::UpdateZombieGatlingHead()
 
 		float aOriginX = mPosX + aTransform.mTransX - 9.0f;
 		float aOriginY = mPosY + aTransform.mTransY + 6.0f;
-#ifdef DO_FIX_BUGS
-		if (mMindControlled)  // hypnotized: fire a friendly pea instead
-		{
-			aOriginX += 90.0f * mScaleZombie;
-			Projectile* aProjectile = mBoard->AddProjectile(aOriginX, aOriginY, mRenderOrder, mRow, ProjectileType::PROJECTILE_PEA);
-			aProjectile->mDamageRangeFlags = 1;
-		}
-		else
-		{
-			Projectile* aProjectile = mBoard->AddProjectile(aOriginX, aOriginY, mRenderOrder, mRow, ProjectileType::PROJECTILE_ZOMBIE_PEA);
-			aProjectile->mMotionType = ProjectileMotion::MOTION_BACKWARDS;
-		}
-#else
 		Projectile* aProjectile = mBoard->AddProjectile(aOriginX, aOriginY, mRenderOrder, mRow, ProjectileType::PROJECTILE_ZOMBIE_PEA);
 		aProjectile->mMotionType = ProjectileMotion::MOTION_BACKWARDS;
-#endif
 	}
 	else if (mPhaseCounter == 0)
 	{
@@ -2507,20 +2360,6 @@ void Zombie::UpdateZombieSquashHead()
 	if (mZombiePhase == ZombiePhase::PHASE_SQUASH_RISING)
 	{
 		int aDestX = mBoard->GridToPixelX(mBoard->PixelToGridXKeepOnBoard(mX, mY), mRow);
-#ifdef DO_FIX_BUGS
-		if (mMindControlled)
-		{
-			Zombie* aZombie = FindZombieTarget();
-			if (aZombie)
-			{
-				aDestX = aZombie->ZombieTargetLeadX(0.0f);
-			}
-			else
-			{
-				aDestX += 90.0f * mScaleZombie;
-			}
-		}
-#endif
 		int aPosX = PvzpAnimateCurve(50, 20, mPhaseCounter, 0, aDestX - mPosX, PvzpCurves::CURVE_EASE_IN_OUT);
 		int aPosY = PvzpAnimateCurve(50, 20, mPhaseCounter, 0, -20, PvzpCurves::CURVE_EASE_IN_OUT);
 
@@ -2540,52 +2379,13 @@ void Zombie::UpdateZombieSquashHead()
 	{
 		int aPosY = PvzpAnimateCurve(10, 0, mPhaseCounter, -20, 74, PvzpCurves::CURVE_LINEAR);
 		int aDestX = mBoard->GridToPixelX(mBoard->PixelToGridXKeepOnBoard(mX, mY), mRow);
-#ifdef DO_FIX_BUGS
-		if (mMindControlled)
-		{
-			Zombie* aZombie = FindZombieTarget();
-			if (aZombie)
-			{
-				aDestX = aZombie->ZombieTargetLeadX(0.0f);
-			}
-			else
-			{
-				aDestX += 90.0f * mScaleZombie;
-			}
-		}
-#endif
 
 		Reanimation* aHeadReanim = mApp->ReanimationGet(mSpecialHeadReanimID);
 		aHeadReanim->SetPosition(mPosX + 6.0f + aDestX - mPosX, mPosY - 21.0f + aPosY);
 
 		if (mPhaseCounter == 2)
 		{
-#ifdef DO_FIX_BUGS
-			if (mMindControlled)  // hypnotized: squash zombies instead
-			{
-				Rect aAttackRect(aDestX - 73, mPosY + 4, 65, 90);  // rect values not verified, TBD
-
-				for (Zombie* aZombie : mBoard->mZombies)
-				{
-					if (aZombie->mDead)
-						continue;
-					if ((aZombie->mRow == mRow || aZombie->mZombieType == ZombieType::ZOMBIE_BOSS) && aZombie->EffectedByDamage(13U))
-					{
-						Rect aZombieRect = aZombie->GetZombieRect();
-						if (GetRectOverlap(aAttackRect, aZombieRect) > (aZombie->mZombieType == ZombieType::ZOMBIE_FOOTBALL ? -20 : 0))
-						{
-							aZombie->TakeDamage(1800, 18U);
-						}
-					}
-				}
-			}
-			else
-			{
-				SquishAllInSquare(mBoard->PixelToGridXKeepOnBoard(mX, mY), mRow, ZombieAttackType::ATTACKTYPE_CHEW);
-			}
-#else
 			SquishAllInSquare(mBoard->PixelToGridXKeepOnBoard(mX, mY), mRow, ZombieAttackType::ATTACKTYPE_CHEW);
-#endif
 		}
 
 		if (mPhaseCounter == 0)
@@ -6169,18 +5969,7 @@ int Zombie::GetDancerFrame()
 		aFrameLength = 10;
 	}
 
-#ifdef DO_FIX_BUGS
-	if (mBoard)
-	{
-		return (mBoard->mMainCounter % (aFrameLength * aFramesCount)) / aFrameLength;  // fixes the "maid" cheat
-	}
-	else
-	{
-		return (mApp->mAppCounter % (aFrameLength * aFramesCount)) / aFrameLength;
-	}
-#else
 	return (mApp->mAppCounter % (aFrameLength * aFramesCount)) / aFrameLength;
-#endif
 }
 
 ZombiePhase Zombie::GetDancerPhase()
@@ -8850,14 +8639,7 @@ void Zombie::DetachShield()
 		}
 		else if (mShieldType == ShieldType::SHIELDTYPE_LADDER)
 		{
-#ifdef DO_FIX_BUGS
-			if (mHasArm)  // fixes lost arms regrowing after a ladder zombie places its ladder
-			{
-				ReanimShowPrefix("Zombie_outerarm", RENDER_GROUP_NORMAL);
-			}
-#else
 			ReanimShowPrefix("Zombie_outerarm", RENDER_GROUP_NORMAL);
-#endif
 			mZombiePhase = ZombiePhase::PHASE_ZOMBIE_NORMAL;
 			if (mIsEating)
 			{
@@ -9751,11 +9533,7 @@ void Zombie::BossRVAttack()
 {
 	RemoveColdEffects();
 	mZombiePhase = ZombiePhase::PHASE_BOSS_DROP_RV;
-#ifdef DO_FIX_BUGS
-	mTargetRow = RandRangeInt(0, mBoard->StageHas6Rows() ? 4 : 3);  // pool boss compatibility
-#else
 	mTargetRow = RandRangeInt(0, 3);
-#endif
 	mTargetCol = RandRangeInt(0, 2);
 
 	PlayZombieReanim("anim_RV_1", ReanimLoopType::REANIM_PLAY_ONCE_AND_HOLD, 20, 16.0f);
@@ -9816,11 +9594,7 @@ void Zombie::BossSpawnAttack()
 	case 2:     aTrackName = "anim_spawn_3";    break;
 	case 3:     aTrackName = "anim_spawn_4";    break;
 	case 4:     aTrackName = "anim_spawn_5";    break;
-#ifdef DO_FIX_BUGS
-	default:    aTrackName = "anim_spawn_5";    break;  // compromise fix for the pool-stage spawn crash without editing the animation
-#else
 	default:    PVZP_ASSERT(false);                   break;
-#endif
 	}
 	PlayZombieReanim(aTrackName, ReanimLoopType::REANIM_PLAY_ONCE_AND_HOLD, 20, 12.0f);
 	mApp->PlayFoley(FoleyType::FOLEY_HYDRAULIC_SHORT);
@@ -10001,11 +9775,7 @@ void Zombie::BossHeadSpit()
 	}
 
 	mZombiePhase = ZombiePhase::PHASE_BOSS_HEAD_SPIT;
-#ifdef DO_FIX_BUGS
-	mFireballRow = RandRangeInt(0, mBoard->StageHas6Rows() ? 5 : 4);  // pool boss compatibility
-#else
 	mFireballRow = RandRangeInt(0, 4);
-#endif
 	mIsFireBall = RandRangeInt(0, 1) == 0;
 
 	const char* aTrackName;
@@ -10016,11 +9786,7 @@ void Zombie::BossHeadSpit()
 	case 2:     aTrackName = "anim_head_attack_3";      break;
 	case 3:     aTrackName = "anim_head_attack_4";      break;
 	case 4:     aTrackName = "anim_head_attack_5";      break;
-#ifdef DO_FIX_BUGS
-	default:    aTrackName = "anim_head_attack_5";      break;  // compromise fix for the pool-stage ball spit without editing the animation
-#else
 	default:    PVZP_ASSERT(false);                           break;
-#endif
 	}
 	PlayZombieReanim(aTrackName, ReanimLoopType::REANIM_PLAY_ONCE_AND_HOLD, 20, 12.0f);
 

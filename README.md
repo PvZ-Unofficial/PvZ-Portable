@@ -227,22 +227,8 @@ You can customize the game features by adding options to the first `cmake` comma
 | Option | Default | Description |
 | :--- | :--- | :--- |
 | `PVZ_DEBUG` | `OFF`<br>(`ON` if `CMAKE_BUILD_TYPE` is `Debug`) | Enable **cheat keys**, debug displays and other debug features. |
-| `DO_FIX_BUGS` | `OFF` | Apply community fixes for "bugs" of official 1.2.0.1073 GOTY Edition.[^1] However, these "bugs" are usually **considered "features"** by many players. |
 | `CONSOLE` | `OFF`<br>(`ON` if `CMAKE_BUILD_TYPE` is `Debug`) | Show a console window (Windows only). |
 | `BUILD_STATIC` | `OFF` | Link dependencies statically (Windows with MinGW-based toolchains, glibc-based Linux). Use a vcpkg `-static` triplet for MSVC. |
-
-[^1]: Current `DO_FIX_BUGS` includes the following fixes:
-    - Fix bungee zombie duplicate sun/item drop in I, Zombie mode.
-    - Make mind-controlled Gargantuars smash enemy zombies instead of plants.
-    - Make mind-controlled Gargantuars throw mind-controlled Imps (with scale, health, and direction fixes).
-    - Make mind-controlled Gargantuars can smash vases in Scary Potter mode.
-    - Make mind-controlled Pea/Gatling Head zombies shoot forward instead of backward.
-    - Make mind-controlled Jalapeno/Squash zombies damage enemy zombies instead of plants.
-    - Coordinate fixes for mind-controlled Squash zombies tracking and smashing enemy zombies.
-    - Make mind-controlled Jalapeno zombies correctly clear Dr. Zomboss' skills (Iceball/Fireball) and ladder logic.
-    - Sync Dancer Zombie animations (fixes "Maid" displacement bug).
-    - Fix visual glitch of Ladder Zombie's arm recovery.
-    - Fix Dr. Zomboss' attack (RV, Fireball/Iceball) and summon range coverage for 6-lane (Pool) levels.
 
 Example: Manually enable `PVZ_DEBUG` in **Release build** so that you can use **cheat keys** while having optimized performance:
 
