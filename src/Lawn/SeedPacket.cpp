@@ -452,15 +452,10 @@ void DrawSeedPacket(Graphics* g, float x, float y, SeedType theSeedType, SeedTyp
 	case SeedType::SEED_ZOMBIE_NORMAL:
 	case SeedType::SEED_ZOMBIE_TRAFFIC_CONE:
 	case SeedType::SEED_ZOMBIE_PAIL:
+	case SeedType::SEED_ZOMBIE_DANCER:
 		aScale = 0.35f;
 		aOffsetX = -3.0f;
 		aOffsetY = -7.0f;
-		break;
-
-	case SeedType::SEED_ZOMBIE_DANCER:
-		aScale = 0.375f;
-		aOffsetX = -19.0f;
-		aOffsetY = -40.0f;
 		break;
 
 	case SeedType::SEED_ZOMBIE_POLEVAULTER:

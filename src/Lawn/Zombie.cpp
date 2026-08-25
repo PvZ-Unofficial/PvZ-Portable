@@ -8431,25 +8431,19 @@ void Zombie::ApplyBurn()
 			aCharredReanim->SetImageOverride("imphead", IMAGE_BLANK);
 		}
 
-		float aCharredScale = mScaleZombie;
-		if (mZombieType == ZombieType::ZOMBIE_DANCER || mZombieType == ZombieType::ZOMBIE_BACKUP_DANCER)
+		if (mScaleZombie != 1.0f)
 		{
-			aCharredScale = 1.0f;
-		}
-
-		if (aCharredScale != 1.0f)
-		{
-			aCharredReanim->mOverlayMatrix.m00 = aCharredScale;
-			aCharredReanim->mOverlayMatrix.m11 = aCharredScale;
-			aCharredReanim->mOverlayMatrix.m02 += 20.0f - aCharredScale * 20.0f;
-			aCharredReanim->mOverlayMatrix.m12 += 120.0f - aCharredScale * 120.0f;
-			aCharredReanim->OverrideScale(aCharredScale, aCharredScale);
+			aCharredReanim->mOverlayMatrix.m00 = mScaleZombie;
+			aCharredReanim->mOverlayMatrix.m11 = mScaleZombie;
+			aCharredReanim->mOverlayMatrix.m02 += 20.0f - mScaleZombie * 20.0f;
+			aCharredReanim->mOverlayMatrix.m12 += 120.0f - mScaleZombie * 120.0f;
+			aCharredReanim->OverrideScale(mScaleZombie, mScaleZombie);
 		}
 
 		if (IsWalkingBackwards())
 		{
-			aCharredReanim->OverrideScale(-aCharredScale, aCharredScale);
-			aCharredReanim->mOverlayMatrix.m02 += 60.0f * aCharredScale;
+			aCharredReanim->OverrideScale(-mScaleZombie, mScaleZombie);
+			aCharredReanim->mOverlayMatrix.m02 += 60.0f * mScaleZombie;
 		}
 
 		DieWithLoot();
