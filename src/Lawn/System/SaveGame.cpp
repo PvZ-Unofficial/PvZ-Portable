@@ -51,7 +51,8 @@ static constexpr const uint32_t SAVE_FILE_VERSION = 2U;
 static const uint32_t SAVE_FILE_DATE = crc32(0, (Bytef*)FILE_COMPILE_TIME_STRING, strlen(FILE_COMPILE_TIME_STRING));
 
 static constexpr const char SAVE_FILE_MAGIC_V4[12] = "PVZP_SAVE4";
-static constexpr const uint32_t SAVE_FILE_V4_VERSION = 1U;
+static constexpr const uint32_t SAVE_FILE_V4_VERSION = 2U;
+static constexpr const uint32_t SAVE_FILE_V4_OLD_RESOURCE_VERSION = 1U;
 
 struct SaveFileHeaderV4
 {
@@ -166,13 +167,15 @@ class PortableSaveContext
 public:
 	bool		mReading = false;
 	bool		mFailed = false;
+	uint32_t	mSaveVersion = SAVE_FILE_V4_VERSION;
 	DataReader*	mReader = nullptr;
 	DataWriter*	mWriter = nullptr;
 
 public:
-	explicit PortableSaveContext(DataReader& theReader)
+	explicit PortableSaveContext(DataReader& theReader, uint32_t theSaveVersion)
 	{
 		mReading = true;
+		mSaveVersion = theSaveVersion;
 		mReader = &theReader;
 	}
 
@@ -466,8 +469,44 @@ static void SyncImagePortable(PortableSaveContext& theContext, Image*& theImage)
 {
 	if (theContext.mReading)
 	{
-		ResourceId aResID;
-		theContext.SyncInt32(reinterpret_cast<int32_t&>(aResID));
+		int32_t aStoredResID = 0;
+		theContext.SyncInt32(aStoredResID);
+		ResourceId aResID = static_cast<ResourceId>(aStoredResID);
+		if (theContext.mSaveVersion == SAVE_FILE_V4_OLD_RESOURCE_VERSION)
+		{
+			// v1 stored IDs from the 879-entry annual-edition resource table.
+			if (aStoredResID >= 0 && aStoredResID <= 98)
+				aResID = static_cast<ResourceId>(aStoredResID);
+			else if (aStoredResID >= 129 && aStoredResID <= 297)
+				aResID = static_cast<ResourceId>(aStoredResID - 30);
+			else if (aStoredResID == 298)
+				aResID = static_cast<ResourceId>(268); // DISCO_OUTERARM_HAND -> JACKSON_OUTERARM_HAND
+			else if (aStoredResID == 299)
+				aResID = static_cast<ResourceId>(269); // DISCO_OUTERARM_UPPER2 -> JACKSON_OUTERARM_UPPER2
+			else if (aStoredResID == 300)
+				aResID = static_cast<ResourceId>(270); // BACKUP_INNERARM_HAND -> DANCER_INNERARM_HAND
+			else if (aStoredResID >= 302 && aStoredResID <= 382)
+				aResID = static_cast<ResourceId>(aStoredResID - 31);
+			else if (aStoredResID >= 384 && aStoredResID <= 396)
+				aResID = static_cast<ResourceId>(aStoredResID - 32);
+			else if (aStoredResID >= 398 && aStoredResID <= 658)
+				aResID = static_cast<ResourceId>(aStoredResID - 33);
+			else if ((aStoredResID >= 99 && aStoredResID <= 128) || aStoredResID == 301 ||
+				aStoredResID == 383 || aStoredResID == 397 || (aStoredResID >= 659 && aStoredResID <= 879))
+				aResID = Sexy::ResourceId::RESOURCE_ID_MAX;
+			else
+				theContext.mFailed = true;
+		}
+		else if (aStoredResID < 0 || aStoredResID > static_cast<int32_t>(Sexy::ResourceId::RESOURCE_ID_MAX))
+		{
+			theContext.mFailed = true;
+		}
+
+		if (theContext.mFailed)
+		{
+			theImage = nullptr;
+			return;
+		}
 		if (aResID == Sexy::ResourceId::RESOURCE_ID_MAX)
 		{
 			theImage = nullptr;
@@ -1025,11 +1064,11 @@ static void AppendFieldWithSync(std::vector<unsigned char>& theOut, uint32_t the
 }
 
 template <typename TReaderFn>
-static bool ApplyFieldWithSync(const unsigned char* theData, size_t theSize, TReaderFn theReaderFn)
+static bool ApplyFieldWithSync(const unsigned char* theData, size_t theSize, uint32_t theSaveVersion, TReaderFn theReaderFn)
 {
 	DataReader aReader;
 	aReader.OpenMemory(theData, static_cast<uint32_t>(theSize), false);
-	PortableSaveContext aContext(aReader);
+	PortableSaveContext aContext(aReader, theSaveVersion);
 	theReaderFn(aContext);
 	return !aContext.mFailed;
 }
@@ -1042,9 +1081,9 @@ static void WriteGameObjectField(std::vector<unsigned char>& theOut, uint32_t th
 	});
 }
 
-static bool ReadGameObjectField(const unsigned char* theData, size_t theSize, GameObject& theObject)
+static bool ReadGameObjectField(const unsigned char* theData, size_t theSize, uint32_t theSaveVersion, GameObject& theObject)
 {
-	return ApplyFieldWithSync(theData, theSize, [&](PortableSaveContext& aContext)
+	return ApplyFieldWithSync(theData, theSize, theSaveVersion, [&](PortableSaveContext& aContext)
 	{
 		SyncGameObjectPortable(aContext, theObject);
 	});
@@ -1094,10 +1133,10 @@ static void SyncSingleObjectTLV(PortableSaveContext& theContext, TObject& theObj
 			{
 			case 1U:
 				if constexpr (HAS_GAME_OBJECT_FIELD)
-					ReadGameObjectField(aFieldData, aFieldSize, theObject);
+					ReadGameObjectField(aFieldData, aFieldSize, theContext.mSaveVersion, theObject);
 				break;
 			case PORTABLE_FIELD_TAIL:
-				ApplyFieldWithSync(aFieldData, aFieldSize, [&](PortableSaveContext& c){ theTailSync(c, theObject); });
+				ApplyFieldWithSync(aFieldData, aFieldSize, theContext.mSaveVersion, [&](PortableSaveContext& c){ theTailSync(c, theObject); });
 				break;
 			default: break;
 			}
@@ -1473,10 +1512,10 @@ static void SyncDataArrayObjectsTLV(PortableSaveContext& theContext, DataArray<T
 			{
 			case 1U:
 				if constexpr (std::is_base_of_v<GameObject, T>)
-					ReadGameObjectField(aData, aSize, anItem);
+					ReadGameObjectField(aData, aSize, theContext.mSaveVersion, anItem);
 				break;
 			case PORTABLE_FIELD_TAIL:
-				ApplyFieldWithSync(aData, aSize, [&](PortableSaveContext& c){ theTailSync(c, anItem); });
+				ApplyFieldWithSync(aData, aSize, theContext.mSaveVersion, [&](PortableSaveContext& c){ theTailSync(c, anItem); });
 				break;
 			default: break;
 			}
@@ -1721,7 +1760,7 @@ static void SyncBoardBasePortable(PortableSaveContext& theContext, Board* theBoa
 			{
 				if (aField.mFieldId == aFieldId)
 				{
-					ApplyFieldWithSync(aFieldData, aFieldSize, [&](PortableSaveContext& c){ aField.mSync(c, theBoard); });
+					ApplyFieldWithSync(aFieldData, aFieldSize, theContext.mSaveVersion, [&](PortableSaveContext& c){ aField.mSync(c, theBoard); });
 					break;
 				}
 			}
@@ -1786,11 +1825,11 @@ static void SyncParticleSystemsPortable(PortableSaveContext& theContext, Board* 
 				SyncParticleSystemPortable(theBoard, &theSystem, aContext);
 			});
 		},
-		[theBoard](uint32_t aFieldId, const unsigned char* aData, size_t aSize, PvzpParticleSystem& theSystem)
+		[theBoard, &theContext](uint32_t aFieldId, const unsigned char* aData, size_t aSize, PvzpParticleSystem& theSystem)
 		{
 			if (aFieldId == 1U)
 			{
-				ApplyFieldWithSync(aData, aSize, [&](PortableSaveContext& aContext)
+				ApplyFieldWithSync(aData, aSize, theContext.mSaveVersion, [&](PortableSaveContext& aContext)
 				{
 					SyncParticleSystemPortable(theBoard, &theSystem, aContext);
 				});
@@ -1808,11 +1847,11 @@ static void SyncReanimationsPortable(PortableSaveContext& theContext, Board* the
 				SyncReanimationPortable(theBoard, &theReanimation, aContext);
 			});
 		},
-		[theBoard](uint32_t aFieldId, const unsigned char* aData, size_t aSize, Reanimation& theReanimation)
+		[theBoard, &theContext](uint32_t aFieldId, const unsigned char* aData, size_t aSize, Reanimation& theReanimation)
 		{
 			if (aFieldId == 1U)
 			{
-				ApplyFieldWithSync(aData, aSize, [&](PortableSaveContext& aContext)
+				ApplyFieldWithSync(aData, aSize, theContext.mSaveVersion, [&](PortableSaveContext& aContext)
 				{
 					SyncReanimationPortable(theBoard, &theReanimation, aContext);
 				});
@@ -1830,11 +1869,11 @@ static void SyncTrailsPortable(PortableSaveContext& theContext, Board* theBoard)
 				SyncTrailPortable(theBoard, &theTrail, aContext);
 			});
 		},
-		[theBoard](uint32_t aFieldId, const unsigned char* aData, size_t aSize, Trail& theTrail)
+		[theBoard, &theContext](uint32_t aFieldId, const unsigned char* aData, size_t aSize, Trail& theTrail)
 		{
 			if (aFieldId == 1U)
 			{
-				ApplyFieldWithSync(aData, aSize, [&](PortableSaveContext& aContext)
+				ApplyFieldWithSync(aData, aSize, theContext.mSaveVersion, [&](PortableSaveContext& aContext)
 				{
 					SyncTrailPortable(theBoard, &theTrail, aContext);
 				});
@@ -1893,8 +1932,8 @@ static void SyncSeedPacketsPortable(PortableSaveContext& theContext, Board* theB
 					break;
 				switch (aFieldId)
 				{
-				case 1U: ReadGameObjectField(aFieldData, aFieldSize, theBoard->mSeedBank->mSeedPackets[i]); break;
-				case PORTABLE_FIELD_TAIL: ApplyFieldWithSync(aFieldData, aFieldSize, [&](PortableSaveContext& c){ SyncSeedPacketTailPortable(c, theBoard->mSeedBank->mSeedPackets[i]); }); break;
+				case 1U: ReadGameObjectField(aFieldData, aFieldSize, theContext.mSaveVersion, theBoard->mSeedBank->mSeedPackets[i]); break;
+				case PORTABLE_FIELD_TAIL: ApplyFieldWithSync(aFieldData, aFieldSize, theContext.mSaveVersion, [&](PortableSaveContext& c){ SyncSeedPacketTailPortable(c, theBoard->mSeedBank->mSeedPackets[i]); }); break;
 				default: break;
 				}
 			}
@@ -2025,7 +2064,7 @@ static bool WriteChunkV4(std::vector<unsigned char>& thePayload, uint32_t theChu
 	return true;
 }
 
-static bool ReadChunkV4(uint32_t theChunkType, const unsigned char* theData, size_t theSize, Board* theBoard)
+static bool ReadChunkV4(uint32_t theChunkType, const unsigned char* theData, size_t theSize, uint32_t theSaveVersion, Board* theBoard)
 {
 	ChunkSyncFn aSyncFn = GetChunkSyncFn(theChunkType);
 	if (!aSyncFn)
@@ -2055,7 +2094,7 @@ static bool ReadChunkV4(uint32_t theChunkType, const unsigned char* theData, siz
 		{
 			DataReader aFieldReader;
 			aFieldReader.OpenMemory(aFieldData, static_cast<uint32_t>(aFieldSize), false);
-			PortableSaveContext aContext(aFieldReader);
+			PortableSaveContext aContext(aFieldReader, theSaveVersion);
 			aSyncFn(aContext, theBoard);
 			if (aContext.mFailed)
 				return false;
@@ -2243,7 +2282,7 @@ static bool LawnLoadGameV4(Board* theBoard, const std::string& theFilePath)
 	aHeader.mPayloadCrc = FromLE32(aHeader.mPayloadCrc);
 	if (memcmp(aHeader.mMagic, SAVE_FILE_MAGIC_V4, sizeof(aHeader.mMagic)) != 0)
 		return false;
-	if (aHeader.mVersion != SAVE_FILE_V4_VERSION)
+	if (aHeader.mVersion != SAVE_FILE_V4_OLD_RESOURCE_VERSION && aHeader.mVersion != SAVE_FILE_V4_VERSION)
 		return false;
 	if (aHeader.mPayloadSize > static_cast<uint32_t>(aBuffer.GetDataLen()) - sizeof(SaveFileHeaderV4))
 		return false;
@@ -2265,7 +2304,7 @@ static bool LawnLoadGameV4(Board* theBoard, const std::string& theFilePath)
 		if (!aReader.ReadBytes(aChunkData, aChunkSize))
 			break;
 
-		if (!ReadChunkV4(aChunkType, aChunkData, aChunkSize, theBoard))
+		if (!ReadChunkV4(aChunkType, aChunkData, aChunkSize, aHeader.mVersion, theBoard))
 			return false;
 		if (aChunkType == SAVE4_CHUNK_BOARD_BASE)
 			aBaseLoaded = true;

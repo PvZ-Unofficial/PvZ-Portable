@@ -2426,7 +2426,10 @@ void* gResources[static_cast<int>(Sexy::ResourceId::RESOURCE_ID_MAX)] =
 
 Sexy::Image* Sexy::GetImageById(ResourceId theId)
 {
-	return *reinterpret_cast<Sexy::Image**>(gResources[static_cast<int>(theId)]);
+	int anId = static_cast<int>(theId);
+	if (anId < 0 || anId >= static_cast<int>(ResourceId::RESOURCE_ID_MAX))
+		return nullptr;
+	return *reinterpret_cast<Sexy::Image**>(gResources[anId]);
 }
 
 Sexy::_Font* Sexy::GetFontById(ResourceId theId)

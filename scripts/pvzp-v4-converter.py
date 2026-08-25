@@ -24,6 +24,7 @@ PvZ-Portable Mid-Level Save File Converter for v4 Format
 Converts portable v4 save files (.v4) to human-readable YAML format and back.
 This is a LOSSLESS bidirectional converter - you can edit the YAML and convert
 it back to a valid v4 save file.
+Both v1 and v2 headers are preserved during a round trip.
 
 Usage:
     python pvzp-v4-converter.py export <input.v4> <output.yaml>
@@ -68,7 +69,8 @@ from typing import Any, Optional, Type
 # ============================================================================
 
 SAVE_MAGIC = b"PVZP_SAVE4\x00\x00"  # 12 bytes with null padding
-SAVE_VERSION = 1
+SAVE_VERSION = 2
+SUPPORTED_SAVE_VERSIONS = (1, SAVE_VERSION)
 HEADER_SIZE = 24  # magic(12) + version(4) + payloadSize(4) + payloadCrc(4)
 
 # Board constants from Board.h
@@ -1664,9 +1666,8 @@ def parse_save_file(data: bytes) -> SaveFile:
         sys.exit(1)
     
     version = struct.unpack("<I", data[12:16])[0]
-    if version != SAVE_VERSION:
-        print(f"Warning: File header says version {version}, but script expects version {SAVE_VERSION}.")
-        print("Proceeding anyway, but errors may occur.")
+    if version not in SUPPORTED_SAVE_VERSIONS:
+        raise ValueError(f"Unsupported v4 save header version: {version}")
     
     payload_size = struct.unpack("<I", data[16:20])[0]
     stored_crc = struct.unpack("<I", data[20:24])[0]
@@ -1848,8 +1849,12 @@ def import_from_yaml(yaml_str: str) -> SaveFile:
     """Import YAML and create SaveFile."""
     data = yaml.safe_load(yaml_str)
     
+    version = data.get("_version", SAVE_VERSION)
+    if version not in SUPPORTED_SAVE_VERSIONS:
+        raise ValueError(f"Unsupported v4 save header version: {version}")
+
     save = SaveFile(
-        version=data.get("_version", SAVE_VERSION),
+        version=version,
         chunk_order=data.get("_chunk_order", []),
         board=data.get("board", {}),
         zombies_header=data.get("zombies_header", {}),
