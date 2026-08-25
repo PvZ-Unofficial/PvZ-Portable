@@ -756,10 +756,6 @@ void Projectile::UpdateMotion()
 	}
 
 	float aSlopeHeightChange = mBoard->GetPosYBasedOnRow(mPosX, aOldRow) - aOldY;
-	if (mProjectileType == ProjectileType::PROJECTILE_COBBIG)
-	{
-		aSlopeHeightChange = 0.0f;  // Fix The Roof Offset Bug of Corn Cob
-	}
 	if (mMotionType == ProjectileMotion::MOTION_FLOAT_OVER)
 	{
 		mPosY += aSlopeHeightChange;
