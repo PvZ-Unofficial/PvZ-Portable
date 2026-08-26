@@ -51,6 +51,9 @@
 #include "../PvzpLib/PvzpParticle.h"
 #include "../PvzpLib/EffectSystem.h"
 #include "../PvzpLib/PvzpStringFile.h"
+#ifdef PVZP_WITH_RSVZ
+#include "rsvz_pvzp_hooks.h"
+#endif
 #include "widget/WidgetManager.h"
 #include <algorithm>
 
@@ -2984,7 +2987,11 @@ void Challenge::SpawnZombieWave()
 	}
 
 	int aIsFlagWave = mBoard->IsFlagWave(mBoard->mCurrentWave);
-	if (mApp->mGameMode == GAMEMODE_CHALLENGE_GRAVE_DANGER && mBoard->mCurrentWave != mBoard->mNumWaves - 1)
+	bool aSpecialEventsDisabled = false;
+#ifdef PVZP_WITH_RSVZ
+	aSpecialEventsDisabled = RsvzPvzp::SpecialEventsDisabled();
+#endif
+	if (!aSpecialEventsDisabled && mApp->mGameMode == GAMEMODE_CHALLENGE_GRAVE_DANGER && mBoard->mCurrentWave != mBoard->mNumWaves - 1)
 	{
 		if (aIsFlagWave)
 		{
@@ -2995,7 +3002,7 @@ void Challenge::SpawnZombieWave()
 			GraveDangerSpawnRandomGrave();
 		}
 	}
-	if (mApp->IsSurvivalMode() && mBoard->mBackground == BACKGROUND_2_NIGHT && mBoard->mCurrentWave == mBoard->mNumWaves - 1)
+	if (!aSpecialEventsDisabled && mApp->IsSurvivalMode() && mBoard->mBackground == BACKGROUND_2_NIGHT && mBoard->mCurrentWave == mBoard->mNumWaves - 1)
 	{
 		int aNumGraves = mBoard->GetGraveStonesCount();
 		int aGraveLimit = mApp->IsSurvivalNormal(mApp->mGameMode) ? 8 : 12;
@@ -3004,7 +3011,7 @@ void Challenge::SpawnZombieWave()
 			GraveDangerSpawnRandomGrave();
 		}
 	}
-	if (mApp->IsBungeeBlitzLevel() && aIsFlagWave)
+	if (!aSpecialEventsDisabled && mApp->IsBungeeBlitzLevel() && aIsFlagWave)
 	{
 		mBoard->DisplayAdvice("[ADVICE_BUNGEES_INCOMING]", MESSAGE_STYLE_HINT_FAST, ADVICE_NONE);
 	}

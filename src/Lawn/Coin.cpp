@@ -36,6 +36,9 @@
 #include "../PvzpLib/PvzpDebug.h"
 #include "../PvzpLib/Reanimator.h"
 #include "../PvzpLib/Attachment.h"
+#ifdef PVZP_WITH_RSVZ
+#include "rsvz_pvzp_hooks.h"
+#endif
 
 Coin::Coin()
 {
@@ -740,6 +743,14 @@ void Coin::Update()
 	{
 		UpdateCollected();
 	}
+
+#ifdef PVZP_WITH_RSVZ
+	if (RsvzPvzp::NormalAutoCollectEnabled() && !mDead && !mIsBeingCollected && !IsLevelAward() && !IsPresentWithAdvice())
+	{
+		PlayCollectSound();
+		Collect();
+	}
+#endif
 
 	if (mAttachmentID != AttachmentID::ATTACHMENTID_NULL)
 	{

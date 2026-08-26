@@ -41,6 +41,9 @@
 #include "../PvzpLib/Attachment.h"
 #include "../PvzpLib/PvzpParticle.h"
 #include <algorithm>
+#ifdef PVZP_WITH_RSVZ
+#include "rsvz_pvzp_hooks.h"
+#endif
 
 constexpr const int ZOMBIE_START_RANDOM_OFFSET = 40;
 constexpr const int BUNGEE_ZOMBIE_HEIGHT = 3000;
@@ -2014,6 +2017,10 @@ void Zombie::UpdateZombieJackInTheBox()
 
 		if (mPhaseCounter <= 0)
 		{
+#ifdef PVZP_WITH_RSVZ
+			if (RsvzPvzp::JackExplosionsDisabled())
+				return;
+#endif
 			mApp->PlayFoley(FoleyType::FOLEY_EXPLOSION);
 
 			int aPosX = mX + mWidth / 2;
@@ -2025,7 +2032,11 @@ void Zombie::UpdateZombieJackInTheBox()
 			else
 			{
 				mBoard->KillAllZombiesInRadius(mRow, aPosX, aPosY, JACK_IN_THE_BOX_ZOMBIE_RADIUS, 1, true, 255);
+			#ifdef PVZP_WITH_RSVZ
+				RsvzPvzp::ApplyJackPlantExplosion(this, mBoard, aPosX, aPosY, JACK_IN_THE_BOX_PLANT_RADIUS);
+			#else
 				mBoard->KillAllPlantsInRadius(aPosX, aPosY, JACK_IN_THE_BOX_PLANT_RADIUS);
+			#endif
 			}
 
 			mApp->AddPvzpParticle(aPosX, aPosY, Board::MakeRenderOrder(RenderLayer::RENDER_LAYER_TOP, 0, 0), ParticleEffect::PARTICLE_JACKEXPLODE);
@@ -2054,7 +2065,11 @@ void Zombie::UpdateZombieGargantuar()
 					if (aPlant->mSeedType == SeedType::SEED_SPIKEROCK)
 					{
 						TakeDamage(20, 32U);
+					#ifdef PVZP_WITH_RSVZ
+						RsvzPvzp::ApplyGargantuarSpikeDamage(this, aPlant);
+					#else
 						aPlant->SpikeRockTakeDamage();
+					#endif
 						if (aPlant->mPlantHealth <= 0)
 						{
 							SquishAllInSquare(aPlant->mPlantCol, aPlant->mRow, ZombieAttackType::ATTACKTYPE_CHEW);
@@ -2258,6 +2273,10 @@ void Zombie::UpdateZombieJalapenoHead()
 
 	if (mPhaseCounter == 0)
 	{
+#ifdef PVZP_WITH_RSVZ
+		if (RsvzPvzp::PepperExplosionsDisabled())
+			return;
+#endif
 		mApp->PlayFoley(FoleyType::FOLEY_JALAPENO_IGNITE);
 		mApp->PlayFoley(FoleyType::FOLEY_JUICY);
 		mBoard->DoFwoosh(mRow);
@@ -2270,6 +2289,10 @@ void Zombie::UpdateZombieJalapenoHead()
 			//Rect aPlantRect = aPlant->GetPlantRect();
 			if (aPlant->mRow == mRow && !aPlant->NotOnGround())
 			{
+#ifdef PVZP_WITH_RSVZ
+				if (RsvzPvzp::PlantDamageRule() == 1)
+					continue;
+#endif
 				mBoard->mPlantsEaten++;
 				aPlant->Die();
 			}
@@ -4234,7 +4257,14 @@ void Zombie::CheckForBoardEdge()
 
 	if (mX <= aEdgeX && mHasHead)
 	{
-		if (mApp->IsIZombieLevel())
+	#ifdef PVZP_WITH_RSVZ
+		RsvzPvzp::EmitHomeEntry(this);
+	#endif
+		if (mApp->IsIZombieLevel()
+#ifdef PVZP_WITH_RSVZ
+			|| RsvzPvzp::ZombiesDieAtHouse()
+#endif
+		)
 		{
 			DieNoLoot();
 		}
@@ -5848,6 +5878,15 @@ int Zombie::GetDancerFrame()
 ZombiePhase Zombie::GetDancerPhase()
 {
 	int aFrame = GetDancerFrame();
+#ifdef PVZP_WITH_RSVZ
+	switch (RsvzPvzp::MaidCheat())
+	{
+	case 1: aFrame = 12; break;
+	case 2: aFrame = 16; break;
+	case 3: aFrame = 11; break;
+	default: break;
+	}
+#endif
 
 	return
 		aFrame <= 11 ? ZombiePhase::PHASE_DANCER_DANCING_LEFT :
@@ -6143,6 +6182,10 @@ void Zombie::SquishAllInSquare(int theX, int theY, ZombieAttackType theAttackTyp
 			continue;
 		if (aPlant->mRow == theY && aPlant->mPlantCol == theX)
 		{
+#ifdef PVZP_WITH_RSVZ
+			if (RsvzPvzp::PlantDamageRule() == 1)
+				continue;
+#endif
 			if (theAttackType == ZombieAttackType::ATTACKTYPE_DRIVE_OVER && aPlant->IsSpiky())
 			{
 				continue;
@@ -6150,8 +6193,18 @@ void Zombie::SquishAllInSquare(int theX, int theY, ZombieAttackType theAttackTyp
 
 			if (aPlant->mSeedType != SeedType::SEED_SPIKEROCK)
 			{
+			#ifdef PVZP_WITH_RSVZ
+				if (mZombieType == ZombieType::ZOMBIE_GARGANTUAR || mZombieType == ZombieType::ZOMBIE_REDEYE_GARGANTUAR)
+					RsvzPvzp::ApplyGargantuarSquish(this, aPlant);
+				else
+				{
+					mBoard->mPlantsEaten++;
+					aPlant->Squish();
+				}
+			#else
 				mBoard->mPlantsEaten++;
 				aPlant->Squish();
+			#endif
 			}
 		}
 	}
@@ -6758,7 +6811,11 @@ void Zombie::EatPlant(Plant* thePlant)
 		}
 	}
 
+#ifdef PVZP_WITH_RSVZ
+	RsvzPvzp::ApplyBite(this, thePlant, DAMAGE_PER_EAT);
+#else
 	thePlant->mPlantHealth -= DAMAGE_PER_EAT;
+#endif
 	thePlant->mRecentlyEatenCountdown = 50;
 	if (mApp->IsIZombieLevel() && mJustGotShotCounter < -500)
 	{
@@ -6952,6 +7009,10 @@ void Zombie::DropLoot()
 		return;
 
 	mDroppedLoot = true;
+#ifdef PVZP_WITH_RSVZ
+	if (RsvzPvzp::ItemDropDisabled())
+		return;
+#endif
 	int aZombieValue = GetZombieDefinition(mZombieType).mZombieValue;
 	if (mApp->IsLittleTroubleLevel() && Rand(4) != 0)
 	{

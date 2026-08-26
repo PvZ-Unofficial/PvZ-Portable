@@ -42,6 +42,9 @@
 #include "../PvzpLib/Reanimator.h"
 #include "widget/Dialog.h"
 #include "misc/MTRand.h"
+#ifdef PVZP_WITH_RSVZ
+#include "rsvz_pvzp_hooks.h"
+#endif
 #include "../PvzpLib/PvzpParticle.h"
 #include "../PvzpLib/EffectSystem.h"
 #include "../PvzpLib/PvzpStringFile.h"
@@ -2633,6 +2636,10 @@ PlantingReason Board::CanPlantAt(int theGridX, int theGridY, SeedType theSeedTyp
 	{
 		return PlantingReason::PLANTING_NOT_HERE;
 	}
+	#ifdef PVZP_WITH_RSVZ
+	if (RsvzPvzp::PlantingRestrictionsIgnored())
+		return PlantingReason::PLANTING_OK;
+	#endif
 
 	PlantingReason aReason = mChallenge->CanPlantAt(theGridX, theGridY, theSeedType);
 	if (aReason != PlantingReason::PLANTING_OK || Challenge::IsZombieSeedType(theSeedType))
@@ -4875,7 +4882,11 @@ void Board::SpawnZombieWave()
 		}
 	}
 
-	if (mCurrentWave == mNumWaves - 1 && !mApp->IsContinuousChallenge())
+	if (mCurrentWave == mNumWaves - 1 && !mApp->IsContinuousChallenge()
+	#ifdef PVZP_WITH_RSVZ
+		&& !RsvzPvzp::SpecialEventsDisabled()
+	#endif
+	)
 	{
 		mRiseFromGraveCounter = 200;
 	}
@@ -4957,6 +4968,10 @@ int Board::GetSurvivalFlagsCompleted()
 
 void Board::SurvivalSaveScore()
 {
+#ifdef PVZP_WITH_RSVZ
+	if (RsvzPvzp::ProfileReadonly())
+		return;
+#endif
 	if (!mApp->IsSurvivalMode())
 		return;
 
@@ -4971,6 +4986,10 @@ void Board::SurvivalSaveScore()
 
 void Board::PuzzleSaveStreak()
 {
+#ifdef PVZP_WITH_RSVZ
+	if (RsvzPvzp::ProfileReadonly())
+		return;
+#endif
 	if (!mApp->IsEndlessIZombie(mApp->mGameMode) && !mApp->IsEndlessScaryPotter(mApp->mGameMode))
 		return;
 
@@ -5113,6 +5132,10 @@ bool Board::HasLevelAwardDropped()
 
 void Board::UpdateSunSpawning()
 {
+	#ifdef PVZP_WITH_RSVZ
+	if (RsvzPvzp::NaturalSunDropDisabled())
+		return;
+	#endif
 	if (StageIsNight() ||
 		HasLevelAwardDropped() ||
 		mApp->mGameMode == GameMode::GAMEMODE_CHALLENGE_RAINING_SEEDS ||
@@ -5145,7 +5168,11 @@ void Board::UpdateSunSpawning()
 	mNumSunsFallen++;
 	mSunCountDown = std::min(SUN_COUNTDOWN_MAX, SUN_COUNTDOWN + mNumSunsFallen * 10) + Rand(SUN_COUNTDOWN_RANGE);
 	CoinType aSunType = mApp->mGameMode == GameMode::GAMEMODE_CHALLENGE_SUNNY_DAY ? CoinType::COIN_LARGESUN : CoinType::COIN_SUN;
-	AddCoin(RandRangeInt(100, 649), 60, aSunType, CoinMotion::COIN_MOTION_FROM_SKY);
+	int aSunX = RandRangeInt(100, 649);
+#ifdef PVZP_WITH_RSVZ
+	if (!RsvzPvzp::CreditProducedSun(this, static_cast<int>(aSunType)))
+#endif
+	AddCoin(aSunX, 60, aSunType, CoinMotion::COIN_MOTION_FROM_SKY);
 }
 
 void Board::NextWaveComing()
@@ -5242,6 +5269,11 @@ void Board::UpdateZombieSpawning()
 
 	if (mChallenge->UpdateZombieSpawning())
 		return;
+
+	#ifdef PVZP_WITH_RSVZ
+	if (RsvzPvzp::ZombieSpawnStopped())
+		return;
+	#endif
 
 	if (mCurrentWave == mNumWaves)
 	{
@@ -7217,6 +7249,16 @@ void Board::UpdateFog()
 	if (!StageHasFog())
 		return;
 
+	#ifdef PVZP_WITH_RSVZ
+	if (RsvzPvzp::FogRevealed())
+	{
+		for (auto& column : mGridCelFog)
+			for (int& amount : column)
+				amount = 0;
+		return;
+	}
+	#endif
+
 	//int aFogFadeInSpeed = mFogBlownCountDown >= 2000 ? 20 : mFogBlownCountDown > 0 ? 1 : 3;
 	int aFogFadeInSpeed = 3;
 	if (mFogBlownCountDown > 0 && mFogBlownCountDown < 2000)
@@ -7403,6 +7445,9 @@ void Board::Draw(Graphics* g)
 
 	mDrawCount++;
 	DrawGameObjects(g);
+#ifdef PVZP_WITH_RSVZ
+	RsvzPvzp::DrawAdvancedPauseMask(g);
+#endif
 }
 
 void Board::SetMustacheMode(bool theEnableMustache)
@@ -8405,6 +8450,10 @@ int Board::CountCoinsBeingCollected()
 
 bool Board::TakeSunMoney(int theAmount)
 {
+	#ifdef PVZP_WITH_RSVZ
+	if (RsvzPvzp::SunCostIgnored())
+		return true;
+	#endif
 	if (CanTakeSunMoney(theAmount))
 	{
 		mSunMoney -= theAmount;
@@ -8418,6 +8467,10 @@ bool Board::TakeSunMoney(int theAmount)
 
 bool Board::CanTakeSunMoney(int theAmount)
 {
+	#ifdef PVZP_WITH_RSVZ
+	if (RsvzPvzp::SunCostIgnored())
+		return true;
+	#endif
 	return theAmount <= mSunMoney + CountSunBeingCollected();
 }
 
@@ -8894,6 +8947,10 @@ void Board::KillAllPlantsInRadius(int theX, int theY, int theRadius)
 			continue;
 		if (GetCircleRectOverlap(theX, theY, theRadius, aPlant->GetPlantRect()))
 		{
+#ifdef PVZP_WITH_RSVZ
+			if (RsvzPvzp::PlantDamageRule() == 1)
+				continue;
+#endif
 			mPlantsEaten++;
 			aPlant->Die();
 		}

@@ -23,6 +23,9 @@
 #include "ProfileMgr.h"
 #include "PlayerInfo.h"
 #include "../../SexyAppFramework/SexyAppBase.h"
+#ifdef PVZP_WITH_RSVZ
+#include "rsvz_pvzp_hooks.h"
+#endif
 
 using namespace Sexy;
 static int gProfileVersion = 14;
@@ -110,6 +113,10 @@ void ProfileMgr::Load()
 
 void ProfileMgr::Save()
 {
+#ifdef PVZP_WITH_RSVZ
+	if (RsvzPvzp::ProfileReadonly())
+		return;
+#endif
 	DataWriter aWriter;
 	aWriter.OpenMemory(0x20);
 	DataSync aSync(aWriter);

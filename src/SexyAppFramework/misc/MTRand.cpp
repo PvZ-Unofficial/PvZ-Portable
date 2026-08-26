@@ -36,6 +36,9 @@ email: m-mat @ math.sci.hiroshima-u.ac.jp (remove space)
 */
 
 #include "MTRand.h"
+#ifdef PVZP_WITH_RSVZ
+#include "rsvz_pvzp_hooks.h"
+#endif
 #include "Debug.h"
 #include <cstdint>
 #include <stdio.h>
@@ -143,6 +146,11 @@ unsigned long MTRand::Next()
 
 unsigned long MTRand::NextNoAssert()
 {
+	#ifdef PVZP_WITH_RSVZ
+	unsigned long aOverride;
+	if (RsvzPvzp::OverrideRandom(this, &aOverride))
+		return aOverride;
+	#endif
 	unsigned long y;
 	static unsigned long mag01[2]={0x0, MATRIX_A};
 	/* mag01[x] = x * MATRIX_A  for x=0,1 */
@@ -172,6 +180,9 @@ unsigned long MTRand::NextNoAssert()
 
 	y &= 0x7FFFFFFF;
 
+	#ifdef PVZP_WITH_RSVZ
+	RsvzPvzp::RecordRandom(this, y);
+	#endif
 	return y;
 }
 

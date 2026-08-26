@@ -53,6 +53,9 @@
 #include "Lawn/Widget/CreditScreen.h"
 #include "PvzpLib/EffectSystem.h"
 #include "PvzpLib/FilterEffect.h"
+#ifdef PVZP_WITH_RSVZ
+#include "rsvz_pvzp_hooks.h"
+#endif
 #include "graphics/Graphics.h"
 #include "PvzpLib/PvzpStringFile.h"
 #include "Lawn/Widget/AlmanacDialog.h"
@@ -315,6 +318,9 @@ void LawnApp::ShutdownHook()
 		mBoardResult = BoardResult::BOARDRESULT_QUIT_APP;
 		mBoard->TryToSaveGame();
 	}
+#ifdef PVZP_WITH_RSVZ
+	RsvzPvzp::Shutdown();
+#endif
 }
 
 void LawnApp::KillBoard()
@@ -323,6 +329,9 @@ void LawnApp::KillBoard()
 	KillSeedChooserScreen();
 	if (mBoard)
 	{
+#ifdef PVZP_WITH_RSVZ
+		RsvzPvzp::BoardDestroying();
+#endif
 		if (mPlayerInfo && (
 			mBoardResult == BoardResult::BOARDRESULT_WON ||
 			mBoardResult == BoardResult::BOARDRESULT_LOST ||
@@ -380,6 +389,10 @@ void LawnApp::LostFocus()
 
 void LawnApp::WriteToRegistry()
 {
+#ifdef PVZP_WITH_RSVZ
+	if (RsvzPvzp::ProfileReadonly())
+		return;
+#endif
 	if (mPlayerInfo)
 	{
 		RegistryWriteString("CurUser", mPlayerInfo->mName);
@@ -396,6 +409,10 @@ void LawnApp::ReadFromRegistry()
 
 bool LawnApp::WriteCurrentUserConfig()
 {
+#ifdef PVZP_WITH_RSVZ
+	if (RsvzPvzp::ProfileReadonly())
+		return true;
+#endif
 	if (mPlayerInfo)
 		mPlayerInfo->SaveDetails();
 
@@ -429,6 +446,9 @@ void LawnApp::MakeNewBoard()
 	mWidgetManager->AddWidget(mBoard);
 	mWidgetManager->BringToBack(mBoard);
 	mWidgetManager->SetFocus(mBoard);
+#ifdef PVZP_WITH_RSVZ
+	RsvzPvzp::BoardCreated();
+#endif
 }
 
 void LawnApp::StartPlaying()
@@ -1302,6 +1322,9 @@ void LawnApp::Start()
 	if (mLoadingFailed)
 		return;
 
+#ifdef PVZP_WITH_RSVZ
+	RsvzPvzp::Initialize(this);
+#endif
 	SexyAppBase::Start();
 }
 
@@ -1576,9 +1599,16 @@ void LawnApp::UpdateFrames()
 	{
 		aUpdateCount = 20;
 	}
+#ifdef PVZP_WITH_RSVZ
+	aUpdateCount = RsvzPvzp::UpdateCount(aUpdateCount);
+#endif
 
 	for (int i = 0; i < aUpdateCount; i++)
 	{
+#ifdef PVZP_WITH_RSVZ
+		if (!RsvzPvzp::BeforeUpdate())
+			continue;
+#endif
 		mAppCounter++;
 
 		if (mBoard)
@@ -1590,7 +1620,13 @@ void LawnApp::UpdateFrames()
 			mEffectSystem->ProcessDeleteQueue();
 		}
 
+#ifdef PVZP_WITH_RSVZ
+		RsvzPvzp::BeginLogicFrame();
+#endif
 		SexyApp::UpdateFrames();
+#ifdef PVZP_WITH_RSVZ
+		RsvzPvzp::EndLogicFrame();
+#endif
 
 		mMusic->MusicUpdate();
 

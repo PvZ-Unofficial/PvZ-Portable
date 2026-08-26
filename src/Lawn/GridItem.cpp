@@ -34,6 +34,9 @@
 #include "../PvzpLib/PvzpParticle.h"
 #include "widget/WidgetManager.h"
 #include <algorithm>
+#ifdef PVZP_WITH_RSVZ
+#include "rsvz_pvzp_hooks.h"
+#endif
 
 using namespace Sexy;
 
@@ -320,7 +323,11 @@ void GridItem::DrawScaryPot(Graphics* g)
 	int aYPos = mBoard->GridToPixelY(mGridX, mGridY) - 15;
 	PvzpDrawImageCelCenterScaledF(g, IMAGE_PLANTSHADOW2, aXPos - 5.0f, aYPos + 72.0f, 0, 1.3f, 1.3f);
 
-	if (mTransparentCounter > 0)
+	bool aShowContents = mTransparentCounter > 0;
+#ifdef PVZP_WITH_RSVZ
+	aShowContents = aShowContents || RsvzPvzp::VaseContentsVisible();
+#endif
+	if (aShowContents)
 	{
 		g->DrawImageCel(IMAGE_SCARY_POT, aXPos, aYPos, aImageCol, 0);
 
@@ -379,6 +386,12 @@ void GridItem::DrawScaryPot(Graphics* g)
 		}
 
 		int aAlpha = PvzpAnimateCurve(0, 50, mTransparentCounter, 255, 58, PvzpCurves::CURVE_LINEAR);
+#ifdef PVZP_WITH_RSVZ
+		if (RsvzPvzp::VaseContentsVisible())
+		{
+			aAlpha = 58;
+		}
+#endif
 		g->SetColorizeImages(true);
 		g->SetColor(Color(255, 255, 255, aAlpha));
 	}

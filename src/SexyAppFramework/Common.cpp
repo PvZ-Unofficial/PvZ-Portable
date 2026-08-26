@@ -34,6 +34,9 @@
 #include <SDL.h>
 
 #include "misc/PerfTimer.h"
+#ifdef PVZP_WITH_RSVZ
+#include "rsvz_pvzp_hooks.h"
+#endif
 
 bool Sexy::gDebug = false;
 static Sexy::MTRand gMTRand;
@@ -92,21 +95,34 @@ void Sexy::LogError(const char* theFormat, ...)
 
 int Sexy::Rand()
 {
+#ifdef PVZP_WITH_RSVZ
+	RsvzPvzp::RegisterBattleRandom(&gMTRand);
+#endif
 	return gMTRand.Next();
 }
 
 int Sexy::Rand(int range)
 {
+#ifdef PVZP_WITH_RSVZ
+	RsvzPvzp::RegisterBattleRandom(&gMTRand);
+#endif
 	return gMTRand.Next((unsigned long)range);
 }
 
 float Sexy::Rand(float range)
 {
+#ifdef PVZP_WITH_RSVZ
+	RsvzPvzp::RegisterBattleRandom(&gMTRand);
+#endif
 	return gMTRand.Next(range);
 }
 
 void Sexy::SRand(ulong theSeed)
 {
+#ifdef PVZP_WITH_RSVZ
+	RsvzPvzp::RegisterBattleRandom(&gMTRand);
+	RsvzPvzp::NoteBattleSeed(theSeed);
+#endif
 	gMTRand.SRand(theSeed);
 }
 

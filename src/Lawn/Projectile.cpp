@@ -32,6 +32,9 @@
 #include "../PvzpLib/Reanimator.h"
 #include "../PvzpLib/Attachment.h"
 #include <algorithm>
+#ifdef PVZP_WITH_RSVZ
+#include "rsvz_pvzp_hooks.h"
+#endif
 
 constinit const ProjectileDefinition gProjectileDefinition[] = {
 	{ .mProjectileType = ProjectileType::PROJECTILE_PEA, .mImageRow = 0, .mDamage = 20 },
@@ -311,7 +314,12 @@ void Projectile::CheckForCollision()
 		if (aPlant)
 		{
 			const ProjectileDefinition& aProjectileDef = GetProjectileDef();
-			aPlant->mPlantHealth -= aProjectileDef.mDamage;
+		#ifdef PVZP_WITH_RSVZ
+			if (RsvzPvzp::PlantDamageRule() == 2)
+				aPlant->mPlantHealth = 0;
+			else if (RsvzPvzp::PlantDamageRule() != 1)
+		#endif
+				aPlant->mPlantHealth -= aProjectileDef.mDamage;
 			aPlant->mEatenFlashCountdown = std::max(aPlant->mEatenFlashCountdown, 25);
 
 			mApp->PlayFoley(FoleyType::FOLEY_SPLAT);
@@ -586,6 +594,10 @@ void Projectile::UpdateLobMotion()
 	if (mProjectileType == ProjectileType::PROJECTILE_COBBIG)
 	{
 		aGroundZ = -40.0f;
+	#ifdef PVZP_WITH_RSVZ
+		if (RsvzPvzp::CobFixedDelay())
+			aGroundZ = -600.0f;
+	#endif
 	}
 	bool hitGround = mPosZ > aGroundZ;
 	if (aZombie == nullptr && aPlant == nullptr && !hitGround)
@@ -613,7 +625,16 @@ void Projectile::UpdateLobMotion()
 		}
 		else
 		{
+		#ifdef PVZP_WITH_RSVZ
+			if (mProjectileType == ProjectileType::PROJECTILE_BASKETBALL)
+				RsvzPvzp::ApplyBasketball(this, aPlant, GetProjectileDef().mDamage);
+			else if (RsvzPvzp::PlantDamageRule() == 2)
+				aPlant->mPlantHealth = 0;
+			else if (RsvzPvzp::PlantDamageRule() != 1)
+				aPlant->mPlantHealth -= GetProjectileDef().mDamage;
+		#else
 			aPlant->mPlantHealth -= GetProjectileDef().mDamage;
+		#endif
 			aPlant->mEatenFlashCountdown = std::max(aPlant->mEatenFlashCountdown, 25);
 			mApp->PlayFoley(FoleyType::FOLEY_SPLAT);
 			Die();
@@ -749,6 +770,10 @@ void Projectile::UpdateMotion()
 	}
 
 	float aSlopeHeightChange = mBoard->GetPosYBasedOnRow(mPosX, aOldRow) - aOldY;
+	#ifdef PVZP_WITH_RSVZ
+	if (RsvzPvzp::CobDriftFixed() && mProjectileType == ProjectileType::PROJECTILE_COBBIG)
+		aSlopeHeightChange = 0.0f;
+	#endif
 	if (mMotionType == ProjectileMotion::MOTION_FLOAT_OVER)
 	{
 		mPosY += aSlopeHeightChange;

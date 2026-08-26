@@ -30,6 +30,9 @@
 #include "graphics/Font.h"
 #include "../PvzpLib/FilterEffect.h"
 #include "misc/SexyMatrix.h"
+#ifdef PVZP_WITH_RSVZ
+#include "rsvz_pvzp_hooks.h"
+#endif
 
 constexpr const int SLOT_MACHINE_TIME = 400;
 constexpr const int CONVEYOR_SPEED = 4;
@@ -170,6 +173,10 @@ void SeedPacket::Update()
 
 	if (!mActive && mRefreshing)
 	{
+	#ifdef PVZP_WITH_RSVZ
+		if (RsvzPvzp::SeedRechargeIgnored())
+			mRefreshCounter = mRefreshTime;
+	#endif
 		mRefreshCounter++;
 		if (mRefreshCounter > mRefreshTime)
 		{
