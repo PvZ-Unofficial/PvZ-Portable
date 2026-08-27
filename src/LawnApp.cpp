@@ -340,8 +340,6 @@ void LawnApp::KillBoard()
 		{
 			std::string aFileName = GetSavedGameName(mGameMode, mPlayerInfo->mId);
 			EraseFile(aFileName);
-			std::string aLegacyFileName = GetLegacySavedGameName(mGameMode, mPlayerInfo->mId);
-			EraseFile(aLegacyFileName);
 		}
 
 		mBoard->DisposeBoard();
@@ -431,10 +429,11 @@ void LawnApp::PreNewGame(GameMode theGameMode, bool theLookForSavedGame)
 	if (theLookForSavedGame && TryLoadGame())
 		return;
 
-	std::string aFileName = GetSavedGameName(mGameMode, mPlayerInfo->mId);
-	EraseFile(aFileName);
-	std::string aLegacyFileName = GetLegacySavedGameName(mGameMode, mPlayerInfo->mId);
-	EraseFile(aLegacyFileName);
+	if (!theLookForSavedGame)
+	{
+		std::string aFileName = GetSavedGameName(mGameMode, mPlayerInfo->mId);
+		EraseFile(aFileName);
+	}
 	NewGame();
 }
 
@@ -492,10 +491,7 @@ bool LawnApp::TryLoadGame()
 		MakeNewBoard();
 		if (mBoard->LoadGame(aLegacySaveName))
 		{
-			if (LawnSaveGame(mBoard, aSaveName))
-			{
-				EraseFile(aLegacySaveName);
-			}
+			LawnSaveGame(mBoard, aSaveName);
 			mFirstTimeGameSelector = false;
 			if (mBoard->mLevelAwardSpawned) // Ensure save cleanup after award collection
 				mBoardResult = BoardResult::BOARDRESULT_WON;

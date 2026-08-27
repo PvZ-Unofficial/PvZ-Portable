@@ -174,8 +174,6 @@ void PlayerInfo::DeleteUserFiles()
 	{
 		std::string aFileName = GetSavedGameName((GameMode)i, mId);
 		gSexyAppBase->EraseFile(aFileName);
-		std::string aLegacyFileName = GetLegacySavedGameName((GameMode)i, mId);
-		gSexyAppBase->EraseFile(aLegacyFileName);
 	}
 }
 

@@ -244,13 +244,14 @@ PvZ-Portable uses two distinct types of save data:
     *   **Fully compatible** with the original PC game format.
     *   Already portable by design (uses explicit serialization).
 
-2.  **Mid-Level Save States** (`game1_0.v4`, etc. legacy `game1_0.dat`, etc.):
+2.  **Mid-Level Save States** (`game1_0.v4`, etc.; original 1.0.0.1051 imports use `game1_0.dat`, etc.):
     *   Stores the exact state of a level when "Save and Exit" is used (zombies, projectiles, plants, etc.).
-    *   The game now writes **only** `*.v4` files by default:
+    *   The game writes **only** `*.v4` files:
         *   `*.v4` files: **Portable format**. Sharing these files to transfer progress between different platforms is fully **supported**.
-        *   `*.dat` files: **Legacy dump** from old versions. Contains raw memory dumps. **Do not share this file** across platforms as it will cause crashes due to architecture differences.
-    *   When loading, the game **prefers** `.v4`; `*.dat` is fallback-only for migration compatibility.
-    *   If a save is loaded from legacy `*.dat`, the game automatically re-saves it to `*.v4` and removes the legacy `*.dat` after successful migration.
+        *   `*.dat` files: read-only import sources. Only mid-level saves written by the Windows original game 1.0.0.1051 are accepted. Annual-edition saves and raw dumps written by early PvZ-Portable builds are not supported.
+    *   A valid `.v4` always takes priority. Otherwise, a matching valid 1.0.0.1051 `.dat` is loaded and the restored state is saved as `.v4`.
+    *   PvZ-Portable never deletes, renames, or modifies an imported `.dat`. If the generated `.v4` is later removed while the `.dat` remains in `userdata/`, that `.dat` is eligible for import again.
+    *   Import is opt-in and local: copy the required `game*.dat` into PvZ-Portable's corresponding `userdata/` directory yourself. PvZ-Portable does not scan or move files from the original game's save directory.
 
 ### Why a new mid-level save format?
 
