@@ -45,6 +45,10 @@
 
 #include <SDL.h>
 
+#ifdef PVZP_WITH_RSVZ
+#include "rsvz_pvzp_hooks.h"
+#endif
+
 #ifdef __SWITCH__
 #include <switch.h>
 #include <locale>
@@ -1774,6 +1778,11 @@ bool SexyAppBase::DrawDirtyStuff()
 {
 	SEXY_AUTO_PERF("SexyAppBase::DrawDirtyStuff");
 	MTAutoDisallowRand aDisallowRand;
+
+#ifdef PVZP_WITH_RSVZ
+	if (RsvzPvzp::WindowUpdateSuppressed())
+		return false;
+#endif
 
 	if (gIsFailing) // just try to reinit
 	{

@@ -1602,6 +1602,8 @@ void LawnApp::UpdateFrames()
 	for (int i = 0; i < aUpdateCount; i++)
 	{
 #ifdef PVZP_WITH_RSVZ
+		if (!RsvzPvzp::ContinueUpdateBatch(i))
+			break;
 		if (!RsvzPvzp::BeforeUpdate())
 			continue;
 #endif
@@ -1624,7 +1626,10 @@ void LawnApp::UpdateFrames()
 		RsvzPvzp::EndLogicFrame();
 #endif
 
-		mMusic->MusicUpdate();
+#ifdef PVZP_WITH_RSVZ
+		if (RsvzPvzp::FastForwardPerformance() == 0)
+#endif
+			mMusic->MusicUpdate();
 
 		CheckForGameEnd();
 	}
@@ -1992,6 +1997,10 @@ void LawnApp::CenterDialog(Dialog* theDialog, int theWidth, int theHeight)
 
 void LawnApp::PlayFoley(FoleyType theFoleyType)
 {
+#ifdef PVZP_WITH_RSVZ
+	if (RsvzPvzp::FastForwardPerformance() >= 2)
+		return;
+#endif
 	if (!mMuteSoundsForCutscene)
 	{
 		mSoundSystem->PlayFoley(theFoleyType);
@@ -2000,6 +2009,10 @@ void LawnApp::PlayFoley(FoleyType theFoleyType)
 
 void LawnApp::PlayFoleyPitch(FoleyType theFoleyType, float thePitch)
 {
+#ifdef PVZP_WITH_RSVZ
+	if (RsvzPvzp::FastForwardPerformance() >= 2)
+		return;
+#endif
 	if (!mMuteSoundsForCutscene)
 	{
 		mSoundSystem->PlayFoleyPitch(theFoleyType, thePitch);
@@ -3252,6 +3265,10 @@ bool LawnApp::CanDoDaisyMode()
 
 void LawnApp::PlaySample(intptr_t theSoundNum)
 {
+#ifdef PVZP_WITH_RSVZ
+	if (RsvzPvzp::FastForwardPerformance() >= 2)
+		return;
+#endif
 	if (!mMuteSoundsForCutscene)
 	{
 		SexyAppBase::PlaySample(theSoundNum);
