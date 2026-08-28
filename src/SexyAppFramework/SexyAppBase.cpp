@@ -1781,7 +1781,11 @@ bool SexyAppBase::DrawDirtyStuff()
 
 #ifdef PVZP_WITH_RSVZ
 	if (RsvzPvzp::WindowUpdateSuppressed())
+	{
+		mHasPendingDraw = false;
+		mLastDrawWasEmpty = true;
 		return false;
+	}
 #endif
 
 	if (gIsFailing) // just try to reinit

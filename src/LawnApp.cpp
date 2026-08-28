@@ -1605,7 +1605,7 @@ void LawnApp::UpdateFrames()
 		if (!RsvzPvzp::ContinueUpdateBatch(i))
 			break;
 		if (!RsvzPvzp::BeforeUpdate())
-			continue;
+			break;
 #endif
 		mAppCounter++;
 

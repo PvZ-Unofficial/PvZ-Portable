@@ -114,7 +114,7 @@ endif()
 
 option(PVZ_DEBUG "Enable PVZ_DEBUG macro to enable cheats, hidden features, etc." ${PVZ_DEBUG_DEFAULT})
 option(CONSOLE "Show console on Windows" ${WIN_CONSOLE_DEFAULT})
-set(PVZP_RSVZ_CMAKE "" CACHE FILEPATH "Optional RustVsZombies PvZ-Portable integration fragment")
+set(PVZP_RSVZ_CMAKE "" CACHE FILEPATH "Optional RustVsZombies plugin-host integration fragment")
 
 if(EMSCRIPTEN)
 	list(PREPEND CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/CMake")

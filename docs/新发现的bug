@@ -40,6 +40,54 @@ PvZ-Portable 中的实际修复提交号。本文件不保留已完成项。
   仅在未命中对象时调用 `ZombiquariumMouseDown`；两种已处理情况均返回
   `true`。增加点击空白处与已有对象的回归测试。
 
+## B7. SDL 默认吞掉用于激活窗口的首次点击
+
+- 状态：已确认待修。
+- 问题介绍：`src/SexyAppFramework/platform/default/Window.cpp` 创建 SDL 窗口前
+  没有启用 `SDL_HINT_MOUSE_FOCUS_CLICKTHROUGH`。本机实际构建使用的 SDL
+  2.32.10 明确规定该选项默认关闭，因此点击未获得焦点的窗口时只激活窗口，
+  不生成对应的 `SDL_MOUSEBUTTONDOWN`；现有输入分支因而无从调用
+  `WidgetManager::MouseDown`。
+- 年度版证据：年度版源码沿革提交
+  `e90839a63c26430607b2d9c6c83c5e75701e051f` 的 Win32
+  `SexyAppBase::WindowProc` 没有拦截 `WM_MOUSEACTIVATE`，由
+  `DefWindowProc` 采用激活且不丢弃点击的默认处理；随后
+  `WM_ACTIVATEAPP` 和 `WM_LBUTTONDOWN` 均被加入延迟消息队列，后者最终调用
+  `WidgetManager::MouseDown`。原版 1051 的对应实现相同，实际运行也可用一次
+  点击同时激活窗口并操作游戏。
+- 实际游戏行为差异：当前 Portable 窗口失去焦点后，第一次点击只能激活窗口，
+  必须再次点击才能操作按钮、卡片或场地；两个官方 Windows 版本只需点击一次。
+- 历史检查：SDL 输入后端最早由
+  `6253f50f612d588c8a5a200afb802c50f129681f` 引入，并在
+  `c613cb509b149e010c5134e30ceab1ae7b95e30e` 拆分；检查全部相关历史，未曾设置
+  `SDL_HINT_MOUSE_FOCUS_CLICKTHROUGH`。这不是 `mMouseIn` 门禁造成的：只要
+  `SDL_MOUSEBUTTONDOWN` 到达，当前分支就会先恢复鼠标在窗状态再分发点击。
+- 待办：在创建 SDL 窗口前把 `SDL_HINT_MOUSE_FOCUS_CLICKTHROUGH` 设为 `1`，
+  验证失焦窗口中的按钮、卡片和场地均能由首次点击直接操作。
+
+## B8. SDL 窗口离开事件未清除鼠标在窗状态
+
+- 状态：已确认待修。
+- 问题介绍：`src/SexyAppFramework/platform/default/Input.cpp` 在鼠标移动或按键
+  事件中把 `SexyAppBase::mMouseIn` 和 `WidgetManager::mMouseIn` 置为 `true`，
+  却没有处理 SDL 已提供的 `SDL_WINDOWEVENT_ENTER` 和
+  `SDL_WINDOWEVENT_LEAVE`。鼠标移出仍保持焦点的窗口后，两个状态可能一直
+  保留为 `true`，且 `WidgetManager::MouseExit` 不会被调用。
+- 年度版证据：上述年度版源码沿革中的 Win32 `WM_TIMER` 分支会用
+  `WindowFromPoint` 和客户区边界周期性核对鼠标位置；检测到离开时调用
+  `WidgetManager::MouseExit`、把 `mMouseIn` 置为 `false` 并刷新光标。原版
+  1051 的对应实现相同。该鼠标进出检测与同一 `WM_TIMER` 分支中记录超过
+  500ms 计时器间隔的代码彼此独立，并不是跳帧控制条件。
+- 实际游戏行为差异：当前 Portable 在鼠标离开窗口后，按钮悬停状态、提示框
+  或关内随鼠标显示的对象可能仍按“鼠标位于窗口内”继续显示，直到其他事件
+  间接刷新状态；官方版本会在检测到离开后清除这些状态。
+- 历史检查：检查 SDL 后端的引入提交
+  `6253f50f612d588c8a5a200afb802c50f129681f`、输入拆分提交
+  `c613cb509b149e010c5134e30ceab1ae7b95e30e` 及后续历史，均未找到
+  `SDL_WINDOWEVENT_ENTER` 或 `SDL_WINDOWEVENT_LEAVE` 的处理。
+- 待办：在 SDL 窗口事件分支同步维护应用和 `WidgetManager` 的鼠标在窗状态；
+  离开时调用 `MouseExit`，并验证按钮悬停、提示框和关内鼠标对象及时消失。
+
 ## 记录格式
 
 <!--

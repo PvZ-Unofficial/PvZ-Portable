@@ -216,7 +216,7 @@ You can customize the game features by adding options to the first `cmake` comma
 | `PVZ_DEBUG` | `OFF`<br>(`ON` if `CMAKE_BUILD_TYPE` is `Debug`) | Enable **cheat keys**, debug displays and other debug features. |
 | `CONSOLE` | `OFF`<br>(`ON` if `CMAKE_BUILD_TYPE` is `Debug`) | Show a console window (Windows only). |
 | `BUILD_STATIC` | `OFF` | Link dependencies statically (Windows with MinGW-based toolchains, glibc-based Linux). Use a vcpkg `-static` triplet for MSVC. |
-| `PVZP_RSVZ_CMAKE` | empty | Optional path to a RustVsZombies integration fragment. Normal builds must leave this empty. |
+| `PVZP_RSVZ_CMAKE` | empty | Optional path to a RustVsZombies plugin-host integration fragment. Normal builds must leave this empty. |
 
 Example: Manually enable `PVZ_DEBUG` in **Release build** so that you can use **cheat keys** while having optimized performance:
 
@@ -227,11 +227,14 @@ cmake -G Ninja -B build -DCMAKE_BUILD_TYPE=Release -DPVZ_DEBUG=ON
 ### Optional RustVsZombies integration
 
 PvZ-Portable does not contain or link RustVsZombies in its default build. The
-RustVsZombies `run-portable` command supplies `PVZP_RSVZ_CMAKE` and the generated
-Rust static library for an opt-in build; users should invoke that command from
-the RustVsZombies workspace instead of configuring these internal variables by
-hand. Leaving `PVZP_RSVZ_CMAKE` empty preserves the standalone build and game
-behavior.
+RustVsZombies `run-portable` command supplies `PVZP_RSVZ_CMAKE` to build an
+opt-in, script-independent plugin host, then builds the selected script as a DLL
+and supplies its path when launching the game. The same host executable starts
+normally when no plugin path is supplied; changing scripts does not relink the
+game. Users should invoke `run-portable` from the RustVsZombies workspace instead
+of configuring these internal variables by hand. Neither project checks, copies,
+or infers `main.pak` or other game resources. Leaving `PVZP_RSVZ_CMAKE` empty
+preserves the default standalone build and game behavior.
 
 If running these commands does not create a successful build please create an issue and detail your problem.
 
