@@ -180,9 +180,6 @@ unsigned long MTRand::NextNoAssert()
 
 	y &= 0x7FFFFFFF;
 
-	#ifdef PVZP_WITH_RSVZ
-	RsvzPvzp::RecordRandom(this, y);
-	#endif
 	return y;
 }
 
