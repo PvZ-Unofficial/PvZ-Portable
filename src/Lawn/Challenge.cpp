@@ -4276,7 +4276,7 @@ ZombieType Challenge::IZombieSeedTypeToZombieType(SeedType theSeedType)
 	unreachable();
 }
 
-void Challenge::IZombiePlaceZombie(ZombieType theZombieType, int theGridX, int theGridY)
+Zombie* Challenge::IZombiePlaceZombie(ZombieType theZombieType, int theGridX, int theGridY)
 {
 	Zombie* aZombie = mBoard->AddZombieInRow(theZombieType, theGridY, 0);
 	if (theZombieType == ZOMBIE_BUNGEE)
@@ -4291,6 +4291,7 @@ void Challenge::IZombiePlaceZombie(ZombieType theZombieType, int theGridX, int t
 	{
 		aZombie->mPosX = mBoard->GridToPixelX(theGridX, theGridY) - 30.0f;
 	}
+	return aZombie;
 }
 
 void Challenge::IZombieMouseDownWithZombie(int theX, int theY, int theClickCount)

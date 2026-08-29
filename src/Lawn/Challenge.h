@@ -225,7 +225,7 @@ public:
 	void                    BeghouledCreatePlants(BeghouledBoardState* theOldBoardState, BeghouledBoardState* theNewBoardState);
 	void                    PuzzlePhaseComplete(int theGridX, int theGridY);
 	int         PuzzleIsAwardStage();
-	void                    IZombiePlaceZombie(ZombieType theZombieType, int theGridX, int theGridY);
+	Zombie*                 IZombiePlaceZombie(ZombieType theZombieType, int theGridX, int theGridY);
 	void                    WhackAZombieUpdate();
 	void                    LastStandCompletedStage();
 	void                    TreeOfWisdomUpdate();
