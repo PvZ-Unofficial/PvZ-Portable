@@ -419,7 +419,9 @@ void Reanimation::Update()
 
 	PVZP_ASSERT(std::isfinite(mAnimRate));
 	mLastFrameTime = mAnimTime;  // save the previous loop position
-	mAnimTime += SECONDS_PER_UPDATE * mAnimRate / mFrameCount;  // advance the loop position
+	const float aScaledRate = static_cast<float>(SECONDS_PER_UPDATE * mAnimRate);
+	const float anIncrement = static_cast<float>(static_cast<double>(aScaledRate) / mFrameCount);
+	mAnimTime = static_cast<float>(static_cast<double>(mAnimTime) + anIncrement);  // x87 PC24 stages
 
 	if (mAnimRate > 0)
 	{
