@@ -1235,7 +1235,13 @@ void Board::InitSurvivalStage()
 	mApp->mSoundSystem->GamePause(true);
 	FreezeEffectsForCutscene(true);
 	mLevelComplete = false;
+	#ifdef PVZP_WITH_RSVZ
+	RsvzPvzp::BeginSurvivalWaveInit();
+	#endif
 	InitZombieWaves();
+	#ifdef PVZP_WITH_RSVZ
+	RsvzPvzp::EndSurvivalWaveInit();
+	#endif
 	mApp->mGameScene = GameScenes::SCENE_LEVEL_INTRO;
 	mApp->ShowSeedChooserScreen();
 	mCutScene->StartLevelIntro();
@@ -2495,12 +2501,18 @@ bool Board::RowCanHaveZombieType(int theRow, ZombieType theZombieType)
 
 int Board::PickRowForNewZombie(ZombieType theZombieType)
 {
+	#ifdef PVZP_WITH_RSVZ
+	RsvzPvzp::BeginRowPick();
+	#endif
 	// A rake that is attracting a zombie pulls the new zombie into its row
 	GridItem* aRake = GetRake();
 	if (aRake && aRake->mGridItemState == GridItemState::GRIDITEM_STATE_RAKE_ATTRACTING && RowCanHaveZombieType(aRake->mGridY, theZombieType))
 	{
 		aRake->mGridItemState = GridItemState::GRIDITEM_STATE_RAKE_WAITING;
 		PvzpUpdateSmoothArrayPick(mRowPickingArray, MAX_GRID_SIZE_Y, aRake->mGridY);
+		#ifdef PVZP_WITH_RSVZ
+		RsvzPvzp::EndRowPick();
+		#endif
 		return aRake->mGridY;
 	}
 
@@ -2541,7 +2553,11 @@ int Board::PickRowForNewZombie(ZombieType theZombieType)
 			}
 		}
 	}
-	return PvzpPickFromSmoothArray(mRowPickingArray, MAX_GRID_SIZE_Y);
+	int aRow = PvzpPickFromSmoothArray(mRowPickingArray, MAX_GRID_SIZE_Y);
+	#ifdef PVZP_WITH_RSVZ
+	RsvzPvzp::EndRowPick();
+	#endif
+	return aRow;
 }
 
 bool Board::CanAddBobSled()
@@ -4838,6 +4854,9 @@ int Board::TotalZombiesHealthInWave(int theWaveIndex)
 
 void Board::SpawnZombieWave()
 {
+	#ifdef PVZP_WITH_RSVZ
+	RsvzPvzp::BeginWaveSpawn(this);
+	#endif
 	mChallenge->SpawnZombieWave();
 	if (mApp->IsBungeeBlitzLevel())
 	{
@@ -4896,6 +4915,9 @@ void Board::SpawnZombieWave()
 	}
 	mCurrentWave++;
 	mTotalSpawnedWaves++;
+	#ifdef PVZP_WITH_RSVZ
+	RsvzPvzp::EndWaveSpawn();
+	#endif
 }
 
 void Board::UpdateGameObjects()

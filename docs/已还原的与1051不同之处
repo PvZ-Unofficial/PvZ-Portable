@@ -281,6 +281,41 @@
   Coin 或 Trail，因此这两类对象尚无真实运行恢复覆盖。
 - 修改提交号：`15817d36b97484ff4060988af8f1a86939d0f5b3`。
 
+## V12. 恢复原版 x87 PC24 的 reanimation 时间推进阶段
+
+- 问题介绍：64 位 Portable 将 `mAnimTime` 的乘、除、加写成一条表达式，
+  编译器按 SSE/宿主精度求值；1051 的 32 位 x87 路径会在 PC24 下分阶段舍入。
+- 原版证据：真实 1051 与 Portable 的“豌豆射手对固定普通僵尸”Full Witness
+  中，其余僵尸状态和坐标相同时，2501 帧内有 42 帧 `mAnimTime` 相差 1 ULP；
+  按乘法、除法、加法三个 float 阶段求值后逐 bit 重合。
+- 年度版证据：这是编译目标和浮点求值方式造成的移植差异，不依赖年度版规则。
+- 实际游戏行为差异：会产生稀疏的动画相位差；使用 reanimation track 的位移、
+  事件或碰撞在边界上也可能继承该差异。本次夹具尚未观察到僵尸坐标或血量分歧。
+- 还原：显式保存缩放速率和增量两个 float 中间值，再以 float 舍入写回
+  `mAnimTime`，复现 1051 PC24 的可观察阶段。
+- 修改文件：`src/PvzpLib/Reanimator.cpp`。
+- 验证：Portable MSVC Release 下上述 2501 帧 Full Witness 与真实 1051
+  逐 bit 相同；普通 MSVC 与 UCRT64 独立游戏构建均成功。
+- 修改提交号：`27c07decd39a6efe3419c5421942953dce65ff11`。
+
+## V13. 恢复矿工出土裁剪期间的倒置碰撞矩形
+
+- 问题介绍：Portable 在 `Zombie::GetZombieRect` 扣除裁剪高度后额外把负高度
+  截为 0；1051 在矿工出土的短暂阶段保留负高度矩形。
+- 原版证据：PE24 Full Witness 的 frame 922 中，同一矿工的 1051 矩形为
+  top 334、bottom 250，旧 Portable 为 top 334、bottom 334；删除 clamp 后
+  三轮 47136 个 canonical frame 全部重合。
+- 年度版证据：该 clamp 是 Portable 路径上的安全化修改；1051 对应逻辑只扣除
+  `mClipHeight`，不把结果限制为非负。
+- 实际游戏行为差异：`GetZombieRect` 是真实碰撞几何，零高与倒置矩形在边界
+  查询中语义不同；PE24 夹具首先在矿工出土阶段观测到该差异。
+- 还原：移除负高度 clamp；RSVZ 的 Portable backend 同时允许无溢出的负尺寸
+  `ContactRect`，避免观测层再次改写原生几何。
+- 修改文件：`src/Lawn/Zombie.cpp`。
+- 验证：Portable PE24 三轮 Survival Digest Witness 与同一 1051 golden
+  在 47136 帧上完全一致；普通 MSVC 与 UCRT64 独立游戏构建均成功。
+- 修改提交号：`27c07decd39a6efe3419c5421942953dce65ff11`。
+
 ## 记录格式
 
 <!--

@@ -1481,6 +1481,9 @@ void LawnApp::CheckForGameEnd()
 		}
 		else
 		{
+			#ifdef PVZP_WITH_RSVZ
+			RsvzPvzp::RoundCompleted();
+			#endif
 			mBoard->mChallenge->mSurvivalStage++;
 			KillGameSelector();
 			mBoard->InitSurvivalStage();
