@@ -29,7 +29,7 @@ source=(
     "${pkgname}::git+file://${startdir}/.."
     # IMPORTANT: You must create this file yourself using assets from your legally owned copy.
     # See archlinux/README.md for instructions.
-    "Plants_vs._Zombies_1.2.0.1073_EN.zip"
+    "Plants_vs._Zombies_1.0.0.1051_EN.zip"
     "pvz-portable.sh"
     "io.github.wszqkzqk.pvz-portable.desktop"
 )
