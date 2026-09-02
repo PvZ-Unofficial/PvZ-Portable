@@ -27,6 +27,9 @@
 #include "graphics/Graphics.h"
 #include "graphics/GLInterface.h"
 #include <algorithm>
+#ifdef PVZP_WITH_RSVZ
+#include "rsvz_pvzp_hooks.h"
+#endif
 
 int gParticleDefCount;
 std::unique_ptr<PvzpParticleDefinition[]> gParticleDefArray;
@@ -822,6 +825,14 @@ void PvzpParticleEmitter::Update()
 	}
 	UpdateSpawning();
 
+	#ifdef PVZP_WITH_RSVZ
+	if (RsvzPvzp::FastForwardPerformance() >= 2)
+	{
+		DeleteNonCrossFading();
+		mDead = true;
+		return;
+	}
+	#endif
 	if (aDie)
 	{
 		DeleteNonCrossFading();

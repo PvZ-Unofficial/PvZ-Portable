@@ -33,6 +33,9 @@
 #include "misc/PerfTimer.h"
 #include "graphics/MemoryImage.h"
 #include <algorithm>
+#ifdef PVZP_WITH_RSVZ
+#include "rsvz_pvzp_hooks.h"
+#endif
 
 constexpr const int NO_BASE_POSE = -2;
 
@@ -492,6 +495,11 @@ void Reanimation::Update()
 		}
 	}
 
+	#ifdef PVZP_WITH_RSVZ
+	const bool aUpdateAttacherTracks = RsvzPvzp::FastForwardPerformance() < 2;
+	#else
+	constexpr bool aUpdateAttacherTracks = true;
+	#endif
 	for (int aTrackIndex = 0; aTrackIndex < mDefinition->mTracks.count; aTrackIndex++)
 	{
 		ReanimatorTrackInstance* aTrack = &mTrackInstances[aTrackIndex];
@@ -504,7 +512,7 @@ void Reanimation::Update()
 			aTrack->mShakeY = RandRangeFloat(-aTrack->mShakeOverride, aTrack->mShakeOverride);
 		}
 
-		if (strncasecmp(mDefinition->mTracks.tracks[aTrackIndex].mName, "attacher__", 10) == 0)  // IsAttacher
+		if (aUpdateAttacherTracks && strncasecmp(mDefinition->mTracks.tracks[aTrackIndex].mName, "attacher__", 10) == 0)  // IsAttacher
 			UpdateAttacherTrack(aTrackIndex);
 
 		if (aTrack->mAttachmentID != AttachmentID::ATTACHMENTID_NULL)

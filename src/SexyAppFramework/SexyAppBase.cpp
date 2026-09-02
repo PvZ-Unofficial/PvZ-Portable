@@ -2435,6 +2435,10 @@ void SexyAppBase::ResetCustomCursorCache()
 
 void SexyAppBase::EnforceCursor()
 {
+	#ifdef PVZP_WITH_RSVZ
+	if (RsvzPvzp::FastForwardPerformance() >= 2)
+		return;
+	#endif
 	int aCursorNum = mSEHOccured ? CURSOR_POINTER : mCursorNum;
 	if (aCursorNum < 0 || aCursorNum >= NUM_CURSORS)
 		aCursorNum = CURSOR_POINTER;

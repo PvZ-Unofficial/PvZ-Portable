@@ -3157,6 +3157,10 @@ void Board::UpdateMousePosition()
 
 void Board::UpdateToolTip()
 {
+	#ifdef PVZP_WITH_RSVZ
+	if (RsvzPvzp::FastForwardPerformance() >= 2)
+		return;
+	#endif
 	if (!mApp->mWidgetManager->mMouseIn || !mApp->mActive || mTimeStopCounter > 0 || mApp->GetDialogCount() > 0 || mApp->mGameScene == GameScenes::SCENE_ZOMBIES_WON)
 	{
 		mToolTip->mVisible = false;

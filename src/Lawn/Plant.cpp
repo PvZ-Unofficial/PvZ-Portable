@@ -1734,6 +1734,10 @@ void Plant::UpdateCobCannon()
 	}
 	else if (mState == PlantState::STATE_COBCANNON_READY)
 	{
+		#ifdef PVZP_WITH_RSVZ
+		if (RsvzPvzp::FastForwardPerformance() >= 2)
+			return;
+		#endif
 		Reanimation* aBodyReanim = mApp->ReanimationGet(mBodyReanimID);
 		ReanimatorTrackInstance* aCobTrack = aBodyReanim->GetTrackInstanceByName("CobCannon_cob");
 		aCobTrack->mTrackColor = GetFlashingColor(mBoard->mMainCounter, 75);
@@ -2694,6 +2698,10 @@ bool Plant::IsUpgradableTo(SeedType theUpgradedType)
 
 void Plant::UpdateReanimColor()
 {
+	#ifdef PVZP_WITH_RSVZ
+	if (RsvzPvzp::FastForwardPerformance() >= 2)
+		return;
+	#endif
 	if (!IsOnBoard())
 		return;
 
@@ -3591,6 +3599,10 @@ float PlantFlowerPotHeightOffset(SeedType theSeedType, float theFlowerPotScale)
 
 float PlantDrawHeightOffset(Board* theBoard, Plant* thePlant, SeedType theSeedType, int theCol, int theRow)
 {
+	#ifdef PVZP_WITH_RSVZ
+	if (RsvzPvzp::FastForwardPerformance() >= 2)
+		return 0.0f;
+	#endif
 	float aHeightOffset = 0.0f;
 
 	bool doFloating = false;
