@@ -17,29 +17,6 @@ PvZ-Portable 中的实际修复提交号。本文件不保留已完成项。
   `UpdateBlover()`；第 20 项在常规出怪路径由 `RowCanHaveZombieType()` 的气球
   特判提供了与官方一致的可观察行为，公共 helper 的局部差异不再作为游戏 bug。
 
-## B6. 僵尸水族馆点击已命中对象时仍执行空白区域逻辑
-
-- 状态：已确认待修。
-- 问题介绍：`src/Lawn/Challenge.cpp` 当前在僵尸水族馆中只要
-  函数参数 `theClickCount > 0` 就调用 `ZombiquariumMouseDown`，没有
-  要求点击测试结果为空；而未进入该分支时还返回 `false`。历史提交
-  `08452331162c95b667066caf8aded2cba96db26a` 虽调整过此处，却没有完整恢复
-  官方控制流。
-- 年度版证据：年度版 `Challenge::MouseDown` 的对应分支
-  `0x42D9CA`—`0x42DA0A` 与 1051 的 `0x422136`—`0x422179` 同构：计数不大于
-  `-1` 时只播放敲玻璃声；计数大于 `-1` 时，只有
-  `HitResult::mObjectType == OBJECT_TYPE_NONE` 才调用 `ZombiquariumMouseDown`。
-  这两条已处理路径最后都返回 `true`。
-- 实际游戏行为差异：当前 Portable 点击鱼缸内已有僵尸、卡包或其他对象时，
-  还可能额外执行一次空白区域点击逻辑；部分路径又错误报告事件未处理，使
-  上层继续分发同一次点击。
-- 历史检查：上述提交是该分支的直接历史修改；检查至审阅基线
-  `3c784d1fda4e04b0b63651ebd495edd83e3bb499`，没有后续提交补回
-  `OBJECT_TYPE_NONE` 条件或统一的已处理返回值。
-- 待办：按两个官方版本恢复分支：计数小于等于 `-1` 时播放敲玻璃声；否则
-  仅在未命中对象时调用 `ZombiquariumMouseDown`；两种已处理情况均返回
-  `true`。增加点击空白处与已有对象的回归测试。
-
 ## B7. SDL 默认吞掉用于激活窗口的首次点击
 
 - 状态：已确认待修。
@@ -87,6 +64,33 @@ PvZ-Portable 中的实际修复提交号。本文件不保留已完成项。
   `SDL_WINDOWEVENT_ENTER` 或 `SDL_WINDOWEVENT_LEAVE` 的处理。
 - 待办：在 SDL 窗口事件分支同步维护应用和 `WidgetManager` 的鼠标在窗状态；
   离开时调用 `MouseExit`，并验证按钮悬停、提示框和关内鼠标对象及时消失。
+
+## B10. 战斗界面 Menu 悬停未切换为手形光标
+
+- 状态：用户现场已复现，根因待动态确认。
+- 问题介绍：正常战斗界面右上角 Menu 可点击且会显示按钮悬停效果，但系统光标
+  保持箭头；其他可点击控件会切换为手形。Menu 是 Board 手工维护的
+  `GameButton`，不是由 `WidgetManager::MouseEnter` 自动设置 `mDoFinger` 的普通
+  Widget。
+- 当前实现分析：`Board::UpdateCursor` 已把 `OBJECT_TYPE_MENU_BUTTON` 显式映射为
+  `CURSOR_HAND`，`MouseHitTest` 也会用 `mMenuButton->IsMouseOver()` 返回该类型，
+  因此不是遗漏 hand case。`Board::MouseMove` 本身不刷新光标，而是依赖后续
+  `Board::Update -> UpdateMousePosition -> UpdateCursor`；暂停、逻辑更新被抑制，
+  或同帧后续路径重新写入 `CURSOR_POINTER` 都可能形成现场现象，尚需区分。
+- 官方证据：1051 `Board::UpdateCursor@0x40E520` 同样把 Menu 命中归入手形分支，
+  `Board::MouseMove@0x40E760` 也不直接更新光标。现有源码证据说明官方预期是
+  Menu 显示手形，但尚不能仅凭静态代码判定 Portable 的最终覆盖点。
+- 实际游戏行为差异：不影响 Menu 的点击动作，但使同一界面内的可点击反馈不一致，
+  也降低按钮可发现性。
+- 历史检查：PR #343 / 提交
+  `266224c78289e7e983945d593f7de1242a697037` 改为从实时鼠标坐标计算
+  `GameButton::IsMouseOver`；提交 `e7a917f28ddeaadb07e673e211f2162d0a14623a`
+  接入 SDL 系统光标。两者均未删除 Board 的 Menu hand 分支，历史中也未找到
+  针对此现象的修复。
+- 待办：在活动战斗、原生暂停和 RSVZ 更新抑制三种状态下记录
+  `MouseHitTest` 结果、`mCursorNum` 与最后一次 `SetCursor` 调用方，并与真实1051
+  对照；确认覆盖点后再选择在 `Board::MouseMove` 即时刷新，或删除错误的后续
+  pointer 写入，避免猜测性修改官方暂停语义。
 
 ## 记录格式
 

@@ -63,6 +63,27 @@ PvZ-Portable 自身错误的 bug。年度版与原版的版本差异改动记录
 - 修改文件：`src/Lawn/Plant.cpp`。
 - 修改提交号：`685d6460ecfdc403e404dbdf0efb0449680c3367`
 
+## B9. 恢复圆形与倒置僵尸矩形的官方求交语义
+
+- 问题介绍：`src/Lawn/Board.cpp` 的 `GetCircleRectOverlap` 曾被重构为
+  `std::clamp`；伴舞等对象从地下升起时，官方 `GetZombieRect` 可以返回负高度，
+  此时 clamp 的下界大于上界，违反标准库前提。后续把矩形高度钳到 0 的修复
+  避开了断言，却改变了官方碰撞距离。
+- 年度版证据：1051 `GetZombieRect@0x5320B0` 与年度版对应函数 `0x54DE40`
+  都允许 `height - clipHeight` 为负；1051
+  `GetCircleRectOverlap@0x41C850` 和年度版 `@0x428460` 均使用相同的显式边界
+  分支计算距离，不依赖有序 clamp 区间。
+- 实际游戏行为差异：旧组合会在 Whack-A-Zombie 对尚未出土僵尸执行圆形命中
+  时触发 libstdc++ 断言；关闭断言时仍属于未定义行为。把负高度改成 0 又会让
+  该阶段的圆形命中范围偏离两个官方版本。
+- 修正：保留 V13 已恢复的官方负高度矩形，并把 `GetCircleRectOverlap` 恢复为
+  两个官方版本共有的四边分支语义，不再向 `std::clamp` 传入倒置边界。
+- 修改文件：`src/Lawn/Board.cpp`；配套负高度恢复位于 `src/Lawn/Zombie.cpp`。
+- 验证：UCRT `Board.cpp` 编译成功；Portable PE24 三轮 Survival Witness 与
+  1051 golden 的 47136 帧完全一致。
+- 修改提交号：`d945e8a3bfe48ac9235aa2f27b2e1df445cc9f75`；配套提交
+  `27c07decd39a6efe3419c5421942953dce65ff11`。
+
 ## 记录格式
 
 <!--

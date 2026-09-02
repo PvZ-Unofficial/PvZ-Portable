@@ -298,19 +298,21 @@
   逐 bit 相同；普通 MSVC 与 UCRT64 独立游戏构建均成功。
 - 修改提交号：`27c07decd39a6efe3419c5421942953dce65ff11`。
 
-## V13. 恢复矿工出土裁剪期间的倒置碰撞矩形
+## V13. 恢复伴舞出土等裁剪期间的倒置碰撞矩形
 
 - 问题介绍：Portable 在 `Zombie::GetZombieRect` 扣除裁剪高度后额外把负高度
-  截为 0；1051 在矿工出土的短暂阶段保留负高度矩形。
-- 原版证据：PE24 Full Witness 的 frame 922 中，同一矿工的 1051 矩形为
-  top 334、bottom 250，旧 Portable 为 top 334、bottom 334；删除 clamp 后
-  三轮 47136 个 canonical frame 全部重合。
-- 年度版证据：该 clamp 是 Portable 路径上的安全化修改；1051 对应逻辑只扣除
-  `mClipHeight`，不把结果限制为非负。
+  截为 0；1051 在裁剪高度大于基础碰撞框高度时保留负高度矩形。
+- 原版证据：PE24 Full Witness 的 frame 922 中，对象是
+  `BackupDancer(9) / DancerRising(50)`；1051 矩形为 top 334、bottom 250，
+  旧 Portable 为 top 334、bottom 334。1051 `GetZombieRect@0x5320B0` 在
+  `0x53211A` 直接计算并写回 `height - clipHeight`，没有非负钳制。
+- 年度版证据：1.2.0.1073 `GetZombieRect@0x54DE40` 在 `0x54DEAA` 使用相同的
+  `fisubr`，同样不把结果限制为非负；该 clamp 是 Portable 后加的安全化修改。
 - 实际游戏行为差异：`GetZombieRect` 是真实碰撞几何，零高与倒置矩形在边界
-  查询中语义不同；PE24 夹具首先在矿工出土阶段观测到该差异。
+  查询中语义不同；PE24 夹具首先在伴舞从地下升起时观测到该差异。
 - 还原：移除负高度 clamp；RSVZ 的 Portable backend 同时允许无溢出的负尺寸
-  `ContactRect`，避免观测层再次改写原生几何。
+  `ContactRect`，避免观测层再次改写原生几何。圆形求交函数对倒置矩形的
+  Portable 安全修复另见 `已经修复的bug合集` B9。
 - 修改文件：`src/Lawn/Zombie.cpp`。
 - 验证：Portable PE24 三轮 Survival Digest Witness 与同一 1051 golden
   在 47136 帧上完全一致；普通 MSVC 与 UCRT64 独立游戏构建均成功。
