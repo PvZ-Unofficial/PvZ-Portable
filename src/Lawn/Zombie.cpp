@@ -2156,6 +2156,9 @@ void Zombie::UpdateZombieGargantuar()
 			aZombieImp->mVelZ = 0.5f * (aThrowingDistance / aZombieImp->mVelX) * THOWN_ZOMBIE_GRAVITY;
 			aZombieImp->PlayZombieReanim("anim_thrown", ReanimLoopType::REANIM_PLAY_ONCE_AND_HOLD, 0, 18.0f);
 			aZombieImp->UpdateReanim();
+			#ifdef PVZP_WITH_RSVZ
+			RsvzPvzp::EmitImpThrown(this, aZombieImp);
+			#endif
 			mApp->PlayFoley(FoleyType::FOLEY_IMP);
 		}
 
@@ -8383,6 +8386,10 @@ void Zombie::ApplyBurn()
 {
 	if (mDead || mZombiePhase == ZombiePhase::PHASE_ZOMBIE_BURNED)
 		return;
+	#ifdef PVZP_WITH_RSVZ
+	if (mZombieType == ZombieType::ZOMBIE_GARGANTUAR || mZombieType == ZombieType::ZOMBIE_REDEYE_GARGANTUAR)
+		RsvzPvzp::EmitGargantuarAshHit(this);
+	#endif
 
 	if (mBodyHealth >= 1800 || mZombieType == ZombieType::ZOMBIE_BOSS)
 	{
