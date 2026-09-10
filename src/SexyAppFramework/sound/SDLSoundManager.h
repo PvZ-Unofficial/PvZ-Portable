@@ -80,6 +80,7 @@ public:
 
 	void					Flush() override;
 	void					StopAllSounds() override;
+	bool                    StopSound(intptr_t theSfxID) override;
 	intptr_t				GetFreeSoundId() override;
 	int						GetNumSounds() override;
 };

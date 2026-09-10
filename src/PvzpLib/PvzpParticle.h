@@ -22,6 +22,7 @@
 #ifndef __PVZPPARTICLE_H__
 #define __PVZPPARTICLE_H__
 
+#include "PvzpLib/Plugin.h"
 #include <cstdint>
 #include <memory>
 #include "PvzpList.h"
@@ -366,7 +367,7 @@ public:
 	~PvzpParticleSystem();
 
 	void							PvzpParticleInitializeFromDef(float theX, float theY, int theRenderOrder, PvzpParticleDefinition* theDefinition, ParticleEffect theEffectType);
-	void							ParticleSystemDie();
+	PVZP_API void							ParticleSystemDie();
 	void							Update();
 	void							Draw(Graphics* g);
 	void							SystemMove(float theX, float theY);

@@ -34,9 +34,7 @@
 #include "../PvzpLib/PvzpParticle.h"
 #include "widget/WidgetManager.h"
 #include <algorithm>
-#ifdef PVZP_WITH_RSVZ
-#include "rsvz_pvzp_hooks.h"
-#endif
+#include "PvzpLib/NativeControls.h"
 
 using namespace Sexy;
 
@@ -324,9 +322,7 @@ void GridItem::DrawScaryPot(Graphics* g)
 	PvzpDrawImageCelCenterScaledF(g, IMAGE_PLANTSHADOW2, aXPos - 5.0f, aYPos + 72.0f, 0, 1.3f, 1.3f);
 
 	bool aShowContents = mTransparentCounter > 0;
-#ifdef PVZP_WITH_RSVZ
-	aShowContents = aShowContents || RsvzPvzp::VaseContentsVisible();
-#endif
+	aShowContents = aShowContents || PvzpNative::VaseContentsVisible();
 	if (aShowContents)
 	{
 		g->DrawImageCel(IMAGE_SCARY_POT, aXPos, aYPos, aImageCol, 0);
@@ -386,12 +382,10 @@ void GridItem::DrawScaryPot(Graphics* g)
 		}
 
 		int aAlpha = PvzpAnimateCurve(0, 50, mTransparentCounter, 255, 58, PvzpCurves::CURVE_LINEAR);
-#ifdef PVZP_WITH_RSVZ
-		if (RsvzPvzp::VaseContentsVisible())
+		if (PvzpNative::VaseContentsVisible())
 		{
 			aAlpha = 58;
 		}
-#endif
 		g->SetColorizeImages(true);
 		g->SetColor(Color(255, 255, 255, aAlpha));
 	}

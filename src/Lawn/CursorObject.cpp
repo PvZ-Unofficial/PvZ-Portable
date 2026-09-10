@@ -27,9 +27,7 @@
 #include "../Resources.h"
 #include "../PvzpLib/Reanimator.h"
 #include "widget/WidgetManager.h"
-#ifdef PVZP_WITH_RSVZ
-#include "rsvz_pvzp_hooks.h"
-#endif
+#include "PvzpLib/NativeControls.h"
 
 CursorObject::CursorObject()
 {
@@ -240,10 +238,8 @@ CursorPreview::CursorPreview()
 
 void CursorPreview::Update()
 {
-	#ifdef PVZP_WITH_RSVZ
-	if (RsvzPvzp::FastForwardPerformance() >= 2)
+	if (PvzpNative::FastForwardPerformance() >= 2)
 		return;
-	#endif
 	if (mApp->mGameScene != GameScenes::SCENE_PLAYING && !mBoard->mCutScene->IsInShovelTutorial())
 	{
 		mVisible = false;

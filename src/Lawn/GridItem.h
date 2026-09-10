@@ -22,6 +22,7 @@
 #ifndef __GRIDITEM_H__
 #define __GRIDITEM_H__
 
+#include "PvzpLib/Plugin.h"
 #include <cstdint>
 #include "../ConstEnums.h"
 
@@ -76,7 +77,7 @@ public:
 	void					DrawLadder(Sexy::Graphics* g);
 	void					DrawCrater(Sexy::Graphics* g);
 	void					DrawGraveStone(Sexy::Graphics* g);
-	void					GridItemDie();
+	PVZP_API void					GridItemDie();
 	void					AddGraveStoneParticles();
 	void					DrawGridItem(Sexy::Graphics* g);
 	void					DrawGridItemOverlay(Sexy::Graphics* g);

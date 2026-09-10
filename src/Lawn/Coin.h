@@ -22,6 +22,7 @@
 #ifndef __COIN_H__
 #define __COIN_H__
 
+#include "PvzpLib/Plugin.h"
 #include <cstdint>
 #include "GameObject.h"
 #include "System/PlayerInfo.h"
@@ -71,7 +72,7 @@ public:
 	void                    StartFade();
 	void                    Update();
 	void                    Draw(Graphics* g);
-	void                    Collect();
+	PVZP_API void                    Collect();
 	int          GetSunValue();
 	static int   GetCoinValue(CoinType theCoinType);
 	void                    UpdateFade();
@@ -89,7 +90,7 @@ public:
 	void                    FanOutCoins(CoinType theCoinType, int theNumCoins);
 	int                     GetDisappearTime();
 	void                    DroppedUsableSeed();
-	void                    PlayCollectSound();
+	PVZP_API void                    PlayCollectSound();
 	void                    TryAutoCollectAfterLevelAward();
 	bool                    IsPresentWithAdvice();
 	void                    PlayLaunchSound();

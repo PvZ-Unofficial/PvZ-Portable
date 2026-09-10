@@ -45,9 +45,7 @@
 
 #include <SDL.h>
 
-#ifdef PVZP_WITH_RSVZ
-#include "rsvz_pvzp_hooks.h"
-#endif
+#include "PvzpLib/NativeControls.h"
 
 #ifdef __SWITCH__
 #include <switch.h>
@@ -1779,14 +1777,12 @@ bool SexyAppBase::DrawDirtyStuff()
 	SEXY_AUTO_PERF("SexyAppBase::DrawDirtyStuff");
 	MTAutoDisallowRand aDisallowRand;
 
-#ifdef PVZP_WITH_RSVZ
-	if (RsvzPvzp::WindowUpdateSuppressed())
+	if (PvzpNative::WindowUpdateSuppressed())
 	{
 		mHasPendingDraw = false;
 		mLastDrawWasEmpty = true;
 		return false;
 	}
-#endif
 
 	if (gIsFailing) // just try to reinit
 	{
@@ -2435,10 +2431,8 @@ void SexyAppBase::ResetCustomCursorCache()
 
 void SexyAppBase::EnforceCursor()
 {
-	#ifdef PVZP_WITH_RSVZ
-	if (RsvzPvzp::FastForwardPerformance() >= 2)
+	if (PvzpNative::FastForwardPerformance() >= 2)
 		return;
-	#endif
 	int aCursorNum = mSEHOccured ? CURSOR_POINTER : mCursorNum;
 	if (aCursorNum < 0 || aCursorNum >= NUM_CURSORS)
 		aCursorNum = CURSOR_POINTER;

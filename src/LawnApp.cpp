@@ -53,9 +53,7 @@
 #include "Lawn/Widget/CreditScreen.h"
 #include "PvzpLib/EffectSystem.h"
 #include "PvzpLib/FilterEffect.h"
-#ifdef PVZP_WITH_RSVZ
-#include "rsvz_pvzp_hooks.h"
-#endif
+#include "PvzpLib/NativeControls.h"
 #include "graphics/Graphics.h"
 #include "PvzpLib/PvzpStringFile.h"
 #include "Lawn/Widget/AlmanacDialog.h"
@@ -318,9 +316,7 @@ void LawnApp::ShutdownHook()
 		mBoardResult = BoardResult::BOARDRESULT_QUIT_APP;
 		mBoard->TryToSaveGame();
 	}
-#ifdef PVZP_WITH_RSVZ
-	RsvzPvzp::Shutdown();
-#endif
+	PvzpNative::Shutdown();
 }
 
 void LawnApp::KillBoard()
@@ -329,9 +325,7 @@ void LawnApp::KillBoard()
 	KillSeedChooserScreen();
 	if (mBoard)
 	{
-#ifdef PVZP_WITH_RSVZ
-		RsvzPvzp::BoardDestroying();
-#endif
+		PvzpNative::BoardDestroying();
 		if (mPlayerInfo && (
 			mBoardResult == BoardResult::BOARDRESULT_WON ||
 			mBoardResult == BoardResult::BOARDRESULT_LOST ||
@@ -387,10 +381,8 @@ void LawnApp::LostFocus()
 
 void LawnApp::WriteToRegistry()
 {
-#ifdef PVZP_WITH_RSVZ
-	if (RsvzPvzp::ProfileReadonly())
+	if (PvzpNative::ProfileReadonly())
 		return;
-#endif
 	if (mPlayerInfo)
 	{
 		RegistryWriteString("CurUser", mPlayerInfo->mName);
@@ -407,10 +399,8 @@ void LawnApp::ReadFromRegistry()
 
 bool LawnApp::WriteCurrentUserConfig()
 {
-#ifdef PVZP_WITH_RSVZ
-	if (RsvzPvzp::ProfileReadonly())
+	if (PvzpNative::ProfileReadonly())
 		return true;
-#endif
 	if (mPlayerInfo)
 		mPlayerInfo->SaveDetails();
 
@@ -445,9 +435,7 @@ void LawnApp::MakeNewBoard()
 	mWidgetManager->AddWidget(mBoard);
 	mWidgetManager->BringToBack(mBoard);
 	mWidgetManager->SetFocus(mBoard);
-#ifdef PVZP_WITH_RSVZ
-	RsvzPvzp::BoardCreated();
-#endif
+	PvzpNative::BoardCreated();
 }
 
 void LawnApp::StartPlaying()
@@ -1318,9 +1306,7 @@ void LawnApp::Start()
 	if (mLoadingFailed)
 		return;
 
-#ifdef PVZP_WITH_RSVZ
-	RsvzPvzp::Initialize(this);
-#endif
+	PvzpPlugin::Load();
 	SexyAppBase::Start();
 }
 
@@ -1481,9 +1467,7 @@ void LawnApp::CheckForGameEnd()
 		}
 		else
 		{
-			#ifdef PVZP_WITH_RSVZ
-			RsvzPvzp::RoundCompleted();
-			#endif
+			PvzpNative::RoundCompleted();
 			mBoard->mChallenge->mSurvivalStage++;
 			KillGameSelector();
 			mBoard->InitSurvivalStage();
@@ -1598,18 +1582,14 @@ void LawnApp::UpdateFrames()
 	{
 		aUpdateCount = 20;
 	}
-#ifdef PVZP_WITH_RSVZ
-	aUpdateCount = RsvzPvzp::UpdateCount(aUpdateCount);
-#endif
+	aUpdateCount = PvzpNative::UpdateCount(aUpdateCount);
 
 	for (int i = 0; i < aUpdateCount; i++)
 	{
-#ifdef PVZP_WITH_RSVZ
-		if (!RsvzPvzp::ContinueUpdateBatch(i))
+		if (!PvzpNative::ContinueUpdateBatch(i))
 			break;
-		if (!RsvzPvzp::BeforeUpdate())
+		if (!PvzpNative::BeforeUpdate())
 			break;
-#endif
 		mAppCounter++;
 
 		if (mBoard)
@@ -1621,17 +1601,11 @@ void LawnApp::UpdateFrames()
 			mEffectSystem->ProcessDeleteQueue();
 		}
 
-#ifdef PVZP_WITH_RSVZ
-		RsvzPvzp::BeginLogicFrame();
-#endif
+		PvzpNative::BeginLogicFrame();
 		SexyApp::UpdateFrames();
-#ifdef PVZP_WITH_RSVZ
-		RsvzPvzp::EndLogicFrame();
-#endif
+		PvzpNative::EndLogicFrame();
 
-#ifdef PVZP_WITH_RSVZ
-		if (RsvzPvzp::FastForwardPerformance() == 0)
-#endif
+		if (PvzpNative::FastForwardPerformance() == 0)
 			mMusic->MusicUpdate();
 
 		CheckForGameEnd();
@@ -2000,10 +1974,8 @@ void LawnApp::CenterDialog(Dialog* theDialog, int theWidth, int theHeight)
 
 void LawnApp::PlayFoley(FoleyType theFoleyType)
 {
-#ifdef PVZP_WITH_RSVZ
-	if (RsvzPvzp::FastForwardPerformance() >= 2)
+	if (PvzpNative::FastForwardPerformance() >= 2)
 		return;
-#endif
 	if (!mMuteSoundsForCutscene)
 	{
 		mSoundSystem->PlayFoley(theFoleyType);
@@ -2012,10 +1984,8 @@ void LawnApp::PlayFoley(FoleyType theFoleyType)
 
 void LawnApp::PlayFoleyPitch(FoleyType theFoleyType, float thePitch)
 {
-#ifdef PVZP_WITH_RSVZ
-	if (RsvzPvzp::FastForwardPerformance() >= 2)
+	if (PvzpNative::FastForwardPerformance() >= 2)
 		return;
-#endif
 	if (!mMuteSoundsForCutscene)
 	{
 		mSoundSystem->PlayFoleyPitch(theFoleyType, thePitch);
@@ -3268,10 +3238,8 @@ bool LawnApp::CanDoDaisyMode()
 
 void LawnApp::PlaySample(intptr_t theSoundNum)
 {
-#ifdef PVZP_WITH_RSVZ
-	if (RsvzPvzp::FastForwardPerformance() >= 2)
+	if (PvzpNative::FastForwardPerformance() >= 2)
 		return;
-#endif
 	if (!mMuteSoundsForCutscene)
 	{
 		SexyAppBase::PlaySample(theSoundNum);

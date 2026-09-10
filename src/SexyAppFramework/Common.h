@@ -25,6 +25,7 @@
 #ifndef __SEXYAPPFRAMEWORK_COMMON_H__
 #define __SEXYAPPFRAMEWORK_COMMON_H__
 
+#include "PvzpLib/Plugin.h"
 #include <string>
 #include <cstring>
 #include <vector>
@@ -121,6 +122,9 @@ typedef std::vector<char> CharVector;
 
 namespace Sexy
 {
+class MTRand;
+bool IsBattleRandom(const MTRand* random);
+
 
 const ulong SEXY_RAND_MAX = 0x7FFFFFFF;
 
@@ -138,7 +142,7 @@ void				LogError(const char* theFormat, ...) SEXY_FORMAT_ATTRIBUTE(1, 2);
 int					Rand();
 int					Rand(int range);
 float				Rand(float range);
-void				SRand(ulong theSeed);
+PVZP_API void				SRand(ulong theSeed);
 extern std::string	VFormat(const char* fmt, va_list argPtr) SEXY_FORMAT_ATTRIBUTE(1, 0);
 extern std::string	StrFormat(const char* fmt ...) SEXY_FORMAT_ATTRIBUTE(1, 2);
 std::string			GetAppDataFolder();

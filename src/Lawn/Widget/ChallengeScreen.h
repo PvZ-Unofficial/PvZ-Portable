@@ -22,6 +22,7 @@
 #ifndef __CHALLENGESCREEN_H__
 #define __CHALLENGESCREEN_H__
 
+#include "PvzpLib/Plugin.h"
 #include "../../ConstEnums.h"
 #include "widget/Dialog.h"
 #include <array>
@@ -66,7 +67,7 @@ public:
 	void                        SetUnlockChallengeIndex(ChallengePage thePage, bool theIsIZombie = false);
 	int                         MoreTrophiesNeeded(int theChallengeIndex);
 	bool             ShowPageButtons();
-	void                        UpdateButtons();
+	PVZP_API void                        UpdateButtons();
 	int                         AccomplishmentsNeeded(int theChallengeIndex);
 	void                        DrawButton(Graphics* g, int theChallengeIndex);
 	void                        Draw(Graphics* g) override;
@@ -100,6 +101,6 @@ public:
 };
 extern const ChallengeDefinition gChallengeDefs[NUM_CHALLENGE_MODES];
 
-const ChallengeDefinition& GetChallengeDefinition(int theChallengeMode);
+PVZP_API const ChallengeDefinition& GetChallengeDefinition(int theChallengeMode);
 
 #endif

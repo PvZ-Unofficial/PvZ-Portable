@@ -61,6 +61,7 @@ public:
 
 	virtual void			Flush() = 0;
 	virtual void			StopAllSounds() = 0;
+	virtual bool            StopSound(intptr_t theSfxID) = 0;
 	virtual intptr_t		GetFreeSoundId() = 0;
 	virtual int				GetNumSounds() = 0;
 };

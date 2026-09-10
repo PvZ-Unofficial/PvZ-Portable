@@ -43,10 +43,10 @@ public:
 	bool                            mVisible;
 	int32_t                         mRow;
 	int32_t                         mRenderOrder;
-#if defined(PVZP_WITH_RSVZ) && defined(__GNUC__)
-	// The Itanium ABI reuses GameObject tail padding, which repr(C) cannot model.
-	// Reserve it explicitly so bindgen raw fields match the integrated native layout.
-	uint32_t                        mRsvzLayoutPadding;
+#if defined(__GNUC__) && defined(__x86_64__)
+	// The GNU x64 SDK reserves base tail padding rather than reusing it in
+	// derived entities. This is a native ABI rule, independent of plugins.
+	uint32_t                        mAbiLayoutPadding;
 #endif
 
 public:

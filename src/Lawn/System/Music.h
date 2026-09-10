@@ -22,6 +22,7 @@
 #ifndef __MUSIC_H__
 #define __MUSIC_H__
 
+#include "PvzpLib/Plugin.h"
 #include <cstdint>
 #include <string>
 #include <string_view>
@@ -119,7 +120,7 @@ public:
 	void						MusicDispose() { ; }
 	void						MusicUpdate();
 	void						StopAllMusic();
-	void				PlayMusic(MusicTune theMusicTune, int theOffset = -1, int theDrumsOffset = -1);
+	PVZP_API void				PlayMusic(MusicTune theMusicTune, int theOffset = -1, int theDrumsOffset = -1);
 	Mix_Music*		GetMusicHandle(MusicFile theMusicFile);
 	void						StartGameMusic();
 	void				LoadSong(MusicFile theMusicFile, std::string_view theFileName);

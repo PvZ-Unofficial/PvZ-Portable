@@ -22,6 +22,7 @@
 #ifndef __SEEDCHOOSERSCREEN_H__
 #define __SEEDCHOOSERSCREEN_H__
 
+#include "PvzpLib/Plugin.h"
 #include "../../ConstEnums.h"
 #include "../../PvzpLib/PvzpCommon.h"
 #include "widget/Widget.h"
@@ -115,18 +116,18 @@ public:
 	bool                    FlyProtectionCurrentlyPlanted();
 	bool                    CheckSeedUpgrade(SeedType theSeedTypeTo, SeedType theSeedTypeFrom);
 	void                    OnStartButton();
-	void                    PickRandomSeeds();
+	PVZP_API void                    PickRandomSeeds();
 	virtual void            ButtonDepress(int theId);
 	SeedType                SeedHitTest(int x, int y);
-	SeedType                FindSeedInBank(int theIndexInBank);
+	PVZP_API SeedType                FindSeedInBank(int theIndexInBank);
 	void         EnableStartButton(bool theEnabled);
 	void                    ClickedSeedInBank(ChosenSeed& theChosenSeed);
-	void                    ClickedSeedInChooser(ChosenSeed& theChosenSeed);
+	PVZP_API void                    ClickedSeedInChooser(ChosenSeed& theChosenSeed);
 	void                    ShowToolTip();
 	void         RemoveToolTip();
 	void         CancelLawnView();
 	void                    MouseUp(int x, int y, int theClickCount) override;
-	void                    UpdateImitaterButton();
+	PVZP_API void                    UpdateImitaterButton();
 	void                    MouseDown(int x, int y, int theClickCount) override;
 	bool         PickedPlantType(SeedType theSeedType);
 	void                    CloseSeedChooser();

@@ -22,6 +22,7 @@
 #ifndef __ZENGARDEN_H__
 #define __ZENGARDEN_H__
 
+#include "PvzpLib/Plugin.h"
 #include "../ConstEnums.h"
 #include <vector>
 #include <string>
@@ -89,12 +90,12 @@ public:
 	std::span<const SpecialGridPlacement> GetSpecialGridPlacements();
 	int                     PixelToGridX(int theX, int theY);
 	int                     PixelToGridY(int theX, int theY);
-	int                     GridToPixelX(int theGridX, int theGridY);
+	PVZP_API int                     GridToPixelX(int theGridX, int theGridY);
 	int                     GridToPixelY(int theGridX, int theGridY);
 	void                    DrawBackdrop(Graphics* g);
 	bool                    MouseDownZenGarden(int x, int y, int theClickCount, HitResult* theHitResult);
 	void                    PlantFulfillNeed(Plant* thePlant);
-	void                    PlantWatered(Plant* thePlant);
+	PVZP_API void                    PlantWatered(Plant* thePlant);
 	PottedPlantNeed         GetPlantsNeed(PottedPlant* thePottedPlant);
 	void                    MouseDownWithFeedingTool(int x, int y, CursorType theCursorType);
 	void                    DrawPlantOverlay(Graphics* g, Plant* thePlant);
@@ -147,7 +148,7 @@ public:
 	int                     PlantGetMinutesSinceHappy(Plant* thePlant);
 	bool         IsStinkyHighOnChocolate();
 	void                    StinkyAnimRateUpdate(GridItem* theStinky);
-	bool         PlantCanBeWatered(Plant* thePlant);
+	PVZP_API bool         PlantCanBeWatered(Plant* thePlant);
 };
 
 #endif

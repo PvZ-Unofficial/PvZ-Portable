@@ -42,9 +42,7 @@
 #include "../PvzpLib/Reanimator.h"
 #include "widget/Dialog.h"
 #include "misc/MTRand.h"
-#ifdef PVZP_WITH_RSVZ
-#include "rsvz_pvzp_hooks.h"
-#endif
+#include "PvzpLib/NativeControls.h"
 #include "../PvzpLib/PvzpParticle.h"
 #include "../PvzpLib/EffectSystem.h"
 #include "../PvzpLib/PvzpStringFile.h"
@@ -1235,13 +1233,9 @@ void Board::InitSurvivalStage()
 	mApp->mSoundSystem->GamePause(true);
 	FreezeEffectsForCutscene(true);
 	mLevelComplete = false;
-	#ifdef PVZP_WITH_RSVZ
-	RsvzPvzp::BeginSurvivalWaveInit();
-	#endif
+	PvzpNative::BeginSurvivalWaveInit();
 	InitZombieWaves();
-	#ifdef PVZP_WITH_RSVZ
-	RsvzPvzp::EndSurvivalWaveInit();
-	#endif
+	PvzpNative::EndSurvivalWaveInit();
 	mApp->mGameScene = GameScenes::SCENE_LEVEL_INTRO;
 	mApp->ShowSeedChooserScreen();
 	mCutScene->StartLevelIntro();
@@ -2501,18 +2495,14 @@ bool Board::RowCanHaveZombieType(int theRow, ZombieType theZombieType)
 
 int Board::PickRowForNewZombie(ZombieType theZombieType)
 {
-	#ifdef PVZP_WITH_RSVZ
-	RsvzPvzp::BeginRowPick();
-	#endif
+	PvzpNative::BeginRowPick();
 	// A rake that is attracting a zombie pulls the new zombie into its row
 	GridItem* aRake = GetRake();
 	if (aRake && aRake->mGridItemState == GridItemState::GRIDITEM_STATE_RAKE_ATTRACTING && RowCanHaveZombieType(aRake->mGridY, theZombieType))
 	{
 		aRake->mGridItemState = GridItemState::GRIDITEM_STATE_RAKE_WAITING;
 		PvzpUpdateSmoothArrayPick(mRowPickingArray, MAX_GRID_SIZE_Y, aRake->mGridY);
-		#ifdef PVZP_WITH_RSVZ
-		RsvzPvzp::EndRowPick();
-		#endif
+		PvzpNative::EndRowPick();
 		return aRake->mGridY;
 	}
 
@@ -2554,9 +2544,7 @@ int Board::PickRowForNewZombie(ZombieType theZombieType)
 		}
 	}
 	int aRow = PvzpPickFromSmoothArray(mRowPickingArray, MAX_GRID_SIZE_Y);
-	#ifdef PVZP_WITH_RSVZ
-	RsvzPvzp::EndRowPick();
-	#endif
+	PvzpNative::EndRowPick();
 	return aRow;
 }
 
@@ -2583,10 +2571,8 @@ Zombie* Board::AddZombieInRow(ZombieType theZombieType, int theRow, int theFromW
 	bool aVariant = !Rand(5);
 	Zombie* aZombie = mZombies.DataArrayAlloc();
 	aZombie->ZombieInitialize(theRow, theZombieType, aVariant, nullptr, theFromWave);
-	#ifdef PVZP_WITH_RSVZ
 	if (theZombieType == ZombieType::ZOMBIE_GARGANTUAR || theZombieType == ZombieType::ZOMBIE_REDEYE_GARGANTUAR)
-		RsvzPvzp::EmitGargantuarSpawned(aZombie);
-	#endif
+		PvzpNative::EmitGargantuarSpawned(aZombie);
 	if (theZombieType == ZombieType::ZOMBIE_BOBSLED && aZombie->IsOnBoard())
 	{
 		for (int _i = 0; _i < 3; _i++)
@@ -2656,10 +2642,8 @@ PlantingReason Board::CanPlantAt(int theGridX, int theGridY, SeedType theSeedTyp
 	{
 		return PlantingReason::PLANTING_NOT_HERE;
 	}
-	#ifdef PVZP_WITH_RSVZ
-	if (RsvzPvzp::PlantingRestrictionsIgnored())
+	if (PvzpNative::PlantingRestrictionsIgnored())
 		return PlantingReason::PLANTING_OK;
-	#endif
 
 	PlantingReason aReason = mChallenge->CanPlantAt(theGridX, theGridY, theSeedType);
 	if (aReason != PlantingReason::PLANTING_OK || Challenge::IsZombieSeedType(theSeedType))
@@ -3161,10 +3145,8 @@ void Board::UpdateMousePosition()
 
 void Board::UpdateToolTip()
 {
-	#ifdef PVZP_WITH_RSVZ
-	if (RsvzPvzp::FastForwardPerformance() >= 2)
+	if (PvzpNative::FastForwardPerformance() >= 2)
 		return;
-	#endif
 	if (!mApp->mWidgetManager->mMouseIn || !mApp->mActive || mTimeStopCounter > 0 || mApp->GetDialogCount() > 0 || mApp->mGameScene == GameScenes::SCENE_ZOMBIES_WON)
 	{
 		mToolTip->mVisible = false;
@@ -4862,9 +4844,7 @@ int Board::TotalZombiesHealthInWave(int theWaveIndex)
 
 void Board::SpawnZombieWave()
 {
-	#ifdef PVZP_WITH_RSVZ
-	RsvzPvzp::BeginWaveSpawn(this);
-	#endif
+	PvzpNative::BeginWaveSpawn(this);
 	mChallenge->SpawnZombieWave();
 	if (mApp->IsBungeeBlitzLevel())
 	{
@@ -4910,9 +4890,7 @@ void Board::SpawnZombieWave()
 	}
 
 	if (mCurrentWave == mNumWaves - 1 && !mApp->IsContinuousChallenge()
-	#ifdef PVZP_WITH_RSVZ
-		&& !RsvzPvzp::SpecialEventsDisabled()
-	#endif
+		&& !PvzpNative::SpecialEventsDisabled()
 	)
 	{
 		mRiseFromGraveCounter = 200;
@@ -4923,9 +4901,7 @@ void Board::SpawnZombieWave()
 	}
 	mCurrentWave++;
 	mTotalSpawnedWaves++;
-	#ifdef PVZP_WITH_RSVZ
-	RsvzPvzp::EndWaveSpawn();
-	#endif
+	PvzpNative::EndWaveSpawn();
 }
 
 void Board::UpdateGameObjects()
@@ -4998,10 +4974,8 @@ int Board::GetSurvivalFlagsCompleted()
 
 void Board::SurvivalSaveScore()
 {
-#ifdef PVZP_WITH_RSVZ
-	if (RsvzPvzp::ProfileReadonly())
+	if (PvzpNative::ProfileReadonly())
 		return;
-#endif
 	if (!mApp->IsSurvivalMode())
 		return;
 
@@ -5016,10 +4990,8 @@ void Board::SurvivalSaveScore()
 
 void Board::PuzzleSaveStreak()
 {
-#ifdef PVZP_WITH_RSVZ
-	if (RsvzPvzp::ProfileReadonly())
+	if (PvzpNative::ProfileReadonly())
 		return;
-#endif
 	if (!mApp->IsEndlessIZombie(mApp->mGameMode) && !mApp->IsEndlessScaryPotter(mApp->mGameMode))
 		return;
 
@@ -5162,10 +5134,8 @@ bool Board::HasLevelAwardDropped()
 
 void Board::UpdateSunSpawning()
 {
-	#ifdef PVZP_WITH_RSVZ
-	if (RsvzPvzp::NaturalSunDropDisabled())
+	if (PvzpNative::NaturalSunDropDisabled())
 		return;
-	#endif
 	if (StageIsNight() ||
 		HasLevelAwardDropped() ||
 		mApp->mGameMode == GameMode::GAMEMODE_CHALLENGE_RAINING_SEEDS ||
@@ -5199,9 +5169,7 @@ void Board::UpdateSunSpawning()
 	mSunCountDown = std::min(SUN_COUNTDOWN_MAX, SUN_COUNTDOWN + mNumSunsFallen * 10) + Rand(SUN_COUNTDOWN_RANGE);
 	CoinType aSunType = mApp->mGameMode == GameMode::GAMEMODE_CHALLENGE_SUNNY_DAY ? CoinType::COIN_LARGESUN : CoinType::COIN_SUN;
 	int aSunX = RandRangeInt(100, 649);
-#ifdef PVZP_WITH_RSVZ
-	if (!RsvzPvzp::CreditProducedSun(this, static_cast<int>(aSunType)))
-#endif
+	if (!PvzpNative::CreditProducedSun(this, static_cast<int>(aSunType)))
 	AddCoin(aSunX, 60, aSunType, CoinMotion::COIN_MOTION_FROM_SKY);
 }
 
@@ -5300,10 +5268,8 @@ void Board::UpdateZombieSpawning()
 	if (mChallenge->UpdateZombieSpawning())
 		return;
 
-	#ifdef PVZP_WITH_RSVZ
-	if (RsvzPvzp::ZombieSpawnStopped())
+	if (PvzpNative::ZombieSpawnStopped())
 		return;
-	#endif
 
 	if (mCurrentWave == mNumWaves)
 	{
@@ -7279,15 +7245,13 @@ void Board::UpdateFog()
 	if (!StageHasFog())
 		return;
 
-	#ifdef PVZP_WITH_RSVZ
-	if (RsvzPvzp::FogRevealed())
+	if (PvzpNative::FogRevealed())
 	{
 		for (auto& column : mGridCelFog)
 			for (int& amount : column)
 				amount = 0;
 		return;
 	}
-	#endif
 
 	//int aFogFadeInSpeed = mFogBlownCountDown >= 2000 ? 20 : mFogBlownCountDown > 0 ? 1 : 3;
 	int aFogFadeInSpeed = 3;
@@ -7475,9 +7439,7 @@ void Board::Draw(Graphics* g)
 
 	mDrawCount++;
 	DrawGameObjects(g);
-#ifdef PVZP_WITH_RSVZ
-	RsvzPvzp::DrawAdvancedPauseMask(g);
-#endif
+	PvzpNative::DrawAdvancedPauseMask(g);
 }
 
 void Board::SetMustacheMode(bool theEnableMustache)
@@ -8480,10 +8442,8 @@ int Board::CountCoinsBeingCollected()
 
 bool Board::TakeSunMoney(int theAmount)
 {
-	#ifdef PVZP_WITH_RSVZ
-	if (RsvzPvzp::SunCostIgnored())
+	if (PvzpNative::SunCostIgnored())
 		return true;
-	#endif
 	if (CanTakeSunMoney(theAmount))
 	{
 		mSunMoney -= theAmount;
@@ -8497,10 +8457,8 @@ bool Board::TakeSunMoney(int theAmount)
 
 bool Board::CanTakeSunMoney(int theAmount)
 {
-	#ifdef PVZP_WITH_RSVZ
-	if (RsvzPvzp::SunCostIgnored())
+	if (PvzpNative::SunCostIgnored())
 		return true;
-	#endif
 	return theAmount <= mSunMoney + CountSunBeingCollected();
 }
 
@@ -9005,10 +8963,8 @@ void Board::KillAllPlantsInRadius(int theX, int theY, int theRadius)
 			continue;
 		if (GetCircleRectOverlap(theX, theY, theRadius, aPlant->GetPlantRect()))
 		{
-#ifdef PVZP_WITH_RSVZ
-			if (RsvzPvzp::PlantDamageRule() == 1)
+			if (PvzpNative::PlantDamageRule() == 1)
 				continue;
-#endif
 			mPlantsEaten++;
 			aPlant->Die();
 		}

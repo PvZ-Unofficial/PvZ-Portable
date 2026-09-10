@@ -33,9 +33,7 @@
 #include "misc/PerfTimer.h"
 #include "graphics/MemoryImage.h"
 #include <algorithm>
-#ifdef PVZP_WITH_RSVZ
-#include "rsvz_pvzp_hooks.h"
-#endif
+#include "PvzpLib/NativeControls.h"
 
 constexpr const int NO_BASE_POSE = -2;
 
@@ -495,11 +493,7 @@ void Reanimation::Update()
 		}
 	}
 
-	#ifdef PVZP_WITH_RSVZ
-	const bool aUpdateAttacherTracks = RsvzPvzp::FastForwardPerformance() < 2;
-	#else
-	constexpr bool aUpdateAttacherTracks = true;
-	#endif
+	const bool aUpdateAttacherTracks = PvzpNative::FastForwardPerformance() < 2;
 	for (int aTrackIndex = 0; aTrackIndex < mDefinition->mTracks.count; aTrackIndex++)
 	{
 		ReanimatorTrackInstance* aTrack = &mTrackInstances[aTrackIndex];

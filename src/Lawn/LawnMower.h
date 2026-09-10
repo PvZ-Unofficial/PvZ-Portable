@@ -22,6 +22,7 @@
 #ifndef __LAWNMOWER_H__
 #define __LAWNMOWER_H__
 
+#include "PvzpLib/Plugin.h"
 #include <cstdint>
 #include "../ConstEnums.h"
 #include "misc/Rect.h"
@@ -62,7 +63,7 @@ public:
 	void                StartMower();
 	void                Update();
 	void                Draw(Graphics* g);
-	void                Die();
+	PVZP_API void                Die();
 	Rect                GetLawnMowerAttackRect();
 	void                UpdatePool();
 	void                MowZombie(Zombie* theZombie);

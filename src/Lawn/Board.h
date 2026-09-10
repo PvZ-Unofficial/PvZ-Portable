@@ -22,6 +22,7 @@
 #ifndef __BOARD_H__
 #define __BOARD_H__
 
+#include "PvzpLib/Plugin.h"
 #include <cstdint>
 #include <memory>
 
@@ -250,7 +251,7 @@ public:
 	void							DisposeBoard();
 	int								CountSunBeingCollected();
 	void							DrawGameObjects(Graphics* g);
-	void							ClearCursor();
+	PVZP_API void							ClearCursor();
 	bool					AreEnemyZombiesOnScreen();
 	LawnMower*						FindLawnMowerInRow(int theRow);
 //  inline bool						SyncState(DataSync& theDataSync) { /* not found */return true; }
@@ -259,7 +260,7 @@ public:
 	void							InitLevel();
 	void							DisplayAdvice(std::string_view theAdvice, MessageStyle theMessageStyle, AdviceType theHelpIndex);
 	void							StartLevel();
-	Plant*							AddPlant(int theGridX, int theGridY, SeedType theSeedType, SeedType theImitaterType = SeedType::SEED_NONE);
+	PVZP_API Plant*							AddPlant(int theGridX, int theGridY, SeedType theSeedType, SeedType theImitaterType = SeedType::SEED_NONE);
 	Projectile*						AddProjectile(int theX, int theY, int theRenderOrder, int theRow, ProjectileType theProjectileType);
 	Coin*							AddCoin(int theX, int theY, CoinType theCoinType, CoinMotion theCoinMotion);
 	void							RefreshSeedPacketFromCursor();
@@ -271,7 +272,7 @@ public:
 	void							RemoveAllZombies();
 	void							RemoveCutsceneZombies();
 	void							SpawnZombiesFromGraves();
-	PlantingReason					CanPlantAt(int theGridX, int theGridY, SeedType theSeedType);
+	PVZP_API PlantingReason					CanPlantAt(int theGridX, int theGridY, SeedType theSeedType);
 	void							MouseMove(int x, int y) override;
 	void							MouseDrag(int x, int y) override;
 	void							MouseDown(int x, int y, int theClickCount) override;
@@ -290,14 +291,14 @@ public:
 	void							ButtonMouseLeave(int) override{}
 	void							ButtonMouseMove(int, int, int) override{}
 	void					AddSunMoney(int theAmount);
-	bool							TakeSunMoney(int theAmount);
-	bool					CanTakeSunMoney(int theAmount);
+	PVZP_API bool							TakeSunMoney(int theAmount);
+	PVZP_API bool					CanTakeSunMoney(int theAmount);
 	void					Pause(bool thePause);
 	inline bool						MakeEasyZombieType() { /* not found */return false; }
 	void							TryToSaveGame();
 	bool					NeedSaveGame();
-	bool					RowCanHaveZombies(int theRow);
-	void							ProcessDeleteQueue();
+	PVZP_API bool					RowCanHaveZombies(int theRow);
+	PVZP_API void							ProcessDeleteQueue();
 	bool							ChooseSeedsOnCurrentLevel();
 	int								GetNumSeedsInBank();
 	bool					StageIsNight();
@@ -309,8 +310,8 @@ public:
 	bool							StageHasGraveStones();
 	int								PixelToGridX(int theX, int theY);
 	int								PixelToGridY(int theX, int theY);
-	int					GridToPixelX(int theGridX, int theGridY);
-	int								GridToPixelY(int theGridX, int theGridY);
+	PVZP_API int					GridToPixelX(int theGridX, int theGridY);
+	PVZP_API int								GridToPixelY(int theGridX, int theGridY);
 	int					PixelToGridXKeepOnBoard(int theX, int theY);
 	int					PixelToGridYKeepOnBoard(int theX, int theY);
 	void							UpdateGameObjects();
@@ -335,7 +336,7 @@ public:
 	void					ClearAdvice(AdviceType theHelpIndex);
 	bool							RowCanHaveZombieType(int theRow, ZombieType theZombieType);
 	int					NumberZombiesInWave(int theWaveIndex);
-	int								TotalZombiesHealthInWave(int theWaveIndex);
+	PVZP_API int								TotalZombiesHealthInWave(int theWaveIndex);
 	void							DrawDebugText(Graphics* g);
 	void							DrawUICoinBank(Graphics* g);
 	void					ShowCoinBank(int theDuration = 1000);
@@ -352,9 +353,9 @@ public:
 	bool					CanAddBobSled();
 	void					ShakeBoard(int theShakeAmountX, int theShakeAmountY);
 	int								CountUntriggerLawnMowers();
-	Zombie*				AddZombieInRow(ZombieType theZombieType, int theRow, int theFromWave);
-	bool					IsPoolSquare(int theGridX, int theGridY);
-	void							PickZombieWaves();
+	PVZP_API Zombie*				AddZombieInRow(ZombieType theZombieType, int theRow, int theFromWave);
+	PVZP_API bool					IsPoolSquare(int theGridX, int theGridY);
+	PVZP_API void							PickZombieWaves();
 	void							StopAllZombieSounds();
 	bool					HasLevelAwardDropped();
 	void							UpdateProgressMeter();
@@ -367,7 +368,7 @@ public:
 	static bool						CanZombieSpawnOnLevel(ZombieType theZombieType, int theLevel);
 	bool							IsZombieWaveDistributionOk();
 	void							PickBackground();
-	void							InitZombieWaves();
+	PVZP_API void							InitZombieWaves();
 	void							InitSurvivalStage();
 	static int			MakeRenderOrder(RenderLayer theRenderLayer, int theRow, int theLayerOffset);
 	void							UpdateGame();
@@ -384,7 +385,7 @@ public:
 	bool							CanDropLoot();
 	ZombieType						GetIntroducedZombieType();
 	void							PickSpecialGraveStone();
-	float							GetPosYBasedOnRow(float thePosX, int theRow);
+	PVZP_API float							GetPosYBasedOnRow(float thePosX, int theRow);
 	void							NextWaveComing();
 	bool							BungeeIsTargetingCell(int theGridX, int theGridY);
 	int					PlantingPixelToGridX(int theX, int theY, SeedType theSeedType);
@@ -399,7 +400,7 @@ public:
 	Plant*				ToolHitTest(int theX, int theY);
 	bool							CanAddGraveStoneAt(int theGridX, int theGridY);
 	void							UpdateGridItems();
-	GridItem*			AddAGraveStone(int theGridX, int theGridY);
+	PVZP_API GridItem*			AddAGraveStone(int theGridX, int theGridY);
 	int								GetSurvivalFlagsCompleted();
 	bool							HasProgressMeter();
 	void							UpdateCursor();
@@ -431,19 +432,19 @@ public:
 	void					PutInMissingZombies(int theWaveNumber, ZombiePicker* theZombiePicker);
 	Rect							GetShovelButtonRect();
 	void							GetZenButtonRect(GameObjectType theObjectType, Rect& theRect);
-	Plant*							NewPlant(int theGridX, int theGridY, SeedType theSeedType, SeedType theImitaterType = SeedType::SEED_NONE);
+	PVZP_API Plant*							NewPlant(int theGridX, int theGridY, SeedType theSeedType, SeedType theImitaterType = SeedType::SEED_NONE);
 	void							DoPlantingEffects(int theGridX, int theGridY, Plant* thePlant);
 	bool							IsFinalSurvivalStage();
 	void							SurvivalSaveScore();
 	int								CountZombiesOnScreen();
 	int					GetNumWavesPerSurvivalStage();
-	int								GetLevelRandSeed();
+	PVZP_API int								GetLevelRandSeed();
 	void							AddBossRenderItem(RenderItem* theRenderList, int& theCurRenderItem, Zombie* theBossZombie);
 	GridItem*			GetCraterAt(int theGridX, int theGridY);
 	GridItem*			GetGraveStoneAt(int theGridX, int theGridY);
 	GridItem*			GetLadderAt(int theGridX, int theGridY);
-	GridItem*			AddALadder(int theGridX, int theGridY);
-	GridItem*			AddACrater(int theGridX, int theGridY);
+	PVZP_API GridItem*			AddALadder(int theGridX, int theGridY);
+	PVZP_API GridItem*			AddACrater(int theGridX, int theGridY);
 	void							InitLawnMowers();
 	bool					IsPlantInCursor();
 	void							HighlightPlantsForMouse(int theMouseX, int theMouseY);
@@ -467,10 +468,10 @@ public:
 	bool							ProgressMeterHasFlags();
 	bool					IsLastStandFinalStage();
 	int					GetNumWavesPerFlag();
-	int								GetCurrentPlantCost(SeedType theSeedType, SeedType theImitaterType);
+	PVZP_API int								GetCurrentPlantCost(SeedType theSeedType, SeedType theImitaterType);
 	bool					PlantUsesAcceleratedPricing(SeedType theSeedType);
 	void							FreezeEffectsForCutscene(bool theFreeze);
-	void							LoadBackgroundImages();
+	PVZP_API void							LoadBackgroundImages();
 	bool							CanUseGameObject(GameObjectType theGameObject);
 	void							SetMustacheMode(bool theEnableMustache);
 	int								CountCoinByType(CoinType theCoinType);

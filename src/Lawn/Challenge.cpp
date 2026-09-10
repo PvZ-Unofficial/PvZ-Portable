@@ -51,9 +51,7 @@
 #include "../PvzpLib/PvzpParticle.h"
 #include "../PvzpLib/EffectSystem.h"
 #include "../PvzpLib/PvzpStringFile.h"
-#ifdef PVZP_WITH_RSVZ
-#include "rsvz_pvzp_hooks.h"
-#endif
+#include "PvzpLib/NativeControls.h"
 #include "widget/WidgetManager.h"
 #include <algorithm>
 
@@ -2988,9 +2986,7 @@ void Challenge::SpawnZombieWave()
 
 	int aIsFlagWave = mBoard->IsFlagWave(mBoard->mCurrentWave);
 	bool aSpecialEventsDisabled = false;
-#ifdef PVZP_WITH_RSVZ
-	aSpecialEventsDisabled = RsvzPvzp::SpecialEventsDisabled();
-#endif
+	aSpecialEventsDisabled = PvzpNative::SpecialEventsDisabled();
 	if (!aSpecialEventsDisabled && mApp->mGameMode == GAMEMODE_CHALLENGE_GRAVE_DANGER && mBoard->mCurrentWave != mBoard->mNumWaves - 1)
 	{
 		if (aIsFlagWave)

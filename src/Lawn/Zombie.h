@@ -22,6 +22,7 @@
 #ifndef __ZOMBIE_H__
 #define __ZOMBIE_H__
 
+#include "PvzpLib/Plugin.h"
 #include <cstdint>
 #include "GameObject.h"
 #include "../GameConstants.h"
@@ -169,8 +170,8 @@ public:
 	void                            EatZombie(Zombie* theZombie);
 	void                            EatPlant(Plant* thePlant);
 	void                            Update();
-	void                            DieNoLoot();
-	void                 DieWithLoot();
+	PVZP_API void                            DieNoLoot();
+	PVZP_API void                 DieWithLoot();
 	void                            Draw(Graphics* g);
 //  void                            DrawZombie(Graphics* g, const ZombieDrawPosition& theDrawPos);
 //  void                            DrawZombieWithParts(Graphics* g, const ZombieDrawPosition& theDrawPos);
@@ -178,11 +179,11 @@ public:
 	void                            DrawBungeeCord(Graphics* g, int theOffsetX);
 	void                            TakeDamage(int theDamage, unsigned int theDamageFlags);
 	void                 SetRow(int theRow);
-	float                           GetPosYBasedOnRow(int theRow);
+	PVZP_API float                           GetPosYBasedOnRow(int theRow);
 	void                            ApplyChill(bool theIsIceTrap);
 	void                            UpdateZombieBungee();
 	void                            BungeeLanding();
-	bool                            EffectedByDamage(unsigned int theDamageRangeFlags);
+	PVZP_API bool                            EffectedByDamage(unsigned int theDamageRangeFlags);
 	void                            PickRandomSpeed();
 	void                            UpdateZombiePolevaulter();
 	void                            UpdateZombieDolphinRider();
@@ -206,7 +207,7 @@ public:
 	void                            UpdateZombieJackInTheBox();
 	void                            DrawZombieHead(Graphics* g, const ZombieDrawPosition& theDrawPos, int theFrame);
 	void                            UpdateZombiePosition();
-	Rect                            GetZombieRect();
+	PVZP_API Rect                            GetZombieRect();
 	Rect                            GetZombieAttackRect();
 	void                            UpdateZombieWalking();
 	void                            UpdateZombieBobsled();
@@ -266,7 +267,7 @@ public:
 	void                            StartMindControlled();
 	bool                            IsFlying();
 	void                            DropHead(unsigned int theDamageFlags);
-	bool                            CanTargetPlant(Plant* thePlant, ZombieAttackType theAttackType);
+	PVZP_API bool                            CanTargetPlant(Plant* thePlant, ZombieAttackType theAttackType);
 	void                            UpdateZombieCatapult();
 	Plant*                          FindCatapultTarget();
 	void                            ZombieCatapultFire(Plant* thePlant);
@@ -306,7 +307,7 @@ public:
 	void                            ReanimIgnoreClipRect(const char* theTrackName, bool theIgnoreClipRect);
 	void                            SetAnimRate(float theAnimRate);
 	void                            ApplyAnimRate(float theAnimRate);
-	bool                 IsDeadOrDying();
+	PVZP_API bool                 IsDeadOrDying();
 	void                            DrawDancerReanim(Graphics* g);
 	void                            DrawBungeeReanim(Graphics* g);
 	void                            DrawBungeeTarget(Graphics* g);

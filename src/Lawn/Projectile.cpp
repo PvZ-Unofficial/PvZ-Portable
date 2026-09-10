@@ -32,9 +32,7 @@
 #include "../PvzpLib/Reanimator.h"
 #include "../PvzpLib/Attachment.h"
 #include <algorithm>
-#ifdef PVZP_WITH_RSVZ
-#include "rsvz_pvzp_hooks.h"
-#endif
+#include "PvzpLib/NativeControls.h"
 
 constinit const ProjectileDefinition gProjectileDefinition[] = {
 	{ .mProjectileType = ProjectileType::PROJECTILE_PEA, .mImageRow = 0, .mDamage = 20 },
@@ -314,11 +312,9 @@ void Projectile::CheckForCollision()
 		if (aPlant)
 		{
 			const ProjectileDefinition& aProjectileDef = GetProjectileDef();
-		#ifdef PVZP_WITH_RSVZ
-			if (RsvzPvzp::PlantDamageRule() == 2)
+			if (PvzpNative::PlantDamageRule() == 2)
 				aPlant->mPlantHealth = 0;
-			else if (RsvzPvzp::PlantDamageRule() != 1)
-		#endif
+			else if (PvzpNative::PlantDamageRule() != 1)
 				aPlant->mPlantHealth -= aProjectileDef.mDamage;
 			aPlant->mEatenFlashCountdown = std::max(aPlant->mEatenFlashCountdown, 25);
 
@@ -594,12 +590,12 @@ void Projectile::UpdateLobMotion()
 	if (mProjectileType == ProjectileType::PROJECTILE_COBBIG)
 	{
 		aGroundZ = -40.0f;
-	#ifdef PVZP_WITH_RSVZ
-		if (RsvzPvzp::CobFixedDelay())
+		if (PvzpNative::CobFixedDelay())
 			aGroundZ = -600.0f;
-	#endif
 	}
 	bool hitGround = mPosZ > aGroundZ;
+	if (mProjectileType == ProjectileType::PROJECTILE_COBBIG && PvzpNative::gModifiers.disableCobImpactDelay)
+		hitGround = true;
 	if (aZombie == nullptr && aPlant == nullptr && !hitGround)
 	{
 		return;
@@ -625,16 +621,12 @@ void Projectile::UpdateLobMotion()
 		}
 		else
 		{
-		#ifdef PVZP_WITH_RSVZ
 			if (mProjectileType == ProjectileType::PROJECTILE_BASKETBALL)
-				RsvzPvzp::ApplyBasketball(this, aPlant, GetProjectileDef().mDamage);
-			else if (RsvzPvzp::PlantDamageRule() == 2)
+				PvzpNative::ApplyBasketball(this, aPlant, GetProjectileDef().mDamage);
+			else if (PvzpNative::PlantDamageRule() == 2)
 				aPlant->mPlantHealth = 0;
-			else if (RsvzPvzp::PlantDamageRule() != 1)
+			else if (PvzpNative::PlantDamageRule() != 1)
 				aPlant->mPlantHealth -= GetProjectileDef().mDamage;
-		#else
-			aPlant->mPlantHealth -= GetProjectileDef().mDamage;
-		#endif
 			aPlant->mEatenFlashCountdown = std::max(aPlant->mEatenFlashCountdown, 25);
 			mApp->PlayFoley(FoleyType::FOLEY_SPLAT);
 			Die();
@@ -770,10 +762,8 @@ void Projectile::UpdateMotion()
 	}
 
 	float aSlopeHeightChange = mBoard->GetPosYBasedOnRow(mPosX, aOldRow) - aOldY;
-	#ifdef PVZP_WITH_RSVZ
-	if (RsvzPvzp::CobDriftFixed() && mProjectileType == ProjectileType::PROJECTILE_COBBIG)
+	if (PvzpNative::CobDriftFixed() && mProjectileType == ProjectileType::PROJECTILE_COBBIG)
 		aSlopeHeightChange = 0.0f;
-	#endif
 	if (mMotionType == ProjectileMotion::MOTION_FLOAT_OVER)
 	{
 		mPosY += aSlopeHeightChange;

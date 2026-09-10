@@ -22,6 +22,7 @@
 #ifndef __PROJECTILE_H__
 #define __PROJECTILE_H__
 
+#include "PvzpLib/Plugin.h"
 #include <cstdint>
 #include "../ConstEnums.h"
 #include "GameObject.h"
@@ -93,7 +94,7 @@ public:
 	void                    DoSplashDamage(Zombie* theZombie);
 	const ProjectileDefinition&   GetProjectileDef();
 	unsigned int            GetDamageFlags(Zombie* theZombie/* = nullptr*/);
-	Rect                    GetProjectileRect();
+	PVZP_API Rect                    GetProjectileRect();
 	void                    UpdateNormalMotion();
 	Plant*                  FindCollisionTargetPlant();
 	void                    ConvertToFireball(int theGridX);

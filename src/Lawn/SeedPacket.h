@@ -22,6 +22,7 @@
 #ifndef __SEEDPACKET_H__
 #define __SEEDPACKET_H__
 
+#include "PvzpLib/Plugin.h"
 #include <cstdint>
 #include "GameObject.h"
 #include "../GameConstants.h"
@@ -50,14 +51,14 @@ public:
 	void                Draw(Graphics* g);
 	void                MouseDown(int x, int y, int theClickCount);
 	bool                MouseHitTest(int theX, int theY, HitResult* theHitResult);
-	void                Deactivate();
+	PVZP_API void                Deactivate();
 	void                Activate();
 	void     SetActivate(bool theActivate);
 	void                PickNextSlotMachineSeed();
-	void                WasPlanted();
+	PVZP_API void                WasPlanted();
 	void     SlotMachineStart();
 	void                FlashIfReady();
-	bool                CanPickUp();
+	PVZP_API bool                CanPickUp();
 	void                SetPacketType(SeedType theSeedType, SeedType theImitaterType = SeedType::SEED_NONE);
 };
 

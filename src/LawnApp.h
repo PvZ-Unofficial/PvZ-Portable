@@ -21,6 +21,7 @@
 
 #ifndef __LAWNAPP_H__
 #define __LAWNAPP_H__
+#include "PvzpLib/Plugin.h"
 
 #include "ConstEnums.h"
 #include "SexyAppFramework/SexyApp.h"
@@ -71,6 +72,7 @@ public:
 class LawnApp : public SexyApp
 {
 public:
+	PvzpPlugin::Host mPlugin;
 	Board*							mBoard;
 	TitleScreen*					mTitleScreen;
 	GameSelector*					mGameSelector;
@@ -175,16 +177,16 @@ public:
 	void							MakeNewBoard();
 	void							StartPlaying();
 	bool							TryLoadGame();
-	void							NewGame();
-	void							PreNewGame(GameMode theGameMode, bool theLookForSavedGame);
+	PVZP_API void							NewGame();
+	PVZP_API void							PreNewGame(GameMode theGameMode, bool theLookForSavedGame);
 	void							ShowGameSelector();
-	void							KillGameSelector();
+	PVZP_API void							KillGameSelector();
 	void							ShowAwardScreen(AwardType theAwardType);
 	void							KillAwardScreen();
 	void							ShowSeedChooserScreen();
 	void							KillSeedChooserScreen();
 	void							DoHighScoreDialog();
-	void							DoBackToMain();
+	PVZP_API void							DoBackToMain();
 	void							DoConfirmBackToMain();
 	void							DoNewOptions(bool theFromGameSelector);
 	void							DoRegister();
@@ -219,7 +221,7 @@ public:
 	bool							UpdateAppStep(bool* updated) override;
 	bool							UpdateApp() override;
 	bool					IsAdventureMode();
-	bool					IsSurvivalMode();
+	PVZP_API bool					IsSurvivalMode();
 	bool							IsContinuousChallenge();
 	bool					IsArtChallenge();
 	bool							NeedPauseGame();
@@ -231,7 +233,7 @@ public:
 	void							PlaySample(intptr_t theSoundNum) override;
 	void							FastLoad(GameMode theGameMode);
 	static std::string				GetStageString(int theLevel);
-	void					KillChallengeScreen();
+	PVZP_API void					KillChallengeScreen();
 	void							ShowChallengeScreen(ChallengePage thePage);
 	const ChallengeDefinition&			GetCurrentChallengeDef();
 	void							CheckForGameEnd();
@@ -244,10 +246,10 @@ public:
 	PvzpParticleSystem*				AddPvzpParticle(float theX, float theY, int theRenderOrder, ParticleEffect theEffect);
 	ParticleSystemID		ParticleGetID(PvzpParticleSystem* theParticle);
 	PvzpParticleSystem*	ParticleGet(ParticleSystemID theParticleID);
-	PvzpParticleSystem*	ParticleTryToGet(ParticleSystemID theParticleID);
+	PVZP_API PvzpParticleSystem*	ParticleTryToGet(ParticleSystemID theParticleID);
 	ReanimationID		ReanimationGetID(Reanimation* theReanimation);
 	Reanimation*			ReanimationGet(ReanimationID theReanimationID);
-	Reanimation*			ReanimationTryToGet(ReanimationID theReanimationID);
+	PVZP_API Reanimation*			ReanimationTryToGet(ReanimationID theReanimationID);
 	void							RemoveReanimation(ReanimationID theReanimationID);
 	void							RemoveParticle(ParticleSystemID theParticleID);
 	StoreScreen*					ShowStoreScreen();
@@ -270,9 +272,9 @@ public:
 	bool					CanShowStore();
 	bool					HasBeatenChallenge(GameMode theGameMode);
 	PottedPlant*					GetPottedPlantByIndex(int thePottedPlantIndex);
-	static bool			IsSurvivalNormal(GameMode theGameMode);
-	static bool			IsSurvivalHard(GameMode theGameMode);
-	static bool			IsSurvivalEndless(GameMode theGameMode);
+	PVZP_API static bool			IsSurvivalNormal(GameMode theGameMode);
+	PVZP_API static bool			IsSurvivalHard(GameMode theGameMode);
+	PVZP_API static bool			IsSurvivalEndless(GameMode theGameMode);
 	bool					HasFinishedAdventure();
 	bool					IsFirstTimeAdventureMode();
 	bool					CanSpawnYetis();
@@ -291,12 +293,12 @@ public:
 	void							KillCreditScreen();
 	static std::string				Pluralize(int theCount, const char* theSingular, const char* thePlural);
 	int								GetNumTrophies(ChallengePage thePage);
-	bool					EarnedGoldTrophy();
+	PVZP_API bool					EarnedGoldTrophy();
 	inline bool						IsRegistered() { return false; }
 	inline bool						IsExpired() { return false; }
 	inline bool						IsDRMConnected() { return false; }
 	bool					IsScaryPotterLevel();
-	static bool			IsEndlessScaryPotter(GameMode theGameMode);
+	PVZP_API static bool			IsEndlessScaryPotter(GameMode theGameMode);
 	bool					IsSquirrelLevel();
 	bool					IsIZombieLevel();
 	bool					CanShowZenGarden();
@@ -308,7 +310,7 @@ public:
 	bool							CanPauseNow();
 	bool					IsPuzzleMode();
 	bool					IsChallengeMode();
-	static bool			IsEndlessIZombie(GameMode theGameMode);
+	PVZP_API static bool			IsEndlessIZombie(GameMode theGameMode);
 	void							CrazyDaveDoneHanding();
 	inline std::string				GetCurrentLevelName() { return "Unknown"; }
 	int					TrophiesNeedForGoldSunflower();
@@ -334,7 +336,7 @@ void								BetaSubmitFunc();
 extern bool gIsPartnerBuild;
 extern bool gFastMo;
 extern bool gSlowMo;
-extern LawnApp* gLawnApp;
+extern PVZP_API LawnApp* gLawnApp;
 extern int gSlowMoCounter;
 
 

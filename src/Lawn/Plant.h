@@ -20,6 +20,7 @@
  */
 
 #pragma once
+#include "PvzpLib/Plugin.h"
 
 #include <cstdint>
 #include <string>
@@ -223,7 +224,7 @@ public:
 	void                    DoSpecial();
 	void                    Fire(Zombie* theTargetZombie, int theRow, PlantWeapon thePlantWeapon = PlantWeapon::WEAPON_PRIMARY);
 	Zombie*                 FindTargetZombie(int theRow, PlantWeapon thePlantWeapon = PlantWeapon::WEAPON_PRIMARY);
-	void                    Die();
+	PVZP_API void                    Die();
 	void                    UpdateProductionPlant();
 	void                    UpdateShooter();
 	bool                    FindTargetAndFire(int theRow, PlantWeapon thePlantWeapon = PlantWeapon::WEAPON_PRIMARY);
@@ -241,9 +242,9 @@ public:
 	void                    UpdateAbilities();
 	void                    Squish();
 	void                    DoRowAreaDamage(int theDamage, unsigned int theDamageFlags);
-	int                     GetDamageRangeFlags(PlantWeapon thePlantWeapon = PlantWeapon::WEAPON_PRIMARY);
-	Rect                    GetPlantRect();
-	Rect                    GetPlantAttackRect(PlantWeapon thePlantWeapon = PlantWeapon::WEAPON_PRIMARY);
+	PVZP_API int                     GetDamageRangeFlags(PlantWeapon thePlantWeapon = PlantWeapon::WEAPON_PRIMARY);
+	PVZP_API Rect                    GetPlantRect();
+	PVZP_API Rect                    GetPlantAttackRect(PlantWeapon thePlantWeapon = PlantWeapon::WEAPON_PRIMARY);
 	Zombie*                 FindSquashTarget();
 	void                    UpdateSquash();
 	bool         NotOnGround();
@@ -273,7 +274,7 @@ public:
 	void                    UpdatePotato();
 	int                     CalcRenderOrder();
 	void                    AnimateNuts();
-	void                    SetSleeping(bool theIsAsleep);
+	PVZP_API void                    SetSleeping(bool theIsAsleep);
 	void                    UpdateShooting();
 	void                    DrawShadow(Graphics* g, float theOffsetX, float theOffsetY);
 	void                    UpdateScaredyShroom();
@@ -288,11 +289,11 @@ public:
 	void                    StarFruitFire();
 	void                    UpdateTanglekelp();
 	Reanimation*            AttachBlinkAnim(Reanimation* theReanimBody);
-	void                    UpdateReanimColor();
+	PVZP_API void                    UpdateReanimColor();
 	bool                    IsUpgradableTo(SeedType theUpgradedType);
 	bool                    IsPartOfUpgradableTo(SeedType theUpgradedType);
 	void                    UpdateCobCannon();
-	void                    CobCannonFire(int theTargetX, int theTargetY);
+	PVZP_API void                    CobCannonFire(int theTargetX, int theTargetY);
 	void                    UpdateGoldMagnetShroom();
 	bool         IsOnBoard();
 	void                    RemoveEffects();
@@ -310,7 +311,7 @@ public:
 	static void  PreloadPlantResources(SeedType theSeedType);
 	bool         IsInPlay();
 	void                    UpdateNeedsFood() { ; }
-	void                    PlayIdleAnim(float theRate);
+	PVZP_API void                    PlayIdleAnim(float theRate);
 	void                    UpdateFlowerPot();
 	void                    UpdateLilypad();
 	void                    GoldMagnetFindTargets();

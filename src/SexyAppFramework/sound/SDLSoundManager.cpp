@@ -415,6 +415,22 @@ void SDLSoundManager::StopAllSounds()
 	}
 }
 
+bool SDLSoundManager::StopSound(intptr_t theSfxID)
+{
+    if (theSfxID < 0 || theSfxID >= MAX_SOURCE_SOUNDS || !mSourceSounds[theSfxID])
+        return false;
+    for (auto* instance : mPlayingSounds)
+    {
+        if (instance && instance->mMixChunk == mSourceSounds[theSfxID])
+        {
+            const bool autoRelease = instance->mAutoRelease;
+            instance->Stop();
+            instance->mAutoRelease = autoRelease;
+        }
+    }
+    return true;
+}
+
 intptr_t SDLSoundManager::GetFreeSoundId()
 {
 	for (intptr_t i=0; i<MAX_SOURCE_SOUNDS; i++)

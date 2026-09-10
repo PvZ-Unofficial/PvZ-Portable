@@ -42,9 +42,7 @@
 #include "../PvzpLib/EffectSystem.h"
 #include "../PvzpLib/PvzpStringFile.h"
 #include <algorithm>
-#ifdef PVZP_WITH_RSVZ
-#include "rsvz_pvzp_hooks.h"
-#endif
+#include "PvzpLib/NativeControls.h"
 
 constinit const PlantDefinition gPlantDefs[SeedType::NUM_SEED_TYPES] = {
 	{ .mSeedType = SeedType::SEED_PEASHOOTER,        .mPlantImage = nullptr, .mReanimationType = ReanimationType::REANIM_PEASHOOTER,    .mPacketIndex = 0,  .mSeedCost = 100, .mRefreshTime = 750,    .mSubClass = PlantSubClass::SUBCLASS_SHOOTER, .mLaunchRate = 150,  .mPlantName = "PEASHOOTER" },
@@ -650,9 +648,7 @@ void Plant::SpikeRockTakeDamage()
 
 	SpikeweedAttack();
 
-#ifdef PVZP_WITH_RSVZ
-	if (RsvzPvzp::PlantDamageRule() != 1)
-#endif
+	if (PvzpNative::PlantDamageRule() != 1)
 	mPlantHealth -= 50;
 	if (mPlantHealth <= 300)
 	{
@@ -705,21 +701,17 @@ void Plant::DoRowAreaDamage(int theDamage, unsigned int theDamageFlags)
 
 					if (mSeedType == SeedType::SEED_SPIKEROCK)
 					{
-#ifdef PVZP_WITH_RSVZ
-						if (RsvzPvzp::PlantDamageRule() == 2)
+						if (PvzpNative::PlantDamageRule() == 2)
 						{
 							Die();
 						}
 						else
-#endif
 						SpikeRockTakeDamage();
 					}
 					else
 					{
-#ifdef PVZP_WITH_RSVZ
-						if (RsvzPvzp::PlantDamageRule() == 1)
+						if (PvzpNative::PlantDamageRule() == 1)
 							continue;
-#endif
 						Die();
 					}
 				}
@@ -812,12 +804,10 @@ bool Plant::FindTargetAndFire(int theRow, PlantWeapon thePlantWeapon)
 	case SeedType::SEED_KERNELPULT:
 	{
 			bool aThrowButter = Sexy::Rand(4) == 0;
-		#ifdef PVZP_WITH_RSVZ
-			if (RsvzPvzp::KernelPultProjectileRule() == 1)
+			if (PvzpNative::KernelPultProjectileRule() == 1)
 				aThrowButter = true;
-			else if (RsvzPvzp::KernelPultProjectileRule() == 2)
+			else if (PvzpNative::KernelPultProjectileRule() == 2)
 				aThrowButter = false;
-		#endif
 			if (aThrowButter)
 			{
 				aBodyReanim = mApp->ReanimationGet(mBodyReanimID);
@@ -1060,35 +1050,25 @@ void Plant::UpdateProductionPlant()
 		{
 			if (mState == PlantState::STATE_SUNSHROOM_SMALL)
 			{
-			#ifdef PVZP_WITH_RSVZ
-				if (!RsvzPvzp::CreditProducedSun(mBoard, static_cast<int>(CoinType::COIN_SMALLSUN)))
-			#endif
+				if (!PvzpNative::CreditProducedSun(mBoard, static_cast<int>(CoinType::COIN_SMALLSUN)))
 				mBoard->AddCoin(mX, mY, CoinType::COIN_SMALLSUN, CoinMotion::COIN_MOTION_FROM_PLANT);
 			}
 			else
 			{
-			#ifdef PVZP_WITH_RSVZ
-				if (!RsvzPvzp::CreditProducedSun(mBoard, static_cast<int>(CoinType::COIN_SUN)))
-			#endif
+				if (!PvzpNative::CreditProducedSun(mBoard, static_cast<int>(CoinType::COIN_SUN)))
 				mBoard->AddCoin(mX, mY, CoinType::COIN_SUN, CoinMotion::COIN_MOTION_FROM_PLANT);
 			}
 		}
 		else if (mSeedType == SeedType::SEED_SUNFLOWER)
 		{
-		#ifdef PVZP_WITH_RSVZ
-			if (!RsvzPvzp::CreditProducedSun(mBoard, static_cast<int>(CoinType::COIN_SUN)))
-		#endif
+			if (!PvzpNative::CreditProducedSun(mBoard, static_cast<int>(CoinType::COIN_SUN)))
 			mBoard->AddCoin(mX, mY, CoinType::COIN_SUN, CoinMotion::COIN_MOTION_FROM_PLANT);
 		}
 		else if (mSeedType == SeedType::SEED_TWINSUNFLOWER)
 		{
-		#ifdef PVZP_WITH_RSVZ
-			if (!RsvzPvzp::CreditProducedSun(mBoard, static_cast<int>(CoinType::COIN_SUN)))
-		#endif
+			if (!PvzpNative::CreditProducedSun(mBoard, static_cast<int>(CoinType::COIN_SUN)))
 			mBoard->AddCoin(mX, mY, CoinType::COIN_SUN, CoinMotion::COIN_MOTION_FROM_PLANT);
-		#ifdef PVZP_WITH_RSVZ
-			if (!RsvzPvzp::CreditProducedSun(mBoard, static_cast<int>(CoinType::COIN_SUN)))
-		#endif
+			if (!PvzpNative::CreditProducedSun(mBoard, static_cast<int>(CoinType::COIN_SUN)))
 			mBoard->AddCoin(mX, mY, CoinType::COIN_SUN, CoinMotion::COIN_MOTION_FROM_PLANT);
 		}
 		else if (mSeedType == SeedType::SEED_MARIGOLD)
@@ -1100,9 +1080,7 @@ void Plant::UpdateProductionPlant()
 		{
 			if (mSeedType == SeedType::SEED_SUNFLOWER)
 			{
-			#ifdef PVZP_WITH_RSVZ
-				if (!RsvzPvzp::CreditProducedSun(mBoard, static_cast<int>(CoinType::COIN_SUN)))
-			#endif
+				if (!PvzpNative::CreditProducedSun(mBoard, static_cast<int>(CoinType::COIN_SUN)))
 				mBoard->AddCoin(mX, mY, CoinType::COIN_SUN, CoinMotion::COIN_MOTION_FROM_PLANT);
 			}
 			else if (mSeedType == SeedType::SEED_MARIGOLD)
@@ -1710,9 +1688,7 @@ void Plant::UpdateCobCannon()
 	if (mState == PlantState::STATE_COBCANNON_ARMING)
 	{
 		if (mStateCountdown == 0
-		#ifdef PVZP_WITH_RSVZ
-			|| RsvzPvzp::CobRechargeShortened()
-		#endif
+			|| PvzpNative::CobRechargeShortened()
 		)
 		{
 			mState = PlantState::STATE_COBCANNON_LOADING;
@@ -1734,10 +1710,8 @@ void Plant::UpdateCobCannon()
 	}
 	else if (mState == PlantState::STATE_COBCANNON_READY)
 	{
-		#ifdef PVZP_WITH_RSVZ
-		if (RsvzPvzp::FastForwardPerformance() >= 2)
+		if (PvzpNative::FastForwardPerformance() >= 2)
 			return;
-		#endif
 		Reanimation* aBodyReanim = mApp->ReanimationGet(mBodyReanimID);
 		ReanimatorTrackInstance* aCobTrack = aBodyReanim->GetTrackInstanceByName("CobCannon_cob");
 		aCobTrack->mTrackColor = GetFlashingColor(mBoard->mMainCounter, 75);
@@ -2367,10 +2341,8 @@ void Plant::RemoveEffects()
 
 void Plant::Squish()
 {
-#ifdef PVZP_WITH_RSVZ
-	if (RsvzPvzp::PlantDamageRule() == 1)
+	if (PvzpNative::PlantDamageRule() == 1)
 		return;
-#endif
 	if (NotOnGround())
 		return;
 
@@ -2590,9 +2562,7 @@ void Plant::UpdateAbilities()
 	}
 
 	if ((mIsAsleep
-	#ifdef PVZP_WITH_RSVZ
-		&& !RsvzPvzp::MushroomsAwake()
-	#endif
+		&& !PvzpNative::MushroomsAwake()
 		) || mSquished || mOnBungeeState != PlantOnBungeeState::NOT_ON_BUNGEE)
 		return;
 
@@ -2638,9 +2608,7 @@ void Plant::UpdateAbilities()
 	{
 		mDoSpecialCountdown--;
 		if (mDoSpecialCountdown == 0
-		#ifdef PVZP_WITH_RSVZ
-			|| RsvzPvzp::InstantIceAndAshEffects()
-		#endif
+			|| PvzpNative::InstantIceAndAshEffects()
 		)
 		{
 			DoSpecial();
@@ -2698,10 +2666,8 @@ bool Plant::IsUpgradableTo(SeedType theUpgradedType)
 
 void Plant::UpdateReanimColor()
 {
-	#ifdef PVZP_WITH_RSVZ
-	if (RsvzPvzp::FastForwardPerformance() >= 2)
+	if (PvzpNative::FastForwardPerformance() >= 2)
 		return;
-	#endif
 	if (!IsOnBoard())
 		return;
 
@@ -3599,10 +3565,8 @@ float PlantFlowerPotHeightOffset(SeedType theSeedType, float theFlowerPotScale)
 
 float PlantDrawHeightOffset(Board* theBoard, Plant* thePlant, SeedType theSeedType, int theCol, int theRow)
 {
-	#ifdef PVZP_WITH_RSVZ
-	if (RsvzPvzp::FastForwardPerformance() >= 2)
+	if (PvzpNative::FastForwardPerformance() >= 2)
 		return 0.0f;
-	#endif
 	float aHeightOffset = 0.0f;
 
 	bool doFloating = false;
@@ -4464,9 +4428,7 @@ void Plant::ImitaterMorph()
 {
 	Die();
 	Plant* aPlant = mBoard->AddPlant(mPlantCol, mRow, mImitaterType, SeedType::SEED_IMITATER);
-#ifdef PVZP_WITH_RSVZ
-	RsvzPvzp::NoteImitaterMorph(this, aPlant);
-#endif
+	PvzpNative::NoteImitaterMorph(this, aPlant);
 
 	FilterEffect aFilter = FilterEffect::FILTER_EFFECT_WASHED_OUT;
 	if (mImitaterType == SeedType::SEED_HYPNOSHROOM || mImitaterType == SeedType::SEED_SQUASH || mImitaterType == SeedType::SEED_POTATOMINE ||

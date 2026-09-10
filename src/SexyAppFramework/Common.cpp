@@ -34,12 +34,11 @@
 #include <SDL.h>
 
 #include "misc/PerfTimer.h"
-#ifdef PVZP_WITH_RSVZ
-#include "rsvz_pvzp_hooks.h"
-#endif
+#include "PvzpLib/NativeControls.h"
 
 bool Sexy::gDebug = false;
 static Sexy::MTRand gMTRand;
+bool Sexy::IsBattleRandom(const Sexy::MTRand* random) { return random == &gMTRand; }
 namespace Sexy
 {
 	std::filesystem::path gAppDataFolder;
@@ -95,34 +94,22 @@ void Sexy::LogError(const char* theFormat, ...)
 
 int Sexy::Rand()
 {
-#ifdef PVZP_WITH_RSVZ
-	RsvzPvzp::RegisterBattleRandom(&gMTRand);
-#endif
 	return gMTRand.Next();
 }
 
 int Sexy::Rand(int range)
 {
-#ifdef PVZP_WITH_RSVZ
-	RsvzPvzp::RegisterBattleRandom(&gMTRand);
-#endif
 	return gMTRand.Next((unsigned long)range);
 }
 
 float Sexy::Rand(float range)
 {
-#ifdef PVZP_WITH_RSVZ
-	RsvzPvzp::RegisterBattleRandom(&gMTRand);
-#endif
 	return gMTRand.Next(range);
 }
 
 void Sexy::SRand(ulong theSeed)
 {
-#ifdef PVZP_WITH_RSVZ
-	RsvzPvzp::RegisterBattleRandom(&gMTRand);
-	RsvzPvzp::NoteBattleSeed(theSeed);
-#endif
+	PvzpNative::NoteBattleSeed(theSeed);
 	gMTRand.SRand(theSeed);
 }
 

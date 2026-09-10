@@ -37,8 +37,11 @@ enum
 	DATA_ARRAY_KEY_FIRST = 1
 };
 
+namespace PvzpPlugin { struct LayoutInspector; }
+
 template <typename T> class DataArray
 {
+	friend struct PvzpPlugin::LayoutInspector;
 	// Value-initialization zeroes T's members only while this constructor stays implicit.
 	struct DataArrayItem : T {};
 

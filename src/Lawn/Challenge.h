@@ -22,6 +22,7 @@
 #ifndef __CHALLENGE_H__
 #define __CHALLENGE_H__
 
+#include "PvzpLib/Plugin.h"
 #include <cstdint>
 #include "../ConstEnums.h"
 #include "../GameConstants.h"
@@ -177,7 +178,7 @@ public:
 	void                    ScaryPotterPopulate();
 	void         ScaryPotterDontPlaceInCol(int theCol, PvzpWeightedGridArray* theGridArray, int theGridArrayCount);
 	void                    ScaryPotterFillColumnWithPlant(int theCol, SeedType theSeedType, PvzpWeightedGridArray* theGridArray, int theGridArrayCount);
-	void                    PuzzleNextStageClear();
+	PVZP_API void                    PuzzleNextStageClear();
 	void                    ScaryPotterMalletPot(GridItem* theScaryPot);
 	static ZombieType       IZombieSeedTypeToZombieType(SeedType theSeedType);
 	static int  IsZombieSeedType(SeedType theSeedType);
@@ -225,7 +226,7 @@ public:
 	void                    BeghouledCreatePlants(BeghouledBoardState* theOldBoardState, BeghouledBoardState* theNewBoardState);
 	void                    PuzzlePhaseComplete(int theGridX, int theGridY);
 	int         PuzzleIsAwardStage();
-	Zombie*                 IZombiePlaceZombie(ZombieType theZombieType, int theGridX, int theGridY);
+	PVZP_API Zombie*                 IZombiePlaceZombie(ZombieType theZombieType, int theGridX, int theGridY);
 	void                    WhackAZombieUpdate();
 	void                    LastStandCompletedStage();
 	void                    TreeOfWisdomUpdate();

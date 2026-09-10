@@ -23,6 +23,7 @@
 #define __RESOURCES__
 
 #include <cstdint>
+#include "PvzpLib/Plugin.h"
 
 extern bool gNeedRecalcVariableToIdMap;
 
@@ -1284,7 +1285,7 @@ namespace Sexy
 	extern intptr_t SOUND_NEWSPAPER_RARRGH;
 	extern intptr_t SOUND_NEWSPAPER_RIP;
 	extern intptr_t SOUND_PAPER;
-	extern intptr_t SOUND_PAUSE;
+	extern PVZP_API intptr_t SOUND_PAUSE;
 	extern intptr_t SOUND_PHONOGRAPH;
 	extern intptr_t SOUND_PLANT2;
 	extern intptr_t SOUND_PLANT;

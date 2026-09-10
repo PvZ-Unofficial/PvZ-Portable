@@ -25,6 +25,7 @@
 #ifndef __WIDGETMANAGER_H__
 #define __WIDGETMANAGER_H__
 
+#include "PvzpLib/Plugin.h"
 #include "Common.h"
 #include "misc/KeyCodes.h"
 #include "WidgetContainer.h"
@@ -134,9 +135,9 @@ public:
 	void					MousePosition(int x, int y);
 	void					RehupMouse();
 	void					RemapMouse(int& theX, int& theY);
-	bool					MouseUp(int x, int y, int theClickCount);
-	bool					MouseDown(int x, int y, int theClickCount);
-	bool					MouseMove(int x, int y);
+	PVZP_API bool					MouseUp(int x, int y, int theClickCount);
+	PVZP_API bool					MouseDown(int x, int y, int theClickCount);
+	PVZP_API bool					MouseMove(int x, int y);
 	bool					MouseDrag(int x, int y);
 	bool					MouseExit(int x, int y);
 	void					MouseWheel(int theDelta);
