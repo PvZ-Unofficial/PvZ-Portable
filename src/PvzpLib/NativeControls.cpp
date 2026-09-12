@@ -441,9 +441,9 @@ namespace PvzpNative {
 			FinishPlantEffect(attempt, gModifiers.plantDamageRule == 1 ? 1 : 6);
 	}
 
-	void ApplyGargantuarSquish(Zombie* zombie, Plant* plant)
+	void ApplyZombieSquish(Zombie* zombie, Plant* plant, int source)
 	{
-		const EventAttempt attempt = BeginPlantEffect(1U << 2, 2, zombie, plant, 2, 0);
+		const EventAttempt attempt = BeginPlantEffect(source == 2 ? 1U << 2 : 1U << 6, source, zombie, plant, 2, 0);
 		if (attempt.suppressed)
 		{
 			FinishPlantEffect(attempt, 0);
@@ -457,9 +457,15 @@ namespace PvzpNative {
 		const bool wasDead = plant->mDead;
 		const bool wasSquished = plant->mSquished;
 		const PlantState oldState = plant->mState;
+		const bool activates = !plant->mIsAsleep &&
+			(plant->mSeedType == SeedType::SEED_CHERRYBOMB || plant->mSeedType == SeedType::SEED_JALAPENO ||
+			 plant->mSeedType == SeedType::SEED_DOOMSHROOM || plant->mSeedType == SeedType::SEED_ICESHROOM ||
+			 (plant->mSeedType == SeedType::SEED_POTATOMINE && oldState != PlantState::STATE_NOTREADY));
 		++plant->mBoard->mPlantsEaten;
 		plant->Squish();
-		if (!wasDead && plant->mDead)
+		if (activates && !wasDead && (plant->mDead || oldState != plant->mState))
+			FinishPlantEffect(attempt, 5);
+		else if (!wasDead && plant->mDead)
 			FinishPlantEffect(attempt, 3);
 		else if (!wasSquished && plant->mSquished)
 			FinishPlantEffect(attempt, 4);
@@ -467,6 +473,18 @@ namespace PvzpNative {
 			FinishPlantEffect(attempt, 5);
 		else
 			FinishPlantEffect(attempt, gModifiers.plantDamageRule == 1 ? 1 : 6);
+	}
+
+	void ApplyBungeeLift(Zombie* zombie, Plant* plant)
+	{
+		const EventAttempt attempt = BeginPlantEffect(1U << 7, 6, zombie, plant, 3, 0);
+		if (attempt.suppressed)
+		{
+			FinishPlantEffect(attempt, 0);
+			return;
+		}
+		plant->mOnBungeeState = PlantOnBungeeState::RISING_WITH_BUNGEE;
+		FinishPlantEffect(attempt, 7);
 	}
 
 	void ApplyJackPlantExplosion(Zombie* zombie, Board* board, int x, int y, int radius)

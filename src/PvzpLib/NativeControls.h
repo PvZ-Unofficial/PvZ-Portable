@@ -149,7 +149,8 @@ namespace PvzpNative
 	void ApplyBite(Zombie* zombie, Plant* plant, int damage);
 	void ApplyBasketball(Projectile* projectile, Plant* plant, int damage);
 	void ApplyGargantuarSpikeDamage(Zombie* zombie, Plant* plant);
-	void ApplyGargantuarSquish(Zombie* zombie, Plant* plant);
+	void ApplyZombieSquish(Zombie* zombie, Plant* plant, int source);
+	void ApplyBungeeLift(Zombie* zombie, Plant* plant);
 	void ApplyJackPlantExplosion(Zombie* zombie, Board* board, int x, int y, int radius);
 	void EmitHomeEntry(Zombie* zombie);
 	void EmitGargantuarSpawned(Zombie* zombie);

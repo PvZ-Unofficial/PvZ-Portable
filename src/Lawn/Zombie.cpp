@@ -1228,7 +1228,7 @@ void Zombie::BungeeLiftTarget()
 	if (aPlant == nullptr)
 		return;
 
-	aPlant->mOnBungeeState = PlantOnBungeeState::RISING_WITH_BUNGEE;
+	PvzpNative::ApplyBungeeLift(this, aPlant);
 	mApp->PlayFoley(FoleyType::FOLEY_FLOOP);
 
 	Reanimation* aPlantReanim = mApp->ReanimationTryToGet(aPlant->mBodyReanimID);
@@ -6178,7 +6178,10 @@ void Zombie::SquishAllInSquare(int theX, int theY, ZombieAttackType theAttackTyp
 			if (aPlant->mSeedType != SeedType::SEED_SPIKEROCK)
 			{
 				if (mZombieType == ZombieType::ZOMBIE_GARGANTUAR || mZombieType == ZombieType::ZOMBIE_REDEYE_GARGANTUAR)
-					PvzpNative::ApplyGargantuarSquish(this, aPlant);
+					PvzpNative::ApplyZombieSquish(this, aPlant, 2);
+				else if (theAttackType == ZombieAttackType::ATTACKTYPE_DRIVE_OVER &&
+					(mZombieType == ZombieType::ZOMBIE_ZAMBONI || mZombieType == ZombieType::ZOMBIE_CATAPULT))
+					PvzpNative::ApplyZombieSquish(this, aPlant, mZombieType == ZombieType::ZOMBIE_ZAMBONI ? 4 : 5);
 				else
 				{
 					mBoard->mPlantsEaten++;

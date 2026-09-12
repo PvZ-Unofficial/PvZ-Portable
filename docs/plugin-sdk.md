@@ -17,7 +17,7 @@ Rust 工具链或 RustVsZombies 源码。Windows x64 支持一个活动插件；
 固定导出只有三个 C ABI 入口：
 
 ```cpp
-uint32_t pvzp_plugin_abi_version(); // 当前 4
+uint32_t pvzp_plugin_abi_version(); // 当前 5
 int32_t pvzp_plugin_initialize();  // 0 成功
 int32_t pvzp_plugin_shutdown();    // 0 表示资源已清理，可以卸载
 ```
