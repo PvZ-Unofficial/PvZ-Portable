@@ -46,7 +46,6 @@
 #include "../PvzpLib/PvzpCommon.h"
 #include "graphics/Font.h"
 #include "../PvzpLib/Reanimator.h"
-#include "misc/Debug.h"
 #include "misc/MTRand.h"
 #include "../PvzpLib/PvzpParticle.h"
 #include "../PvzpLib/EffectSystem.h"

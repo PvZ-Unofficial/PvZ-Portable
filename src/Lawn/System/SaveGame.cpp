@@ -40,7 +40,6 @@
 #include "../../PvzpLib/PvzpList.h"
 #include "DataSync.h"
 #include "misc/Buffer.h"
-#include <algorithm>
 #include <cstdint>
 #include <memory>
 #include <type_traits>

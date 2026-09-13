@@ -1,5 +1,18 @@
 CompileFlags:
-  CompilationDatabase: "build"
+  CompilationDatabase: "build/clangd"
 
 Index:
   Background: Build
+
+Diagnostics:
+  ClangTidy:
+    Remove: bugprone-integer-division
+
+---
+If:
+  PathMatch: src/SexyAppFramework/sound/SDL-Mixer-X/.*
+Index:
+  Background: Skip
+Diagnostics:
+  ClangTidy:
+    Remove: '*'

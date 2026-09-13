@@ -193,6 +193,46 @@ cmake -G Ninja -B build
 cmake --build build
 ```
 
+### clangd and clang-tidy
+
+The repository's `.clangd` reads `build/clangd/compile_commands.json`. Configure
+this directory with the compiler, dependencies and options used for your game
+build. For example, in the Windows MSYS2 UCRT64 shell:
+
+```bash
+cmake -S . -B build/clangd -G Ninja -DCMAKE_BUILD_TYPE=Release \
+  -DCMAKE_C_COMPILER=gcc -DCMAKE_CXX_COMPILER=g++ -DCMAKE_PREFIX_PATH="$MINGW_PREFIX"
+```
+
+On other platforms, use the normal build command with `-B build/clangd`. For
+MSVC, use Ninja from a developer shell and pass the normal vcpkg toolchain
+options. Reconfigure after changing build options or toolchains; use a separate
+directory for a different compiler and select it in your personal clangd
+configuration. CMake already exports the compilation database.
+
+Install clangd and clang-tidy and select clangd in your editor. When using GCC,
+add `--query-driver=<absolute-path-to-g++>` to the editor's clangd arguments so it
+can obtain the compiler's target and system headers. Keep machine-specific paths
+in editor/user settings. Run a check from the repository root:
+
+```bash
+clang-tidy -p build/clangd src/Lawn/System/SaveGame.cpp
+```
+
+For Windows LLVM with the UCRT64 database, explicitly select GCC's target
+(clang-tidy has no `--query-driver` option):
+
+```bash
+clang-tidy -p build/clangd src/Lawn/System/SaveGame.cpp \
+  --extra-arg=--target="$(g++ -dumpmachine)"
+```
+
+No project `.clang-tidy` configuration is provided. clangd uses its default
+embedded checks except `bugprone-integer-division`. `.clangd` also skips
+background indexing and tidy checks inside SDL-Mixer-X. Limit standalone batch checks to project sources. Warnings are
+advisory; review them against the original 1.0.0.1051 behavior before changing
+code, and do not run bulk `--fix`. clang-tidy is not part of the normal build.
+
 ### Performance Optimization
 
 It is recommended to use the **Release** build type for the best performance, as it usually implies compiler optimizations:
