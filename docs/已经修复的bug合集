@@ -84,6 +84,26 @@ PvZ-Portable 自身错误的 bug。年度版与原版的版本差异改动记录
 - 修改提交号：`d945e8a3bfe48ac9235aa2f27b2e1df445cc9f75`；配套提交
   `27c07decd39a6efe3419c5421942953dce65ff11`。
 
+## B11. 激进跳帧使冰道到期时解引用已回收粒子
+
+- 状态：已修复，固定值 7 的连续 10 轮 Full 实测通过。
+- 问题：`PvzpParticleEmitter::Update()` 的激进跳帧分支提前结束视觉粒子；`Board::UpdateIce()` 在计时器由 1 降为 0 时允许粒子不存在，却仍无条件调用 `OverrideColor`。
+- 证据：pe96 固定随机返回值 7 的 Portable 转储 `pvz-portable.exe.36724.dmp`，异常位于 EXE RVA `0x35FD8` 的空 `rbx+0x18` 读取；RVA `0x35F1B` 的零计时器分支在粒子为空时直接跳至该读取。原版对应 `Board::UpdateIce@0x414100`；这里的提前回收来自 Portable 的跳帧优化，而非原版正常游戏条件。
+- 历史：无条件颜色调用来自初始反编译；提前回收由 `77622eede4338b00145cb9f1fe3e003fae5de95b` 引入，现已改为 `PvzpNative::FastForwardPerformance()`。
+- 修正：仅在粒子存在时更新颜色，保留冰道计时及到期恢复格点的逻辑；未扩大粒子池或关闭激进跳帧。
+- 验证入口：RSVZ `target/pe96-witness-20260914/` 的 pe96、9990 阳光、1128 初始轮数、显式混合出怪表，激进跳帧连续 10 轮 Full Witness。
+
+- 修改提交号：`0390f6bafa77cac39aa45a927e647fdccd9761a2`。
+
+## B12. 冰车速度插值的舍入与原版不一致
+
+- 状态：已修复，固定值 7 的连续 10 轮 Full 实测通过。
+- 问题：通用 `PvzpAnimateCurveFloat` 的 float 端点相减与原版编译器预计算的 double 差值不一致。第 1307 帧速度位模式为 `0x3E5E353F`，1051 为 `0x3E5E3540`。
+- 证据：1051 `UpdateZamboni@0x52A7B0`，`0x52A7CF..0x52A82A` 的整数横坐标、PC24 运算与 `0x679728` 的 double 常量 `-0.19999999925494194`。
+- 修正：仅在冰车速度路径显式执行相同的截断、边界判断和分步舍入，没有改变通用曲线函数或浮点环境。
+- 验证：MSVC、MinGW 最终构建通过；MSVC 激进跳帧 10 轮 Full 与 1051 完全一致，共 425584 帧，记录在 RSVZ `target/pe96-witness-20260914/rounding-fixed-7/portable/diff.txt`。
+- 修改提交号：`0390f6bafa77cac39aa45a927e647fdccd9761a2`。
+
 ## 记录格式
 
 <!--
