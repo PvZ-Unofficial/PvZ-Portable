@@ -303,7 +303,7 @@ public:
 	void                    AnimateGarlic();
 	Coin*                   FindGoldMagnetTarget();
 	void                    SpikeweedAttack();
-	void                    ImitaterMorph();
+	PVZP_API void           ImitaterMorph();
 	void                    UpdateImitater();
 	void                    UpdateReanim();
 	void                    SpikeRockTakeDamage();

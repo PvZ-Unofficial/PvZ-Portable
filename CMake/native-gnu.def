@@ -54,6 +54,7 @@ EXPORTS
     _ZN5Plant12GetPlantRectEv
     _ZN5Plant12PlayIdleAnimEf
     _ZN5Plant13CobCannonFireEii
+    _ZN5Plant13ImitaterMorphEv
     _ZN5Plant17UpdateReanimColorEv
     _ZN5Plant18GetPlantAttackRectE11PlantWeapon
     _ZN5Plant19GetDamageRangeFlagsE11PlantWeapon

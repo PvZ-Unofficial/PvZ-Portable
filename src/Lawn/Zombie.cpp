@@ -3708,7 +3708,18 @@ void Zombie::UpdateZamboni()
 {
 	if (mPosX > 400.0f && !mFlatTires)
 	{
-		mVelX = PvzpAnimateCurveFloat(700, 300, mPosX, 0.25f, 0.05f, PvzpCurves::CURVE_LINEAR);
+		// 1051 UpdateZamboni@0x52A7CF..0x52A82A: PC24 arithmetic stages,
+		// with the precomputed binary64 endpoint difference from 0x679728.
+		const float aTime = static_cast<float>(static_cast<double>(static_cast<int>(mPosX) - 700) / -400.0);
+		if (aTime <= 0.0f)
+			mVelX = 0.25f;
+		else if (aTime >= 1.0f)
+			mVelX = 0.05f;
+		else
+		{
+			const float aScaled = static_cast<float>(static_cast<double>(aTime) * -0.19999999925494194);
+			mVelX = static_cast<float>(static_cast<double>(aScaled) + 0.25);
+		}
 	}
 	else if (mFlatTires && mVelX > 0.0005f)
 	{

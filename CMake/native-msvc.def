@@ -78,6 +78,7 @@ EXPORTS
     ?SetBattleCallbacks@PvzpPlugin@@YA_NPEBUBattleCallbacks@1@I@Z
     ?SetBoardDestroyingCallback@PvzpPlugin@@YA_NP6AXXZ@Z
     ?SetSleeping@Plant@@QEAAX_N@Z
+    ?ImitaterMorph@Plant@@QEAAXXZ
     ?SetUpdateCallback@PvzpPlugin@@YA_NP6AHE_K@Z@Z
     ?TakeSunMoney@Board@@QEAA_NH@Z
     ?TotalZombiesHealthInWave@Board@@QEAAHH@Z

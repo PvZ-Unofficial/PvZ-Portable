@@ -5375,8 +5375,12 @@ void Board::UpdateIce()
 				}
 			}
 
-			int anAlpha = std::clamp(mIceTimer[aRow] / 10, 0, 255);
-			aParticleIce->OverrideColor(nullptr, Color(255, 255, 255, anAlpha));
+			// Aggressive fast-forward can reclaim the sparkle before the ice expires.
+			if (aParticleIce)
+			{
+				int anAlpha = std::clamp(mIceTimer[aRow] / 10, 0, 255);
+				aParticleIce->OverrideColor(nullptr, Color(255, 255, 255, anAlpha));
+			}
 		}
 	}
 }
