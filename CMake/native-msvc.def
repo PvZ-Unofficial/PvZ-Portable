@@ -51,6 +51,7 @@ EXPORTS
     ?KillChallengeScreen@LawnApp@@QEAAXXZ
     ?KillGameSelector@LawnApp@@QEAAXXZ
     ?LoadBackgroundImages@Board@@QEAAXXZ
+    ?SetDanceMode@Board@@QEAAX_N@Z
     ?MouseDown@WidgetManager@Sexy@@QEAA_NHHH@Z
     ?MouseMove@WidgetManager@Sexy@@QEAA_NHH@Z
     ?MouseUp@WidgetManager@Sexy@@QEAA_NHHH@Z

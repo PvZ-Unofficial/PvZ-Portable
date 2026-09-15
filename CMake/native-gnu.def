@@ -46,6 +46,7 @@ EXPORTS
     _ZN5Board18ProcessDeleteQueueEv
     _ZN5Board19GetCurrentPlantCostE8SeedTypeS0_
     _ZN5Board20LoadBackgroundImagesEv
+    _ZN5Board12SetDanceModeEb
     _ZN5Board24TotalZombiesHealthInWaveEi
     _ZN5Board8AddPlantEii8SeedTypeS0_
     _ZN5Board8NewPlantEii8SeedTypeS0_
