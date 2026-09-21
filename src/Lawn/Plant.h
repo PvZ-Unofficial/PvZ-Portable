@@ -337,4 +337,4 @@ public:
 };
 extern const PlantDefinition gPlantDefs[SeedType::NUM_SEED_TYPES];
 
-const PlantDefinition& GetPlantDefinition(SeedType theSeedType);
+PVZP_API const PlantDefinition& GetPlantDefinition(SeedType theSeedType);
