@@ -64,7 +64,6 @@ namespace PvzpNative {
     extern PVZP_API std::uint32_t gMorphPlaceholder;
     extern PVZP_API std::uint32_t gMorphSuccessor;
     extern PVZP_API bool gGameSpeedCaptured;
-    extern PVZP_API int gOriginalFrameTime;
     extern PVZP_API double gOriginalUpdateMultiplier;
     extern PVZP_API bool gFastForward;
     extern PVZP_API std::int32_t gFastForwardPerformance;

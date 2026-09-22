@@ -38,7 +38,6 @@ namespace PvzpNative {
 	std::uint32_t gMorphPlaceholder = 0;
 	std::uint32_t gMorphSuccessor = 0;
 	bool gGameSpeedCaptured = false;
-	int gOriginalFrameTime = 10;
 	double gOriginalUpdateMultiplier = 1.0;
 	bool gFastForward = false;
 	std::int32_t gFastForwardPerformance = 0;
@@ -103,7 +102,6 @@ namespace PvzpNative {
 			return;
 		if (gLawnApp)
 		{
-			gLawnApp->mFrameTime = gOriginalFrameTime;
 			gLawnApp->mUpdateMultiplier = gOriginalUpdateMultiplier;
 		}
 		gGameSpeedCaptured = false;
