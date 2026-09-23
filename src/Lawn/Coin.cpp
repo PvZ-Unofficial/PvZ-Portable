@@ -742,7 +742,7 @@ void Coin::Update()
 		UpdateCollected();
 	}
 
-	if (PvzpNative::NormalAutoCollectEnabled() && !mDead && !mIsBeingCollected && !IsLevelAward() && !IsPresentWithAdvice())
+	if (PvzpNative::NormalAutoCollectEnabled() && !mDead && !mIsBeingCollected && !IsLevelAward() && !IsPresentWithAdvice() && mType != CoinType::COIN_USABLE_SEED_PACKET)
 	{
 		PlayCollectSound();
 		Collect();

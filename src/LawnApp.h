@@ -228,7 +228,7 @@ public:
 	virtual void					ShowResourceError(bool doExit = false);
 	void							ToggleSlowMo();
 	void							ToggleFastMo();
-	void							PlayFoley(FoleyType theFoleyType);
+	PVZP_API void							PlayFoley(FoleyType theFoleyType);
 	void							PlayFoleyPitch(FoleyType theFoleyType, float thePitch);
 	void							PlaySample(intptr_t theSoundNum) override;
 	void							FastLoad(GameMode theGameMode);
@@ -258,7 +258,7 @@ public:
 	void					EndLevel();
 	inline bool						IsIceDemo() { return false; }
 	bool					IsShovelLevel();
-	bool					IsWallnutBowlingLevel();
+	PVZP_API bool					IsWallnutBowlingLevel();
 	bool					IsMiniBossLevel();
 	bool					IsSlotMachineLevel();
 	bool					IsLittleTroubleLevel();

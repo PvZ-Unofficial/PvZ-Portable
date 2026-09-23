@@ -88,3 +88,10 @@ EXPORTS
     ?UpdateReanimColor@Plant@@QEAAXXZ
     ?ValidateLayout@PvzpPlugin@@YA_NPEBULayoutEntry@1@I@Z
     ?WasPlanted@SeedPacket@@QEAAXXZ
+    ?HasConveyorBeltSeedBank@Board@@QEAA_NXZ
+    ?SetTutorialState@Board@@QEAAXW4TutorialState@@@Z
+    ?CountPlantByType@Board@@QEAAHW4SeedType@@@Z
+    ?NotOnGround@Plant@@QEAA_NXZ
+    ?PlayFoley@LawnApp@@QEAAXW4FoleyType@@@Z
+    ?IsWallnutBowlingLevel@LawnApp@@QEAA_NXZ
+    ?AddCoin@Board@@QEAAPEAVCoin@@HHW4CoinType@@W4CoinMotion@@@Z

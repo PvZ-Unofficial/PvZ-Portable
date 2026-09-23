@@ -88,3 +88,10 @@ EXPORTS
     _ZN9ZenGarden12GridToPixelXEii
     _ZN9ZenGarden12PlantWateredEP5Plant
     _ZN9ZenGarden17PlantCanBeWateredEP5Plant
+    _ZN5Board23HasConveyorBeltSeedBankEv
+    _ZN5Board16SetTutorialStateE13TutorialState
+    _ZN5Board16CountPlantByTypeE8SeedType
+    _ZN5Plant11NotOnGroundEv
+    _ZN7LawnApp9PlayFoleyE9FoleyType
+    _ZN7LawnApp21IsWallnutBowlingLevelEv
+    _ZN5Board7AddCoinEii8CoinType10CoinMotion

@@ -262,7 +262,7 @@ public:
 	void							StartLevel();
 	PVZP_API Plant*							AddPlant(int theGridX, int theGridY, SeedType theSeedType, SeedType theImitaterType = SeedType::SEED_NONE);
 	Projectile*						AddProjectile(int theX, int theY, int theRenderOrder, int theRow, ProjectileType theProjectileType);
-	Coin*							AddCoin(int theX, int theY, CoinType theCoinType, CoinMotion theCoinMotion);
+	PVZP_API Coin*							AddCoin(int theX, int theY, CoinType theCoinType, CoinMotion theCoinMotion);
 	void							RefreshSeedPacketFromCursor();
 	ZombieType						PickGraveRisingZombieType();
 	ZombieType						PickZombieType(int theZombiePoints, int theWaveIndex, ZombiePicker* theZombiePicker);
@@ -391,7 +391,7 @@ public:
 	int					PlantingPixelToGridX(int theX, int theY, SeedType theSeedType);
 	int					PlantingPixelToGridY(int theX, int theY, SeedType theSeedType);
 	Plant*							FindUmbrellaPlant(int theGridX, int theGridY);
-	void							SetTutorialState(TutorialState theTutorialState);
+	PVZP_API void							SetTutorialState(TutorialState theTutorialState);
 	void							DoFwoosh(int theRow);
 	void							UpdateFwoosh();
 	Plant*							SpecialPlantHitTest(int x, int y);
@@ -406,7 +406,7 @@ public:
 	void							UpdateCursor();
 	void							UpdateTutorial();
 	SeedType						GetSeedTypeInCursor();
-	int					CountPlantByType(SeedType theSeedType);
+	PVZP_API int					CountPlantByType(SeedType theSeedType);
 	bool							PlantingRequirementsMet(SeedType theSeedType);
 	bool							HasValidCobCannonSpot();
 	bool							IsValidCobCannonSpot(int theGridX, int theGridY);
@@ -418,7 +418,7 @@ public:
 	void							DrawHouseDoorTop(Graphics* g);
 	void							DrawHouseDoorBottom(Graphics* g);
 	Zombie*							GetBossZombie();
-	bool							HasConveyorBeltSeedBank();
+	PVZP_API bool							HasConveyorBeltSeedBank();
 	bool					StageHasRoof();
 	void							SpawnZombiesFromPool();
 	void							SpawnZombiesFromSky();
@@ -479,7 +479,7 @@ public:
 	void							DrawZenWheelBarrowButton(Graphics* g, int theOffsetY);
 	void							DrawZenButtons(Graphics* g);
 	void					OffsetYForPlanting(int& theY, SeedType theSeedType);
-	void							SetDanceMode(bool theEnableDance);
+	PVZP_API void							SetDanceMode(bool theEnableDance);
 	void							SetFutureMode(bool theEnableFuture);
 	void							SetPinataMode(bool theEnablePinata);
 	void							SetDaisyMode(bool theEnableDaisy);

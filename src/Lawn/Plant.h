@@ -247,7 +247,7 @@ public:
 	PVZP_API Rect                    GetPlantAttackRect(PlantWeapon thePlantWeapon = PlantWeapon::WEAPON_PRIMARY);
 	Zombie*                 FindSquashTarget();
 	void                    UpdateSquash();
-	bool         NotOnGround();
+	PVZP_API bool         NotOnGround();
 	void                    DoSquashDamage();
 	void                    BurnRow(int theRow);
 	void                    IceZombies();
