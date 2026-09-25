@@ -2323,7 +2323,7 @@ bool LawnLoadGame(Board* theBoard, const std::string& theFilePath)
 	return true;
 }
 
-bool LawnSaveGame(Board* theBoard, const std::string& theFilePath)
+bool LawnSerializeGame(Board* theBoard, std::vector<unsigned char>& aOutBuffer)
 {
 	std::vector<unsigned char> aPayload;
 	if (!WriteChunkV4(aPayload, SAVE4_CHUNK_BOARD_BASE, theBoard)) return false;
@@ -2353,10 +2353,17 @@ bool LawnSaveGame(Board* theBoard, const std::string& theFilePath)
 	aHeader.mPayloadSize = ToLE32(static_cast<uint32_t>(aPayload.size()));
 	aHeader.mPayloadCrc = ToLE32(crc32(0, reinterpret_cast<Bytef*>(aPayload.data()), static_cast<uint32_t>(aPayload.size())));
 
-	std::vector<unsigned char> aOutBuffer;
+
 	aOutBuffer.resize(sizeof(aHeader) + aPayload.size());
 	memcpy(aOutBuffer.data(), &aHeader, sizeof(aHeader));
 	memcpy(aOutBuffer.data() + sizeof(aHeader), aPayload.data(), aPayload.size());
 
-	return gSexyAppBase->WriteBytesToFile(theFilePath, aOutBuffer.data(), static_cast<int>(aOutBuffer.size()));
+	return true;
+}
+
+bool LawnSaveGame(Board* theBoard, const std::string& theFilePath)
+{
+    std::vector<unsigned char> bytes;
+    if (!LawnSerializeGame(theBoard, bytes)) return false;
+    return gSexyAppBase->WriteBytesToFile(theFilePath, bytes.data(), static_cast<int>(bytes.size()));
 }

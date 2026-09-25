@@ -175,6 +175,7 @@ public:
 	void							FinishTimesUpDialog();
 	void							KillBoard();
 	void							MakeNewBoard();
+    void ProcessReplaySafeDeletes() { ProcessSafeDeleteList(); }
 	void							StartPlaying();
 	bool							TryLoadGame();
 	PVZP_API void							NewGame();

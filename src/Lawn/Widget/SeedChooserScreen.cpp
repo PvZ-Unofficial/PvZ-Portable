@@ -179,10 +179,14 @@ SeedChooserScreen::SeedChooserScreen()
 	}
 	if (mBoard->mCutScene->IsSurvivalRepick())
 	{
-		for (int anIdx = 0; anIdx < mBoard->mSeedBank->mNumPackets; anIdx++)
+		for (int anIdx = 0; anIdx < mBoard->mSeedBank->mNumPackets && anIdx < SEEDBANK_MAX; anIdx++)
 		{
 			SeedPacket* aSeedPacket = &mBoard->mSeedBank->mSeedPackets[anIdx];
-			ChosenSeed& aChosenSeed = mChosenSeeds[aSeedPacket->mPacketType];
+			// Modified/expanded active banks can contain non-chooser cards. Do not
+            // index outside mChosenSeeds or silently substitute another card.
+            if (aSeedPacket->mPacketType < SEED_PEASHOOTER || aSeedPacket->mPacketType >= NUM_SEEDS_IN_CHOOSER)
+                continue;
+            ChosenSeed& aChosenSeed = mChosenSeeds[aSeedPacket->mPacketType];
 			aChosenSeed.mRefreshing = aSeedPacket->mRefreshing;
 			aChosenSeed.mRefreshCounter = aSeedPacket->mRefreshCounter;
 		}
