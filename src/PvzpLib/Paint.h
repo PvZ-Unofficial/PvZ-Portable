@@ -13,5 +13,6 @@ PVZP_API bool PaintClip(bool enabled, int x, int y, int width, int height);
 PVZP_API bool PaintText(int x, int y, const char* text, int length, const char16_t* family,
     int pixels, bool bold, std::uint32_t argb, bool measure, std::uint32_t* width, std::uint32_t* height);
 void Paint(Sexy::Graphics& graphics);
+void PreparePaint();
 void ClearPaint();
 }

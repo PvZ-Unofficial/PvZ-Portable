@@ -121,9 +121,19 @@ bool SetPaintCallback(PaintCallback callback) {
 void ClearPaint() {
     if (canvas) return; // Host callback-depth gate prevents physical revocation here.
     if (gLawnApp) gLawnApp->mPlugin.paintCallback = nullptr;
+    if (gLawnApp && gLawnApp->mWidgetManager) gLawnApp->mWidgetManager->MarkAllDirty();
 #if defined(_WIN32)
     delete resources; resources = nullptr;
 #endif
+}
+void PreparePaint() {
+    if (!gLawnApp || !gLawnApp->mWidgetManager) return;
+    const auto& host = gLawnApp->mPlugin;
+    if (!host.enabled || host.stopRequested || host.callbackDepth || !host.paintCallback || canvas) return;
+    // Overlays are drawn into the same framebuffer as the widgets. Repaint the
+    // base before every overlay frame, including while native updates are paused,
+    // so moved/disabled overlays never leave pixels from the preceding frame.
+    gLawnApp->mWidgetManager->MarkAllDirty();
 }
 void Paint(Sexy::Graphics& graphics) {
     if (!gLawnApp) return;

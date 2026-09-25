@@ -1825,6 +1825,7 @@ bool SexyAppBase::DrawDirtyStuff()
 		return false;
 	}
 
+	PvzpPlugin::PreparePaint();
 	mIsDrawing = true;
 	bool drewScreen = mWidgetManager->DrawScreen();
 	mIsDrawing = false;
