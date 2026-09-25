@@ -4,12 +4,39 @@
 #include <windows.h>
 #endif
 #include "NativeControls.h"
+#include "PvzpParticle.h"
+#include "Reanimator.h"
+#include <limits>
+#include <algorithm>
 #include "../LawnApp.h"
 #include "../Lawn/Board.h"
 #include "../Lawn/System/SaveGame.h"
 #include "../SexyAppFramework/widget/WidgetManager.h"
 
 namespace PvzpReplay {
+int ParticleEmitterCount(int kind) noexcept {
+    if (!gLawnApp || !gParticleDefArray || kind<0 || kind>=static_cast<int>(ParticleEffect::NUM_PARTICLES) || kind>=gParticleDefCount) return -1;
+    return gParticleDefArray[kind].mEmitterDefCount;
+}
+int AnimationTrackCount(int kind) noexcept {
+    try {
+        if (!gLawnApp || !gReanimatorDefArray || kind<0 || kind>=static_cast<int>(ReanimationType::NUM_REANIMS) || static_cast<unsigned>(kind)>=gReanimatorDefCount) return -1;
+        ReanimatorEnsureDefinitionLoaded(static_cast<ReanimationType>(kind),true);
+        return gReanimatorDefArray[kind].mTracks.count;
+    } catch (...) {return -1;}
+}
+int AnimationFrameCount(int kind) noexcept {
+    const int count=AnimationTrackCount(kind);
+    if (count<=0) return count;
+    if (!gReanimatorDefArray[kind].mTracks.tracks) return -1;
+    int frames=std::numeric_limits<int>::max();
+    for (int i=0;i<count;++i) {
+        const auto& track=gReanimatorDefArray[kind].mTracks.tracks[i];
+        if (track.mTransforms.count<=0 || !track.mTransforms.mTransforms) return -1;
+        frames=std::min(frames,track.mTransforms.count);
+    }
+    return frames;
+}
 bool SaveCheckpoint(std::uintptr_t file) noexcept
 {
 #if defined(_WIN32)
