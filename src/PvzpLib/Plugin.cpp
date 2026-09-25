@@ -1,4 +1,5 @@
 #include "Plugin.h"
+#include "Paint.h"
 #include "PluginLayout.h"
 #include "PvzpDebug.h"
 #include "NativeControls.h"
@@ -22,6 +23,7 @@ namespace
     void Revoke()
     {
         State().updateCallback = nullptr;
+        ClearPaint();
         State().boardDestroyingCallback = nullptr;
         ClearBattleCallbacks();
     }
@@ -111,7 +113,7 @@ bool SetBattleCallbacks(const BattleCallbacks* callbacks, std::uint32_t interest
     if (!State().validated || State().shutdownAttempted || State().stopRequested || !callbacks || !interest || State().battleInterest)
         return false;
     if (!callbacks->beginLogicFrame || !callbacks->endLogicFrame || !callbacks->beginPlantEffect
-        || !callbacks->finishPlantEffect || !callbacks->emitHomeEntry || !callbacks->emitGargantuarSpawned
+        || !callbacks->finishPlantEffect || !callbacks->emitActivation || !callbacks->emitHomeEntry || !callbacks->emitGargantuarSpawned
         || !callbacks->emitImpThrown || !callbacks->emitGargantuarAshHit)
         return false;
     State().battleCallbacks = *callbacks;

@@ -37,6 +37,7 @@ struct BattleCallbacks
     std::uint64_t (*beginPlantEffect)(std::int32_t, void*, void*, std::int32_t, std::int32_t) = nullptr;
     void (*finishPlantEffect)(std::uint32_t, std::int32_t, std::int32_t) = nullptr;
     void (*emitHomeEntry)(void*) = nullptr;
+    void (*emitActivation)(std::int32_t,std::int32_t,std::int32_t,std::int32_t,std::int32_t,std::int32_t) = nullptr;
     void (*emitGargantuarSpawned)(void*) = nullptr;
     void (*emitImpThrown)(void*, void*) = nullptr;
     void (*emitGargantuarAshHit)(void*) = nullptr;
@@ -48,6 +49,7 @@ struct Host
     void* module = nullptr;
     std::int32_t (*shutdownPlugin)() = nullptr;
     UpdateCallback updateCallback = nullptr;
+    void (*paintCallback)() = nullptr;
     BoardDestroyingCallback boardDestroyingCallback = nullptr;
     BattleCallbacks battleCallbacks;
     std::uint32_t battleInterest = 0;

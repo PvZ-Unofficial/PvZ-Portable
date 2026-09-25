@@ -13,6 +13,8 @@
 #include <string_view>
 
 #include "Lawn/Board.h"
+#include "Lawn/Plant.h"
+#include "Lawn/Projectile.h"
 #include "Lawn/Challenge.h"
 #include "Lawn/CursorObject.h"
 #include "Lawn/Cutscene.h"
@@ -536,6 +538,28 @@ namespace PvzpNative {
 			FinishPlantEffect(attempt, plant->mDead ? 3 : 6);
 		}
 	}
+
+    void EmitPlantActivation(Plant* plant) {
+        if (!plant || !gEventFrameOpen || !PvzpPlugin::BattleDispatchEnabled()
+            || !(gLawnApp->mPlugin.battleInterest & (1U<<8))) return;
+        int kind;
+        switch (static_cast<int>(plant->mSeedType)) {
+            case 14:kind=1;break; case 15:kind=2;break; case 2:kind=3;break;
+            case 20:kind=4;break;case 17:kind=5;break;case 4:kind=6;break;
+            default:return;
+        }
+        PvzpPlugin::CallbackScope scope;
+        gLawnApp->mPlugin.battleCallbacks.emitActivation(kind,plant->mRow,plant->mPlantCol,
+            plant->mX,plant->mY,kind==5 ? plant->mX+40 : (plant->mPlantCol+1)*80);
+    }
+    void EmitCobActivation(Projectile* projectile) {
+        if (!projectile || projectile->mProjectileType!=ProjectileType::PROJECTILE_COBBIG || !gEventFrameOpen
+            || !PvzpPlugin::BattleDispatchEnabled() || !(gLawnApp->mPlugin.battleInterest & (1U<<8))) return;
+        const int x=static_cast<int>(projectile->mCobTargetX+87.5f);
+        PvzpPlugin::CallbackScope scope;
+        gLawnApp->mPlugin.battleCallbacks.emitActivation(0,projectile->mCobTargetRow,
+            static_cast<int>(x/80.0f-0.5f),x,0,x);
+    }
 
 	void EmitHomeEntry(Zombie* zombie)
 	{

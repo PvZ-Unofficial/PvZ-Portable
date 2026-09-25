@@ -1421,6 +1421,7 @@ void Plant::UpdateTorchwood()
 
 void Plant::DoSquashDamage()
 {
+    PvzpNative::EmitPlantActivation(this);
 	int aDamageRangeFlags = GetDamageRangeFlags(PlantWeapon::WEAPON_PRIMARY);
 	Rect aAttackRect = GetPlantAttackRect(PlantWeapon::WEAPON_PRIMARY);
 
@@ -4313,6 +4314,7 @@ void Plant::KillAllPlantsNearDoom()
 
 void Plant::DoSpecial()
 {
+    PvzpNative::EmitPlantActivation(this);
 	int aPosX = mX + mWidth / 2;
 	int aPosY = mY + mHeight / 2;
 	int aDamageRangeFlags = GetDamageRangeFlags(PlantWeapon::WEAPON_PRIMARY);

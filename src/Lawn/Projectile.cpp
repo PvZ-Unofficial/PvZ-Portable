@@ -826,6 +826,7 @@ void Projectile::PlayImpactSound(Zombie* theZombie)
 
 void Projectile::DoImpact(Zombie* theZombie)
 {
+    PvzpNative::EmitCobActivation(this);
 	PlayImpactSound(theZombie);
 
 	if (IsSplashDamage(theZombie))

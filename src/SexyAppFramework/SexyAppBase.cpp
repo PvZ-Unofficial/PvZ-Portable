@@ -46,6 +46,7 @@
 #include <SDL.h>
 
 #include "PvzpLib/NativeControls.h"
+#include "PvzpLib/Paint.h"
 
 #ifdef __SWITCH__
 #include <switch.h>
@@ -1852,7 +1853,11 @@ bool SexyAppBase::DrawDirtyStuff()
 		mLastDrawTick = aPreScreenBltTime;
 
 		if (drewScreen)
-			Redraw(nullptr);
+        {
+            Graphics overlay(mGLInterface->GetScreenImage());
+            PvzpPlugin::Paint(overlay);
+            Redraw(nullptr);
+        }
 
 		// This is our one UpdateFTimeAcc if we are vsynched
 		UpdateFTimeAcc();

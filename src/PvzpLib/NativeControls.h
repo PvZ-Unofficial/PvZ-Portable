@@ -174,6 +174,8 @@ namespace PvzpNative
 	void ApplyBungeeLift(Zombie* zombie, Plant* plant);
 	void ApplyJackPlantExplosion(Zombie* zombie, Board* board, int x, int y, int radius);
 	void EmitHomeEntry(Zombie* zombie);
+    void EmitPlantActivation(Plant* plant);
+    void EmitCobActivation(Projectile* projectile);
 	void EmitGargantuarSpawned(Zombie* zombie);
 	void EmitImpThrown(Zombie* parent, Zombie* imp);
 	void EmitGargantuarAshHit(Zombie* zombie);
