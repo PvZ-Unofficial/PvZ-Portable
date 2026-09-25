@@ -16,7 +16,7 @@
 
 namespace PvzpPlugin
 {
-inline constexpr std::uint32_t AbiVersion = 6;
+inline constexpr std::uint32_t AbiVersion = 7;
 
 struct LayoutEntry
 {
