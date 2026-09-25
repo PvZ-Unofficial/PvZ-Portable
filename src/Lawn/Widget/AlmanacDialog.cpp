@@ -19,6 +19,7 @@
  * along with PvZ-Portable. If not, see <https://www.gnu.org/licenses/>.
  */
 
+#include "../../PvzpLib/NativeControls.h"
 #include "../Board.h"
 #include "../Plant.h"
 #include "../Zombie.h"
@@ -558,6 +559,7 @@ bool AlmanacDialog::ZombieHasSilhouette(ZombieType theZombieType)
 
 bool AlmanacDialog::ZombieIsShown(ZombieType theZombieType)
 {
+	if (PvzpNative::gModifiers.temporaryUnlock) return true;
 	// trial mode only shows zombies up to the Snorkel Zombie
 	if (mApp->IsTrialStageLocked() && theZombieType > ZombieType::ZOMBIE_SNORKEL)
 		return false;
@@ -584,6 +586,7 @@ bool AlmanacDialog::ZombieIsShown(ZombieType theZombieType)
 
 bool AlmanacDialog::ZombieHasDescription(ZombieType theZombieType)
 {
+	if (PvzpNative::gModifiers.temporaryUnlock) return true;
 	int aLevel = mApp->mPlayerInfo->GetLevel();
 	int aStart = GetZombieDefinition(theZombieType).mStartingLevel;
 

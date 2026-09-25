@@ -26,6 +26,7 @@
 #include "widget/Widget.h"
 #include "widget/ButtonListener.h"
 #include "GameButton.h"
+#include "../../PvzpLib/Plugin.h"
 #include <memory>
 
 class LawnApp;
@@ -103,7 +104,7 @@ public:
 	GameSelector(LawnApp* theApp);
 	~GameSelector() override;
 
-	void                        SyncProfile(bool theShowLoading);
+	PVZP_API void               SyncProfile(bool theShowLoading);
 	void                        Draw(Graphics* g) override;
 	void                        DrawOverlay(Graphics* g) override;
 	void                        Update() override;

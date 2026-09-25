@@ -457,7 +457,7 @@ void Challenge::StartLevel()
 		mChallengeStateCounter = 400;
 	}
 	GameMode aGameMode = mApp->mGameMode;
-	if (aGameMode == GAMEMODE_CHALLENGE_BOBSLED_BONANZA)
+	if (aGameMode == GAMEMODE_CHALLENGE_BOBSLED_BONANZA && !PvzpNative::gModifiers.iceTrailsDisabled)
 	{
 		for (int i = 0; i < MAX_GRID_SIZE_Y; i++)
 		{

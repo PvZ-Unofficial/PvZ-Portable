@@ -57,7 +57,7 @@ public:
 	MessageWidget(LawnApp* theApp);
 	~MessageWidget() { ClearReanim(); }
 
-	void		SetLabel(std::string_view theNewLabel, MessageStyle theMessageStyle);
+	PVZP_API void		SetLabel(std::string_view theNewLabel, MessageStyle theMessageStyle);
 	void				Update();
 	void				Draw(Sexy::Graphics* g);
 	void				ClearReanim();

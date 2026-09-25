@@ -195,7 +195,7 @@ public:
 	bool					WriteCurrentUserConfig();
 	void							DoNeedRegisterDialog();
 	void							DoContinueDialog();
-	void							DoPauseDialog();
+	PVZP_API void							DoPauseDialog();
 	void							FinishModelessDialogs();
 	Dialog*							DoDialog(int theDialogId, bool isModal, const std::string& theDialogHeader, const std::string& theDialogLines, const std::string& theDialogFooter, int theButtonMode) override;
 	virtual Dialog*					DoDialogDelay(int theDialogId, bool isModal, const std::string& theDialogHeader, const std::string& theDialogLines, const std::string& theDialogFooter, int theButtonMode);
@@ -212,7 +212,7 @@ public:
 	virtual bool					NeedRegister();
 	virtual void					UpdateRegisterInfo();
 	void							ButtonPress(int theId) override;
-	void							ButtonDepress(int theId) override;
+	PVZP_API void							ButtonDepress(int theId) override;
 	void							ButtonDownTick(int theId) override;
 	void							ButtonMouseEnter(int theId) override;
 	void							ButtonMouseLeave(int theId) override;
@@ -254,7 +254,7 @@ public:
 	void							RemoveParticle(ParticleSystemID theParticleID);
 	StoreScreen*					ShowStoreScreen();
 	void							KillStoreScreen();
-	bool							HasSeedType(SeedType theSeedType);
+	PVZP_API bool                  HasSeedType(SeedType theSeedType);
 	void					EndLevel();
 	inline bool						IsIceDemo() { return false; }
 	bool					IsShovelLevel();

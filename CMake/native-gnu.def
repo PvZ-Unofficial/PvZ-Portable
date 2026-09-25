@@ -1,4 +1,22 @@
 EXPORTS
+    _ZN6ZombieC1Ev
+    _ZN6ZombieC2Ev
+    _ZN6ZombieD1Ev
+    _ZN6ZombieD2Ev
+    _ZN5Board14InitLawnMowersEv
+    _ZN9LawnMower10StartMowerEv
+    _ZN5Board19InitLawnMowersReadyEv
+    _ZN12EffectSystem18ProcessDeleteQueueEv
+    _ZN9Challenge17IZombieSetupPlantEP5Plant
+    _ZN5Board18ProcessDeleteQueueEv
+    _ZN5Board9PlaceRakeEv
+    _ZN5Board11PlaceRakeAtEii
+    _ZN9Challenge23GraveDangerSpawnGraveAtEii
+    _ZN4Sexy4RandEv
+    _ZN10PvzpNative23BuildCurrentZombieWavesEP5Boardj
+    _ZN5Board10IsFlagWaveEi
+    _ZN5Board21RemoveCutsceneZombiesEv
+    _ZN8SeedBank14SetPacketCountEi
     _Z17PvzpTraceAndLogLnPKcz
     _Z22GetChallengeDefinitioni
     _ZN10Projectile17GetProjectileRectEv
@@ -95,3 +113,15 @@ EXPORTS
     _ZN7LawnApp9PlayFoleyE9FoleyType
     _ZN7LawnApp21IsWallnutBowlingLevelEv
     _ZN5Board7AddCoinEii8CoinType10CoinMotion
+
+    _ZN6Zombie9ApplyBurnEv
+    _ZN5Plant14BlowAwayFliersEv
+    _ZN5Plant16FindTargetZombieEi11PlantWeapon
+    _ZN6Zombie19StartMindControlledEv
+    _ZN6Zombie10TakeDamageEij
+    _ZN9LawnMower6UpdateEv
+    _ZN5Plant13UpdateChomperEv
+    _ZN5Board12FadeOutLevelEv
+    _ZN7LawnApp13DoPauseDialogEv
+    _ZN7LawnApp13ButtonDepressEi
+    _ZN5Board25GetSurvivalFlagsCompletedEv

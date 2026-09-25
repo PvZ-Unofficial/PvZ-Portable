@@ -7,10 +7,14 @@
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
 #include <cstdlib>
+#include <array>
+#include <cstring>
+#include <cwchar>
 #endif
 
 namespace PvzpPlugin
 {
+static bool LoadPath(const wchar_t* path, bool dependenciesBesidePlugin);
 namespace
 {
     Host& State() { return gLawnApp->mPlugin; }
@@ -21,6 +25,79 @@ namespace
         State().boardDestroyingCallback = nullptr;
         ClearBattleCallbacks();
     }
+
+#if defined(_WIN32) && (defined(_M_X64) || defined(__x86_64__))
+    // One request per connection: three LE u32 values (RVP1, version 1,
+    // UTF-16 code-unit count), followed by an absolute DLL path without NUL.
+    // All loading occurs here on the game's outer update thread, never on a
+    // remote injection thread or inside DllMain.
+    std::uint32_t ReadLoadRequest(HANDLE pipe)
+    {
+        alignas(wchar_t) std::array<unsigned char, 12 + 32768 * sizeof(wchar_t)> bytes;
+        DWORD received = 0;
+        if (!ReadFile(pipe, bytes.data(), static_cast<DWORD>(bytes.size()), &received, nullptr) || received < 12)
+            return 1;
+        std::uint32_t header[3];
+        std::memcpy(header, bytes.data(), sizeof(header));
+        if (header[0] != 0x31505652 || header[1] != 1 || header[2] == 0 || header[2] >= 32768
+            || received != 12 + header[2] * sizeof(wchar_t))
+            return 1;
+        auto* path = reinterpret_cast<wchar_t*>(bytes.data() + 12);
+        for (std::uint32_t i = 0; i < header[2]; ++i)
+            if (!path[i]) return 1;
+        path[header[2]] = L'\0';
+        const bool drivePath = header[2] >= 3 && path[1] == L':' && (path[2] == L'\\' || path[2] == L'/');
+        const bool networkPath = header[2] >= 2 && path[0] == L'\\' && path[1] == L'\\';
+        if (!drivePath && !networkPath) return 1;
+        if (State().module) return 2;
+        return LoadPath(path, true) ? 0 : 3;
+    }
+
+    void PollExternalLoad()
+    {
+        if (State().callbackDepth || State().initializing) return;
+        if (!State().controlAttempted)
+        {
+            State().controlAttempted = true;
+            wchar_t name[96];
+            std::swprintf(name, 96, L"\\\\.\\pipe\\pvzp-plugin-load-%lu", GetCurrentProcessId());
+            HANDLE pipe = CreateNamedPipeW(name, PIPE_ACCESS_DUPLEX | FILE_FLAG_FIRST_PIPE_INSTANCE,
+                PIPE_TYPE_MESSAGE | PIPE_READMODE_MESSAGE | PIPE_NOWAIT | PIPE_REJECT_REMOTE_CLIENTS,
+                1, 64, 12 + 32768 * sizeof(wchar_t), 0, nullptr);
+            if (pipe != INVALID_HANDLE_VALUE) State().controlPipe = pipe;
+            else PvzpTraceAndLogLn("Plugin bootstrap endpoint unavailable: %lu", GetLastError());
+        }
+        if (!State().controlPipe) return;
+        HANDLE pipe = static_cast<HANDLE>(State().controlPipe);
+        if (!State().controlConnected)
+        {
+            if (!ConnectNamedPipe(pipe, nullptr) && GetLastError() != ERROR_PIPE_CONNECTED) return;
+            State().controlConnected = true;
+            State().controlReplied = false;
+            State().controlStarted = GetTickCount();
+        }
+        DWORD available = 0;
+        if (!PeekNamedPipe(pipe, nullptr, 0, nullptr, &available, nullptr)
+            || static_cast<std::uint32_t>(GetTickCount() - State().controlStarted) >= 2000)
+        {
+            DisconnectNamedPipe(pipe);
+            State().controlConnected = false;
+            return;
+        }
+        if (!State().controlReplied && available)
+        {
+            const std::uint32_t result = ReadLoadRequest(pipe);
+            DWORD written = 0;
+            // Never FlushFileBuffers here: a client must not block game updates.
+            if (!WriteFile(pipe, &result, sizeof(result), &written, nullptr) || written != sizeof(result))
+            {
+                DisconnectNamedPipe(pipe);
+                State().controlConnected = false;
+            }
+            State().controlReplied = true;
+        }
+    }
+#endif
 
 }
 
@@ -110,19 +187,22 @@ void SafePoint()
 #endif
 }
 
-void Load()
+static bool LoadPath(const wchar_t* path, bool dependenciesBesidePlugin)
 {
 #if defined(_WIN32) && (defined(_M_X64) || defined(__x86_64__))
-    if (State().module || State().shutdownAttempted)
-        return;
-    const wchar_t* path = _wgetenv(L"PVZP_PLUGIN");
+    if (State().module || State().callbackDepth || State().initializing)
+        return false;
     if (!path || !*path)
-        return;
-    State().module = LoadLibraryW(path);
+        return false;
+    State().shutdownAttempted = false;
+    State().stopRequested = false;
+    State().module = dependenciesBesidePlugin
+        ? LoadLibraryExW(path, nullptr, LOAD_WITH_ALTERED_SEARCH_PATH)
+        : LoadLibraryW(path);
     if (!State().module)
     {
         PvzpTraceAndLogLn("Plugin load failed with Windows error %lu", GetLastError());
-        return;
+        return false;
     }
     auto version = reinterpret_cast<std::uint32_t (*)()>(GetProcAddress(static_cast<HMODULE>(State().module), "pvzp_plugin_abi_version"));
     auto initialize = reinterpret_cast<std::int32_t (*)()>(GetProcAddress(static_cast<HMODULE>(State().module), "pvzp_plugin_initialize"));
@@ -136,7 +216,7 @@ void Load()
         FreeLibrary(static_cast<HMODULE>(State().module));
         State().module = nullptr;
         State().shutdownPlugin = nullptr;
-        return;
+        return false;
     }
     State().initializing = true;
     std::int32_t result = -1;
@@ -152,15 +232,30 @@ void Load()
         Revoke();
         RequestStop();
         SafePoint();
-        return;
+        return false;
     }
     State().enabled = true;
+    return true;
+#else
+    (void)path;
+    (void)dependenciesBesidePlugin;
+    return false;
+#endif
+}
+
+void Load()
+{
+#if defined(_WIN32) && (defined(_M_X64) || defined(__x86_64__))
+    LoadPath(_wgetenv(L"PVZP_PLUGIN"), false);
 #endif
 }
 
 std::int32_t Update(std::uint8_t replaced, std::uint64_t rounds)
 {
     SafePoint();
+#if defined(_WIN32) && (defined(_M_X64) || defined(__x86_64__))
+    PollExternalLoad();
+#endif
     if (!State().enabled || State().callbackDepth || !State().updateCallback)
         return 0;
     std::int32_t result = 2;
@@ -189,5 +284,12 @@ void Shutdown()
 {
     RequestStop();
     SafePoint();
+#if defined(_WIN32) && (defined(_M_X64) || defined(__x86_64__))
+    if (State().controlPipe)
+    {
+        CloseHandle(static_cast<HANDLE>(State().controlPipe));
+        State().controlPipe = nullptr;
+    }
+#endif
 }
 }

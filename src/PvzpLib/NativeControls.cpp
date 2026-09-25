@@ -1,4 +1,5 @@
 #include "NativeControls.h"
+#include <stdexcept>
 
 
 #include <cstdlib>
@@ -31,6 +32,23 @@
 
 
 namespace PvzpNative {
+    static Sexy::MTRand* gPickerRandom = nullptr;
+
+    void BuildCurrentZombieWaves(Board* board, std::uint32_t seed)
+    {
+        if (!board || !board->mApp || !board->mApp->mPlayerInfo || !board->mChallenge
+            || board->mNumWaves<=0 || board->mNumWaves>MAX_ZOMBIE_WAVES || gPickerRandom)
+            throw std::invalid_argument("current natural spawn prerequisites");
+        const auto derived=static_cast<std::uint32_t>(board->GetLevelRandSeed())
+            -static_cast<std::uint32_t>(board->mBoardRandSeed)+seed;
+        Sexy::MTRand random(derived);
+        struct Reset { ~Reset() { gPickerRandom=nullptr; } } reset;
+        gPickerRandom=&random;
+        board->mBoardRandSeed=static_cast<int>(seed);
+        for(int wave=0;wave<board->mNumWaves;++wave)
+            std::fill(std::begin(board->mZombiesInWave[wave]),std::end(board->mZombiesInWave[wave]),ZombieType::ZOMBIE_INVALID);
+        board->PickCurrentZombieWaves();
+    }
 	bool gWorldReplaced = false;
 	bool gEventFrameOpen = false;
 	std::uint64_t gBoardEpoch = 0;
@@ -277,15 +295,18 @@ namespace PvzpNative {
 	PVZP_DEFINE_RULE_QUERY(SunCostIgnored, sunCostIgnored)
 	PVZP_DEFINE_RULE_QUERY(FogRevealed, fogRevealed)
 	PVZP_DEFINE_RULE_QUERY(VaseContentsVisible, vaseContentsVisible)
-	PVZP_DEFINE_RULE_QUERY(InstantIceAndAshEffects, instantIceAndAshEffects)
+	bool InstantIceAndAshEffects() { return gModifiers.plantSpecialCountdownRule == 1; }
+    int PlantSpecialCountdownRule() { return gModifiers.plantSpecialCountdownRule; }
 	PVZP_DEFINE_RULE_QUERY(MushroomsAwake, mushroomsAwake)
 	PVZP_DEFINE_RULE_QUERY(CobFixedDelay, cobFixedDelay)
 	PVZP_DEFINE_RULE_QUERY(CobRechargeShortened, cobRechargeShortened)
 	PVZP_DEFINE_RULE_QUERY(CobDriftFixed, cobDriftFixed)
 	PVZP_DEFINE_RULE_QUERY(ItemDropDisabled, itemDropDisabled)
 	PVZP_DEFINE_RULE_QUERY(NaturalSunDropDisabled, naturalSunDropDisabled)
-	PVZP_DEFINE_RULE_QUERY(JackExplosionsDisabled, jackExplosionsDisabled)
-	PVZP_DEFINE_RULE_QUERY(PepperExplosionsDisabled, pepperExplosionsDisabled)
+	bool JackExplosionsDisabled() { return gModifiers.jackExplosionRule == 2; }
+    int JackExplosionRule() { return gModifiers.jackExplosionRule; }
+	bool PepperExplosionsDisabled() { return gModifiers.pepperExplosionRule == 2; }
+    int PepperExplosionRule() { return gModifiers.pepperExplosionRule; }
 	PVZP_DEFINE_RULE_QUERY(SpecialEventsDisabled, specialEventsDisabled)
 	PVZP_DEFINE_RULE_QUERY(ZombieSpawnStopped, zombieSpawnStopped)
 	PVZP_DEFINE_RULE_QUERY(ZombiesDieAtHouse, zombiesDieAtHouse)
@@ -296,6 +317,7 @@ namespace PvzpNative {
 
 	int KernelPultProjectileRule() { return gModifiers.kernelPultProjectileRule; }
 	int PlantDamageRule() { return gModifiers.plantDamageRule; }
+    int ZombieDamageRule() { return gModifiers.zombieDamageRule; }
 	int MaidCheat() { return gModifiers.maidCheat; }
 
 	int UpdateCount(int nativeCount)
@@ -347,6 +369,13 @@ namespace PvzpNative {
 	{
 		if (gBypassRandomOverride)
 			return false;
+		if (gPickerRandom && Sexy::IsBattleRandom(random))
+		{
+			gBypassRandomOverride=true;
+			*value=gPickerRandom->NextNoAssert() & 0x7fffffffU;
+			gBypassRandomOverride=false;
+			return true;
+		}
 		if (gWaveSpawnActive && gWaveRowPickActive && Sexy::IsBattleRandom(random))
 		{
 			gBypassRandomOverride = true;
@@ -554,8 +583,16 @@ namespace PvzpNative {
 }
 
 namespace PvzpNative {
+void SetTemporaryUnlock(bool enabled)
+{
+	gModifiers.temporaryUnlock = enabled;
+	// PT changes gZombieDefs[19].mStartingLevel, including native spawn checks.
+	gZombieDefs[ZOMBIE_YETI].mStartingLevel = enabled ? 0 : 40;
+}
+
 void RestoreAll()
 {
+	SetTemporaryUnlock(false);
 	RestoreGameSpeed();
 	if (gEasyPlantingCaptured && gLawnApp)
 		gLawnApp->mEasyPlantingCheat = gEasyPlantingOriginal;

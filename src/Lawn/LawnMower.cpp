@@ -26,12 +26,18 @@
 #include "System/ReanimationLawn.h"
 #include "../PvzpLib/PvzpFoley.h"
 #include "../PvzpLib/Reanimator.h"
+#include "../PvzpLib/NativeControls.h"
 
 void LawnMower::LawnMowerInitialize(int theRow)
 {
+    LawnMowerInitializeAt(theRow, -160.0f);
+}
+
+void LawnMower::LawnMowerInitializeAt(int theRow, float theX)
+{
 	mApp = (LawnApp*)gSexyAppBase;
 	mRow = theRow;
-	mPosX = -160.0f;
+	mPosX = theX;
 	mBoard = mApp->mBoard;
 	mRenderOrder = Board::MakeRenderOrder(RenderLayer::RENDER_LAYER_LAWN_MOWER, theRow, 0);
 	mPosY = mBoard->GetPosYBasedOnRow(mPosX + 40.0f, theRow) + 23.0f;
@@ -208,7 +214,7 @@ void LawnMower::Update()
 	{
 		if (aZombie->mDead)
 			continue;
-		if (aZombie->mZombieType == ZombieType::ZOMBIE_BOSS)
+		if (PvzpNative::ZombieDamageRule() == 1 || aZombie->mZombieType == ZombieType::ZOMBIE_BOSS)
 			continue;
 
 		if (aZombie->mRow - mRow)

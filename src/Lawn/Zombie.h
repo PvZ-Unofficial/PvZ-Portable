@@ -161,8 +161,8 @@ public:
 	int32_t                         mLastPortalX;
 
 public:
-	Zombie();
-	~Zombie();
+	PVZP_API Zombie();
+	PVZP_API ~Zombie();
 
 	void                            ZombieInitialize(int theRow, ZombieType theType, bool theVariant, Zombie* theParentZombie, int theFromWave);
 	void                            Animate();
@@ -402,7 +402,7 @@ public:
 	int                             mPickWeight;
 	const char*                 mZombieName;
 };
-extern const ZombieDefinition gZombieDefs[NUM_ZOMBIE_TYPES];
+extern ZombieDefinition gZombieDefs[NUM_ZOMBIE_TYPES];
 
 const ZombieDefinition&            GetZombieDefinition(ZombieType theZombieType);
 

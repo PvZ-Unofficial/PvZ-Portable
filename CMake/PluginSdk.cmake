@@ -31,8 +31,15 @@ if(WIN32 AND CMAKE_SIZEOF_VOID_P EQUAL 8 AND _pvzp_x64)
     endif()
     set(_pvzp_sdk "${PROJECT_BINARY_DIR}/sdk/$<CONFIG>")
     file(GENERATE OUTPUT "${_pvzp_sdk}/sdl-include.txt" CONTENT "${SDL2_INCLUDE_DIRS}")
+    file(STRINGS "${PROJECT_SOURCE_DIR}/src/PvzpLib/Plugin.h" _pvzp_abi_line REGEX "AbiVersion = [0-9]+;")
+    string(REGEX MATCH "AbiVersion = ([0-9]+)" _pvzp_abi_match "${_pvzp_abi_line}")
+    set(_pvzp_sdk_abi "${CMAKE_MATCH_1}")
+    if(NOT _pvzp_sdk_abi)
+        message(FATAL_ERROR "Cannot read the native SDK ABI version")
+    endif()
+    set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS "${PROJECT_SOURCE_DIR}/src/PvzpLib/Plugin.h")
     file(GENERATE OUTPUT "${_pvzp_sdk}/build.txt" CONTENT
-        "abi=4\ncompiler=${CMAKE_CXX_COMPILER_ID}\nversion=${CMAKE_CXX_COMPILER_VERSION}\nprofile=$<CONFIG>\npvz_debug=$<BOOL:${PVZ_DEBUG}>\nlow_memory=$<BOOL:${LOW_MEMORY}>\n")
+        "abi=${_pvzp_sdk_abi}\ncompiler=${CMAKE_CXX_COMPILER_ID}\nversion=${CMAKE_CXX_COMPILER_VERSION}\nprofile=$<CONFIG>\npvz_debug=$<BOOL:${PVZ_DEBUG}>\nlow_memory=$<BOOL:${LOW_MEMORY}>\n")
     file(GENERATE OUTPUT "${_pvzp_sdk}/pvzp-sdk.cmake" CONTENT
         "add_library(pvzp-sdk INTERFACE IMPORTED)\nset_target_properties(pvzp-sdk PROPERTIES INTERFACE_INCLUDE_DIRECTORIES \"\${CMAKE_CURRENT_LIST_DIR}/src;\${CMAKE_CURRENT_LIST_DIR}/src/SexyAppFramework;\${CMAKE_CURRENT_LIST_DIR}/src/SexyAppFramework/sound/SDL-Mixer-X/include;${SDL2_INCLUDE_DIRS}\" INTERFACE_LINK_LIBRARIES \"\${CMAKE_CURRENT_LIST_DIR}/lib/$<TARGET_LINKER_FILE_NAME:pvz-portable>\" INTERFACE_COMPILE_FEATURES cxx_std_20 INTERFACE_COMPILE_OPTIONS \"${_pvzp_sdk_options}\" INTERFACE_COMPILE_DEFINITIONS \"$<$<BOOL:${PVZ_DEBUG}>:PVZ_DEBUG>;$<$<BOOL:${LOW_MEMORY}>:LOW_MEMORY>\")\n")
     add_custom_command(TARGET pvz-portable POST_BUILD

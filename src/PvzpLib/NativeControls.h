@@ -9,6 +9,7 @@ class Zombie;
 namespace Sexy { class Graphics; }
 
 namespace PvzpNative {
+    PVZP_API void BuildCurrentZombieWaves(Board* board, std::uint32_t seed);
     enum class CommonDance : std::int32_t { Default = -1, None = 0, Fast = 1, Slow = 2 };
 	struct RandomState
 	{
@@ -36,7 +37,7 @@ namespace PvzpNative {
 		bool sunCostIgnored = false;
 		bool fogRevealed = false;
 		bool vaseContentsVisible = false;
-		bool instantIceAndAshEffects = false;
+		std::int32_t plantSpecialCountdownRule = 0;
 		bool mushroomsAwake = false;
 		bool cobFixedDelay = false;
         bool disableCobImpactDelay = false;
@@ -45,8 +46,8 @@ namespace PvzpNative {
 		bool cobDriftFixed = false;
 		bool itemDropDisabled = false;
 		bool naturalSunDropDisabled = false;
-		bool jackExplosionsDisabled = false;
-		bool pepperExplosionsDisabled = false;
+		std::int32_t jackExplosionRule = 0;
+		std::int32_t pepperExplosionRule = 0;
 		bool specialEventsDisabled = false;
 		bool zombieSpawnStopped = false;
 		bool zombiesDieAtHouse = false;
@@ -55,7 +56,23 @@ namespace PvzpNative {
 		bool normalAutoCollectEnabled = false;
 		std::int32_t kernelPultProjectileRule = 0;
 		std::int32_t plantDamageRule = 0;
+        std::int32_t zombieDamageRule = 0;
+        bool upgradePlantingUnrestricted = false;
+        bool seedRechargeShadingHidden = false;
+        bool seedBankTopmost = false;
 		std::int32_t maidCheat = 0;
+		std::int32_t sunlightLimit = 9990;
+		std::int32_t moneyLimit = 99999;
+		bool cratersExpireImmediately = false;
+		bool chilledEffectsDisabled = false;
+		bool butterEffectsDisabled = false;
+		bool impThrowDisabled = false;
+		bool zombieWalkingStopped = false;
+		bool iceTrailsDisabled = false;
+		std::int32_t backgroundRunRule = 0; // 0=native platform behavior, 1=PT background, 2=desktop focus pause
+		bool pauseDialogDisabled = false;
+		bool hiddenPagesVisible = false;
+		bool temporaryUnlock = false;
 	};
     extern bool gWorldReplaced;
     extern bool gEventFrameOpen;
@@ -96,6 +113,7 @@ namespace PvzpNative {
 PVZP_API void BeginRandomConstruction(std::uint32_t seed, bool lockedOnly);
 PVZP_API void EndRandomConstruction();
 PVZP_API void RestoreGameSpeed();
+PVZP_API void SetTemporaryUnlock(bool enabled);
 PVZP_API void RestoreAll();
 	struct RandomConstructionGuard
 	{
@@ -128,6 +146,7 @@ namespace PvzpNative
 	bool VaseContentsVisible();
 	int KernelPultProjectileRule();
 	bool InstantIceAndAshEffects();
+    int PlantSpecialCountdownRule();
 	bool MushroomsAwake();
 	bool CobFixedDelay();
 	bool CobRechargeShortened();
@@ -135,7 +154,9 @@ namespace PvzpNative
 	bool ItemDropDisabled();
 	bool NaturalSunDropDisabled();
 	bool JackExplosionsDisabled();
+    int JackExplosionRule();
 	bool PepperExplosionsDisabled();
+    int PepperExplosionRule();
 	bool SpecialEventsDisabled();
 	bool ZombieSpawnStopped();
 	bool ZombiesDieAtHouse();
@@ -143,6 +164,7 @@ namespace PvzpNative
 	bool ProfileReadonly();
 	bool NormalAutoCollectEnabled();
 	int PlantDamageRule();
+    int ZombieDamageRule();
 	int MaidCheat();
 
 	void ApplyBite(Zombie* zombie, Plant* plant, int damage);

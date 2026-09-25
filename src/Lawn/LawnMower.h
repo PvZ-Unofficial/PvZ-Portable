@@ -60,7 +60,8 @@ public:
 
 public:
 	void                LawnMowerInitialize(int theRow);
-	void                StartMower();
+	PVZP_API void       StartMower();
+	void                LawnMowerInitializeAt(int theRow, float theX);
 	void                Update();
 	void                Draw(Graphics* g);
 	PVZP_API void                Die();

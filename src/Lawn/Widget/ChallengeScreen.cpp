@@ -23,6 +23,7 @@
 #include "../../LawnApp.h"
 #include "../System/Music.h"
 #include "ChallengeScreen.h"
+#include "../../PvzpLib/NativeControls.h"
 #include "../../Resources.h"
 #include "../ToolTipWidget.h"
 #include "../System/PlayerInfo.h"
@@ -153,7 +154,7 @@ ChallengeScreen::ChallengeScreen(LawnApp* theApp, ChallengePage thePage)
 		aPageButton->mColors[ButtonWidget::COLOR_LABEL] = Color(255, 240, 0);
 		aPageButton->mColors[ButtonWidget::COLOR_LABEL_HILITE] = Color(220, 220, 0);
 		aPageButton->Resize(200 + 100 * aPageIdx, 540, 100, 75);
-		if (!ShowPageButtons() || aPageIdx == CHALLENGE_PAGE_SURVIVAL || aPageIdx == CHALLENGE_PAGE_PUZZLE)
+		if (!PvzpNative::gModifiers.hiddenPagesVisible && (!ShowPageButtons() || aPageIdx == CHALLENGE_PAGE_SURVIVAL || aPageIdx == CHALLENGE_PAGE_PUZZLE))
 			aPageButton->mVisible = false;
 	}
 
@@ -254,6 +255,7 @@ void ChallengeScreen::SetUnlockChallengeIndex(ChallengePage thePage, bool theIsI
 
 int ChallengeScreen::MoreTrophiesNeeded(int theChallengeIndex)
 {
+	if (PvzpNative::gModifiers.temporaryUnlock) return 0;
 	const ChallengeDefinition& aDef = GetChallengeDefinition(theChallengeIndex);
 	if (mApp->mGameMode == GAMEMODE_UPSELL && mApp->mGameScene == SCENE_LEVEL_INTRO)
 	{

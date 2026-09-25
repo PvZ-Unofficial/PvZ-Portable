@@ -31,6 +31,7 @@
 #include "../PvzpLib/FilterEffect.h"
 #include "misc/SexyMatrix.h"
 #include "PvzpLib/NativeControls.h"
+#include <stdexcept>
 
 constexpr const int SLOT_MACHINE_TIME = 400;
 constexpr const int CONVEYOR_SPEED = 4;
@@ -603,7 +604,7 @@ void DrawSeedPacket(Graphics* g, float x, float y, SeedType theSeedType, SeedTyp
 void SeedPacket::Draw(Graphics* g)
 {
 	float aPercentDark = 0.0f;
-	if (!mActive)
+	if (!mActive && !PvzpNative::gModifiers.seedRechargeShadingHidden)
 	{
 		if (mRefreshTime == 0)
 		{
@@ -1161,7 +1162,14 @@ void SeedBank::UpdateConveyorBelt()
 
 void SeedBank::UpdateWidth()
 {
-	mNumPackets = mBoard->GetNumSeedsInBank();
+	SetPacketCount(mBoard->GetNumSeedsInBank());
+}
+
+void SeedBank::SetPacketCount(int theCount)
+{
+	if (theCount < 0 || theCount > SEEDBANK_MAX)
+		throw std::out_of_range("seed packet count");
+	mNumPackets = theCount;
 	mWidth = IMAGE_SEEDBANK->GetWidth() + mBoard->GetSeedBankExtraWidth();
 	for (int i = 0; i < mNumPackets; i++)
 	{

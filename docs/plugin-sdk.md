@@ -11,13 +11,12 @@ Rust 工具链或 RustVsZombies 源码。Windows x64 支持一个活动插件；
 `pvzp-sdk.cmake`。C++ 消费者可以 `include` 该文件并链接 `pvzp-sdk` target。
 `PVZP_BUILD_PLUGIN_TESTS=ON` 另外构建不依赖 rsvz 的最小 C++ 插件。
 
-启动游戏前把 `PVZP_PLUGIN` 设置为 DLL 完整路径；不设置时正常运行。只在启动
-读取一次，换插件需要关闭并重启游戏。游戏不解析脚本配置，也不使用外部注入器。
+启动游戏前把 `PVZP_PLUGIN` 设置为 DLL 完整路径；不设置时正常运行。启动读取一次；也可通过下述本地入口在游戏主线程显式加载。游戏不解析脚本配置，也不使用外部注入器。
 
 固定导出只有三个 C ABI 入口：
 
 ```cpp
-uint32_t pvzp_plugin_abi_version(); // 当前 5
+uint32_t pvzp_plugin_abi_version(); // 当前 6
 int32_t pvzp_plugin_initialize();  // 0 成功
 int32_t pvzp_plugin_shutdown();    // 0 表示资源已清理，可以卸载
 ```
@@ -32,6 +31,14 @@ ExitFight 撤销、EnterFight 按当前兴趣重新登记，Board 销毁前宿�
 shutdown、撤销入口，再卸载 DLL。初始化失败也清理部分登记并调用 shutdown。
 shutdown 非零或抛出异常时保留 DLL 和未释放资源，报告失败并禁止继续加载；
 重复停止请求不会重复释放。运行报告写入失败不等同于资源清理失败。
+
+## 运行时加载入口
+
+Windows x64 在外层更新中提供本地消息管道 `\\.\pipe\pvzp-plugin-load-<PID>`。它只接收显式 DLL 加载请求，不执行游戏动作、不解析脚本参数、不替换已有活动插件。已有模块或清理失败保留的模块会拒绝加载；上一模块确实安全卸载后可以再次显式加载。共享 rsvz 宿主仍占一个物理插件槽，其普通脚本和修改器模块由宿主自行管理。
+
+一次连接对应一次请求。请求为三个小端 u32（magic `0x31505652`、协议版本 `1`、UTF-16 码元数），后接不含 NUL 的绝对 DLL 路径；长度为1–32767。回复一个小端 u32：0成功、1格式/路径无效、2槽位已有模块、3加载或初始化失败。原生消息管道禁止远程客户端，读写均非阻塞；客户端未完成请求或未断开时两秒后回收连接，不在游戏线程 FlushFileBuffers 等待对端。DLL 在游戏外层安全点、loader lock 外初始化，仍先验证 ABI 和布局。运行时绝对路径加载使用 DLL 所在目录查找配套依赖；原有 `PVZP_PLUGIN` 启动路径保留既有查找方式。
+
+该入口在无脚本时也可接受请求，使修改器不必先随游戏启动。ABI 6包含 App 所有的入口句柄和连接状态，故游戏、原生 SDK 与插件应重新配套构建；不能用旧 ABI 5二进制混接。
 
 ## ABI 与导出清单
 

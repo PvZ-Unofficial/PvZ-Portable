@@ -83,6 +83,7 @@ public:
 	int		CountOfTypeOnConveyorBelt(SeedType theSeedType);
 	void			    UpdateConveyorBelt();
 	void			    UpdateWidth();
+	PVZP_API void       SetPacketCount(int theCount);
 	void			    RefreshAllPackets();
 };
 

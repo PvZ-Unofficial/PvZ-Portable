@@ -104,8 +104,8 @@ public:
 	void                    GetSeedPositionInChooser(int theIndex, int& x, int& y);
 	void         GetSeedPositionInBank(int theIndex, int& x, int& y);
 	unsigned int SeedNotRecommendedToPick(SeedType theSeedType);
-	bool         SeedNotAllowedToPick(SeedType theSeedType);
-	bool         SeedNotAllowedDuringTrial(SeedType theSeedType);
+	PVZP_API bool SeedNotAllowedToPick(SeedType theSeedType);
+	PVZP_API bool SeedNotAllowedDuringTrial(SeedType theSeedType);
 	void                    Draw(Graphics* g) override;
 	void                    UpdateViewLawn();
 	void                    LandFlyingSeed(ChosenSeed& theChosenSeed);
@@ -121,7 +121,7 @@ public:
 	SeedType                SeedHitTest(int x, int y);
 	PVZP_API SeedType                FindSeedInBank(int theIndexInBank);
 	void         EnableStartButton(bool theEnabled);
-	void                    ClickedSeedInBank(ChosenSeed& theChosenSeed);
+	PVZP_API void           ClickedSeedInBank(ChosenSeed& theChosenSeed);
 	PVZP_API void                    ClickedSeedInChooser(ChosenSeed& theChosenSeed);
 	void                    ShowToolTip();
 	void         RemoveToolTip();

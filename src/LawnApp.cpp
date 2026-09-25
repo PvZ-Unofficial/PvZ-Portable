@@ -371,12 +371,11 @@ void LawnApp::GotFocus()
 
 void LawnApp::LostFocus()
 {
+    bool pauseOnLoss = PvzpNative::gModifiers.backgroundRunRule == 2;
 #if (defined(__ANDROID__) && !defined(__TERMUX__)) || defined(__IPHONEOS__)
-	if (!mCheatKeys && CanPauseNow())
-	{
-		DoPauseDialog();
-	}
+    pauseOnLoss = pauseOnLoss || PvzpNative::gModifiers.backgroundRunRule == 0;
 #endif
+    if (pauseOnLoss && !mCheatKeys && CanPauseNow()) DoPauseDialog();
 }
 
 void LawnApp::WriteToRegistry()
@@ -730,6 +729,7 @@ void LawnApp::DoContinueDialog()
 
 void LawnApp::DoPauseDialog()
 {
+    if (PvzpNative::gModifiers.pauseDialogDisabled) return;
 	mBoard->Pause(true);
 	//FinishModelessDialogs();
 
@@ -2284,7 +2284,7 @@ SeedType LawnApp::GetAwardSeedForLevel(int theLevel)
 int LawnApp::GetSeedsAvailable()
 {
 	int aLevel = mPlayerInfo->GetLevel();
-	if (HasFinishedAdventure() || aLevel > 50)
+	if (HasFinishedAdventure() || PvzpNative::gModifiers.temporaryUnlock || aLevel > 50)
 	{
 		return 49;
 	}
@@ -2438,7 +2438,7 @@ bool LawnApp::CanShowZenGarden()
 	if (IsTrialStageLocked())
 		return false;
 
-	return HasFinishedAdventure() || mPlayerInfo->mLevel >= 45;
+	return HasFinishedAdventure() || PvzpNative::gModifiers.temporaryUnlock || mPlayerInfo->mLevel >= 45;
 }
 
 bool LawnApp::CanSpawnYetis()

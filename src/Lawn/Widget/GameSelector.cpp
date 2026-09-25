@@ -19,6 +19,7 @@
  * along with PvZ-Portable. If not, see <https://www.gnu.org/licenses/>.
  */
 
+#include "../../PvzpLib/NativeControls.h"
 #include "../Board.h"
 #include "../LawnCommon.h"
 #include "GameButton.h"
@@ -333,8 +334,8 @@ GameSelector::~GameSelector()
 
 void GameSelector::SyncButtons()
 {
-	bool aAlmanacAvailable = mApp->CanShowAlmanac() || mUnlockSelectorCheat;
-	bool aStoreOpen = mApp->CanShowStore() || mUnlockSelectorCheat;
+	bool aAlmanacAvailable = mApp->CanShowAlmanac() || mUnlockSelectorCheat || (mApp->mPlayerInfo && PvzpNative::gModifiers.temporaryUnlock);
+	bool aStoreOpen = mApp->CanShowStore() || mUnlockSelectorCheat || (mApp->mPlayerInfo && PvzpNative::gModifiers.temporaryUnlock);
 	bool aZenGardenOpen = mApp->CanShowZenGarden() || mUnlockSelectorCheat;
 
 	mAlmanacButton->mDisabled = !aAlmanacAvailable;
@@ -465,7 +466,7 @@ void GameSelector::SyncProfile(bool theShowLoading)
 		if (mLevel >= 2)
 			mShowStartButton = false;
 
-		if (mApp->HasFinishedAdventure())
+		if ((mApp->HasFinishedAdventure() || (mApp->mPlayerInfo && PvzpNative::gModifiers.temporaryUnlock)))
 		{
 			mMinigamesLocked = false;
 			mSurvivalLocked = false;
@@ -487,7 +488,7 @@ void GameSelector::SyncProfile(bool theShowLoading)
 		}
 	}
 
-	if (mApp->HasFinishedAdventure() && !mApp->IsTrialStageLocked())
+	if ((mApp->HasFinishedAdventure() || (mApp->mPlayerInfo && PvzpNative::gModifiers.temporaryUnlock)) && !mApp->IsTrialStageLocked())
 		mHasTrophy = true;
 	else
 		mHasTrophy = false;

@@ -1792,7 +1792,7 @@ void Plant::UpdateChomper()
 			bool doBite = false;
 			if (aZombie)
 			{
-				if (aZombie->mZombieType == ZombieType::ZOMBIE_GARGANTUAR || aZombie->mZombieType == ZombieType::ZOMBIE_REDEYE_GARGANTUAR ||
+				if (PvzpNative::ZombieDamageRule() == 1 || aZombie->mZombieType == ZombieType::ZOMBIE_GARGANTUAR || aZombie->mZombieType == ZombieType::ZOMBIE_REDEYE_GARGANTUAR ||
 					aZombie->mZombieType == ZombieType::ZOMBIE_BOSS)
 				{
 					doBite = true;
@@ -2607,9 +2607,9 @@ void Plant::UpdateAbilities()
 	if (mDoSpecialCountdown > 0)
 	{
 		mDoSpecialCountdown--;
-		if (mDoSpecialCountdown == 0
-			|| PvzpNative::InstantIceAndAshEffects()
-		)
+		const int timingRule = PvzpNative::PlantSpecialCountdownRule();
+		// Rule 2 reproduces PT's inverted JNE -> JE, including countdown=1.
+		if (timingRule == 2 ? mDoSpecialCountdown != 0 : (mDoSpecialCountdown == 0 || timingRule == 1))
 		{
 			DoSpecial();
 		}
@@ -4287,7 +4287,7 @@ void Plant::BlowAwayFliers()
 		if (!aZombie->IsDeadOrDying())
 		{
 			// Blow away only flying balloons here; balloons mid-pop are excluded
-			if (aZombie->mZombiePhase == ZombiePhase::PHASE_BALLOON_FLYING)
+			if (PvzpNative::ZombieDamageRule() != 1 && aZombie->mZombiePhase == ZombiePhase::PHASE_BALLOON_FLYING)
 			{
 				aZombie->mBlowingAway = true;
 			}

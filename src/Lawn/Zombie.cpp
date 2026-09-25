@@ -69,7 +69,7 @@ constexpr const float CLIP_HEIGHT_LIMIT = -100.0f;
 constexpr const float CLIP_HEIGHT_OFF = -200.0f;
 constexpr Color ZOMBIE_MINDCONTROLLED_COLOR = Color(128, 64, 192, 255);
 
-constinit const ZombieDefinition gZombieDefs[NUM_ZOMBIE_TYPES] = {
+constinit ZombieDefinition gZombieDefs[NUM_ZOMBIE_TYPES] = {
 	{ .mZombieType = ZOMBIE_NORMAL, .mReanimationType = REANIM_ZOMBIE, .mZombieValue = 1, .mStartingLevel = 1, .mFirstAllowedWave = 1, .mPickWeight = 4000, .mZombieName = "ZOMBIE" },
 	{ .mZombieType = ZOMBIE_FLAG, .mReanimationType = REANIM_ZOMBIE, .mZombieValue = 1, .mStartingLevel = 1, .mFirstAllowedWave = 1, .mPickWeight = 0, .mZombieName = "FLAG_ZOMBIE" },
 	{ .mZombieType = ZOMBIE_TRAFFIC_CONE, .mReanimationType = REANIM_ZOMBIE, .mZombieValue = 2, .mStartingLevel = 3, .mFirstAllowedWave = 1, .mPickWeight = 4000, .mZombieName = "CONEHEAD_ZOMBIE" },
@@ -1996,7 +1996,8 @@ void Zombie::UpdateZombieJackInTheBox()
 {
 	if (mZombiePhase == ZombiePhase::PHASE_JACK_IN_THE_BOX_RUNNING)
 	{
-		if (mPhaseCounter <= 0 && mHasHead)
+		const int rule = PvzpNative::JackExplosionRule();
+		if (rule != 2 && (rule == 1 || mPhaseCounter <= 0) && mHasHead)
 		{
 			mPhaseCounter = 110;
 			mZombiePhase = ZombiePhase::PHASE_JACK_IN_THE_BOX_POPPING;
@@ -2015,8 +2016,6 @@ void Zombie::UpdateZombieJackInTheBox()
 
 		if (mPhaseCounter <= 0)
 		{
-			if (PvzpNative::JackExplosionsDisabled())
-				return;
 			mApp->PlayFoley(FoleyType::FOLEY_EXPLOSION);
 
 			int aPosX = mX + mWidth / 2;
@@ -2160,7 +2159,7 @@ void Zombie::UpdateZombieGargantuar()
 	if (IsImmobilizied() || !mHasHead)
 		return;
 
-	if (mHasObject && mBodyHealth < mBodyMaxHealth / 2 && aThrowingDistance > 40.0f)
+	if (mHasObject && !PvzpNative::gModifiers.impThrowDisabled && mBodyHealth < mBodyMaxHealth / 2 && aThrowingDistance > 40.0f)
 	{
 		mZombiePhase = ZombiePhase::PHASE_GARGANTUAR_THROWING;
 		PlayZombieReanim("anim_throw", ReanimLoopType::REANIM_PLAY_ONCE_AND_HOLD, 20, 24.0f);
@@ -2260,10 +2259,9 @@ void Zombie::UpdateZombieJalapenoHead()
 	if (!mHasHead)
 		return;
 
-	if (mPhaseCounter == 0)
+	const int rule = PvzpNative::PepperExplosionRule();
+	if (rule != 2 && (rule == 1 || mPhaseCounter == 0))
 	{
-		if (PvzpNative::PepperExplosionsDisabled())
-			return;
 		mApp->PlayFoley(FoleyType::FOLEY_JALAPENO_IGNITE);
 		mApp->PlayFoley(FoleyType::FOLEY_JUICY);
 		mBoard->DoFwoosh(mRow);
@@ -3706,6 +3704,7 @@ bool Zombie::ZombieNotWalking()
 
 void Zombie::UpdateZamboni()
 {
+	if (PvzpNative::gModifiers.iceTrailsDisabled) return;
 	if (mPosX > 400.0f && !mFlatTires)
 	{
 		// 1051 UpdateZamboni@0x52A7CF..0x52A82A: PC24 arithmetic stages,
@@ -3832,13 +3831,14 @@ void Zombie::UpdateZombieWalking()
 			}
 		}
 
-		if (IsWalkingBackwards() || mZombiePhase == ZombiePhase::PHASE_DANCER_DANCING_IN)
+		// PT only suppresses displacement in the reanimation walking path.
+		// Animations, attacks, special movements and the legacy fallback continue.
+		if (!PvzpNative::gModifiers.zombieWalkingStopped)
 		{
-			mPosX += aSpeed;
-		}
-		else
-		{
-			mPosX -= aSpeed;
+			if (IsWalkingBackwards() || mZombiePhase == ZombiePhase::PHASE_DANCER_DANCING_IN)
+				mPosX += aSpeed;
+			else
+				mPosX -= aSpeed;
 		}
 
 		if (mZombieType == ZombieType::ZOMBIE_FOOTBALL && mFromWave != Zombie::ZOMBIE_WAVE_WINNER)
@@ -4323,7 +4323,7 @@ void Zombie::UpdatePlaying()
 	}
 	if (mChilledCounter > 0)
 	{
-		mChilledCounter--;
+		mChilledCounter = PvzpNative::gModifiers.chilledEffectsDisabled ? 0 : mChilledCounter - 1;
 		if (mChilledCounter == 0)
 		{
 			UpdateAnimSpeed();
@@ -4331,7 +4331,7 @@ void Zombie::UpdatePlaying()
 	}
 	if (mButteredCounter > 0)
 	{
-		mButteredCounter--;
+		mButteredCounter = PvzpNative::gModifiers.butterEffectsDisabled ? 0 : mButteredCounter - 1;
 		if (mButteredCounter == 0)
 		{
 			RemoveButter();
@@ -6694,7 +6694,8 @@ void Zombie::CheckForHighGround()
 void Zombie::StartMindControlled()
 {
 	mApp->PlaySample(SOUND_MINDCONTROLLED);
-	mMindControlled = true;
+	// PT 0x52FA82 changes only this flag; the native sound/cleanup still run.
+	mMindControlled = PvzpNative::ZombieDamageRule() != 1;
 	mLastPortalX = -1;
 
 	if (mZombieType == ZombieType::ZOMBIE_DANCER)
@@ -7326,8 +7327,10 @@ int Zombie::TakeShieldDamage(int theDamage, unsigned int theDamageFlags)
 	}
 
 	int aDamageIndexBeforeDamage = GetShieldDamageIndex();
-	int aDamageActual = std::min(mShieldHealth, theDamage);
-	int aDamageRemaining = theDamage - aDamageActual;
+	// PT 0x530C9B changes both shield damage and remainder before the native write.
+	const int aRule = PvzpNative::ZombieDamageRule();
+	int aDamageActual = aRule == 1 ? 0 : aRule == 2 ? mShieldHealth : std::min(mShieldHealth, theDamage);
+	int aDamageRemaining = aRule == 0 ? theDamage - aDamageActual : 0;
 	mShieldHealth -= aDamageActual;
 	if (mShieldHealth == 0)
 	{
@@ -7435,7 +7438,11 @@ int Zombie::TakeHelmDamage(int theDamage, unsigned int theDamageFlags)
 	int aDamageIndexBeforeDamage = GetHelmDamageIndex();
 	int aDamageActual = std::min(mHelmHealth, theDamage);
 	int aDamageRemaining = theDamage - aDamageActual;
-	mHelmHealth -= aDamageActual;
+	// PT 0x531045 leaves the already computed remainder unchanged.
+	if (PvzpNative::ZombieDamageRule() == 2)
+		mHelmHealth = 0;
+	else if (PvzpNative::ZombieDamageRule() != 1)
+		mHelmHealth -= aDamageActual;
 	if (TestBit(theDamageFlags, static_cast<int>(DamageFlags::DAMAGE_FREEZE)))
 	{
 		ApplyChill(false);
@@ -7543,7 +7550,11 @@ void Zombie::TakeBodyDamage(int theDamage, unsigned int theDamageFlags)
 
 	int aBodyHealthOrigin = mBodyHealth;
 	int aDamageIndexBeforeDamage = GetBodyDamageIndex();
-	mBodyHealth -= theDamage;
+	// PT 0x53130F only replaces the body-health arithmetic.
+	if (PvzpNative::ZombieDamageRule() == 2)
+		mBodyHealth = 0;
+	else if (PvzpNative::ZombieDamageRule() != 1)
+		mBodyHealth -= theDamage;
 	int aDamageIndexAfterDamage = GetBodyDamageIndex();
 	if (mZombieType == ZombieType::ZOMBIE_ZAMBONI)
 	{
@@ -8375,7 +8386,12 @@ void Zombie::ApplyBurn()
 	if (mZombieType == ZombieType::ZOMBIE_GARGANTUAR || mZombieType == ZombieType::ZOMBIE_REDEYE_GARGANTUAR)
 		PvzpNative::EmitGargantuarAshHit(this);
 
-	if (mBodyHealth >= 1800 || mZombieType == ZombieType::ZOMBIE_BOSS)
+	// PT replaces JGE by JNO/JO after signed CMP health,1800.
+	// Spell out overflow without performing overflowing signed arithmetic.
+	const int aRule = PvzpNative::ZombieDamageRule();
+	const bool aOverflow = mBodyHealth < (-2147483647 - 1) + 1800;
+	const bool aDamageBranch = aRule == 1 ? !aOverflow : aRule == 2 ? aOverflow : mBodyHealth >= 1800;
+	if (aDamageBranch || mZombieType == ZombieType::ZOMBIE_BOSS)
 	{
 		TakeDamage(1800, 18U);
 		return;

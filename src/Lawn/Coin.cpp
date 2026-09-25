@@ -437,12 +437,15 @@ void Coin::ScoreCoin()
 	if (IsSun())
 	{
 		int aSunValue = GetSunValue();
-		mBoard->AddSunMoney(aSunValue);
+		// PT edits the pickup compare/write sites, not every AddSunMoney caller.
+		mBoard->mSunMoney += aSunValue;
+		mBoard->mSunMoney = std::min(mBoard->mSunMoney, PvzpNative::gModifiers.sunlightLimit);
 	}
 	else if (IsMoney())
 	{
 		int aCoinValue = Coin::GetCoinValue(mType);
-		mApp->mPlayerInfo->AddCoins(aCoinValue);
+		mApp->mPlayerInfo->mCoins += aCoinValue;
+		mApp->mPlayerInfo->mCoins = std::clamp(mApp->mPlayerInfo->mCoins, 0, PvzpNative::gModifiers.moneyLimit);
 		if (mBoard)
 		{
 			mBoard->mCoinsCollected += aCoinValue;

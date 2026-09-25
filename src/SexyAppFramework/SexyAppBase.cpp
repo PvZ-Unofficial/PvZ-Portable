@@ -1974,7 +1974,7 @@ void SexyAppBase::RehupFocus()
 	{
 		mHasFocus = wantHasFocus;
 
-		if (mHasFocus)
+		if (mHasFocus || PvzpNative::gModifiers.backgroundRunRule == 1)
 		{
 			if (mMuteOnLostFocus)
 				Unmute(true);
@@ -2631,7 +2631,12 @@ bool SexyAppBase::Process(bool allowSleep)
 
 		if (mUpdateAppState == UPDATESTATE_PROCESS_1)
 		{
-			if ((++mNonDrawCount < static_cast<int>(ceil(10 * mUpdateMultiplier))) || (!mLoaded))
+            // The vanilla strict comparison cannot advance at <=0.1x: both the
+            // incremented count and ceil(10*multiplier) are one. Preserve the
+            // original limit elsewhere, and allow one update before the next draw.
+            const int drawLimit = static_cast<int>(ceil(10 * mUpdateMultiplier));
+            const int effectiveLimit = PvzpNative::gGameSpeedCaptured ? std::max(2, drawLimit) : drawLimit;
+			if ((++mNonDrawCount < effectiveLimit) || (!mLoaded))
 			{
 				bool doUpdate = false;
 

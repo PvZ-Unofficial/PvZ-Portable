@@ -19,6 +19,7 @@
  * along with PvZ-Portable. If not, see <https://www.gnu.org/licenses/>.
  */
 
+#include "../../PvzpLib/NativeControls.h"
 #include <cstdint>
 #include <time.h>
 #include "../Coin.h"
@@ -227,6 +228,7 @@ bool StoreScreen::IsItemSoldOut(StoreItem theStoreItem)
 
 bool StoreScreen::IsItemUnavailable(StoreItem theStoreItem)
 {
+	if (PvzpNative::gModifiers.temporaryUnlock) return false;
 	if (mEasyBuyingCheat)
 		return false;
 
@@ -819,7 +821,7 @@ bool StoreScreen::IsPageShown(StorePages thePage)
 	// trial mode only shows the default page
 	if (mApp->IsTrialStageLocked()) return thePage == STORE_PAGE_SLOT_UPGRADES;
 	// finishing adventure unlocks all pages
-	if (mApp->HasFinishedAdventure()) return true;
+	if (mApp->HasFinishedAdventure() || PvzpNative::gModifiers.temporaryUnlock) return true;
 	// the plant upgrades page requires reaching adventure 5-2 (level 42)
 	if (thePage == STORE_PAGE_PLANT_UPGRADES) return mApp->mPlayerInfo->mLevel >= 42;
 	// the zen garden page requires reaching adventure 5-5 (level 45)

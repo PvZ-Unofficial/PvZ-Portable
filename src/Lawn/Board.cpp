@@ -589,6 +589,11 @@ void Board::PickZombieWaves()
 			mNumWaves = 40;
 	}
 
+	PickCurrentZombieWaves();
+}
+
+void Board::PickCurrentZombieWaves()
+{
 	ZombiePicker aZombiePicker;
 	ZombiePickerInit(&aZombiePicker);
 	ZombieType aIntroZombieType = GetIntroducedZombieType();
@@ -750,16 +755,18 @@ void Board::PickZombieWaves()
 
 int Board::GetLevelRandSeed()
 {
-	int aRndSeed = mApp->mPlayerInfo->mId + mBoardRandSeed;
+	// Native 1051 uses wrapping 32-bit arithmetic, including user-supplied
+	// board seed bit patterns above INT_MAX.
+	std::uint32_t aRndSeed = static_cast<std::uint32_t>(mApp->mPlayerInfo->mId) + static_cast<std::uint32_t>(mBoardRandSeed);
 	if (mApp->IsAdventureMode())
 	{
-		aRndSeed += mApp->mPlayerInfo->mFinishedAdventure * 101 + mLevel;
+		aRndSeed += static_cast<std::uint32_t>(mApp->mPlayerInfo->mFinishedAdventure) * 101U + static_cast<std::uint32_t>(mLevel);
 	}
 	else
 	{
-		aRndSeed += mChallenge->mSurvivalStage * 101 + mApp->mGameMode;
+		aRndSeed += static_cast<std::uint32_t>(mChallenge->mSurvivalStage) * 101U + static_cast<std::uint32_t>(mApp->mGameMode);
 	}
-	return aRndSeed;
+	return static_cast<int>(aRndSeed);
 }
 
 void Board::LoadBackgroundImages()
@@ -1518,12 +1525,27 @@ Reanimation* Board::CreateRakeReanim(float theRakeX, float theRakeY, int theRend
 
 void Board::PlaceRake()
 {
-	if (!mApp->mPlayerInfo->mPurchases[StoreItem::STORE_ITEM_RAKE])
-		return;
+    PlaceRakeImpl(false, 7, 0);
+}
 
-	int aGridX = 7;
+GridItem* Board::PlaceRakeAt(int theGridX, int theGridY)
+{
+    if (theGridX < 0 || theGridX >= MAX_GRID_SIZE_X || theGridY < 0 || theGridY >= MAX_GRID_SIZE_Y ||
+        !mApp->mPlayerInfo || mGridItems.mSize >= mGridItems.mMaxSize || mGridItems.mFreeListHead >= mGridItems.mMaxSize)
+        return nullptr;
+    return PlaceRakeImpl(true, theGridX, theGridY);
+}
+
+GridItem* Board::PlaceRakeImpl(bool forced, int forcedCol, int forcedRow)
+{
+	if (!forced && !mApp->mPlayerInfo->mPurchases[StoreItem::STORE_ITEM_RAKE])
+		return nullptr;
+
+	int aGridX = forced ? forcedCol : 7;
 	if (mApp->IsScaryPotterLevel())
 	{
+		// PT only patches the ordinary column assignment; vase levels retain their native selection.
+		aGridX = 7;
 		for (GridItem* aGridItem : mGridItems)
 		{
 			if (aGridItem->mDead)
@@ -1538,7 +1560,7 @@ void Board::PlaceRake()
 	{
 		if (!StageHasZombieWalkInFromRight() || mApp->mGameMode == GameMode::GAMEMODE_CHALLENGE_BEGHOULED ||
 			mApp->mGameMode == GameMode::GAMEMODE_CHALLENGE_BEGHOULED_TWIST || mApp->mGameMode == GameMode::GAMEMODE_CHALLENGE_BOBSLED_BONANZA)
-			return;
+			return nullptr;
 	}
 
 	int aPickCount = 0;
@@ -1553,10 +1575,11 @@ void Board::PlaceRake()
 		}
 	}
 	if (aPickCount == 0)
-		return;
+		return nullptr;
 
 	int aGridY = PvzpPickFromWeightedArray(aPickArray, aPickCount);
-	mApp->mPlayerInfo->mPurchases[StoreItem::STORE_ITEM_RAKE]--;
+	if (forced) aGridY = forcedRow;
+	else mApp->mPlayerInfo->mPurchases[StoreItem::STORE_ITEM_RAKE]--;
 	GridItem* aRake = mGridItems.DataArrayAlloc();
 	aRake->mGridItemType = GridItemType::GRIDITEM_RAKE;
 	aRake->mGridX = aGridX;
@@ -1566,27 +1589,40 @@ void Board::PlaceRake()
 	aRake->mRenderOrder = MakeRenderOrder(RenderLayer::RENDER_LAYER_GRAVE_STONE, aGridY, 9);
 	aRake->mGridItemReanimID = mApp->ReanimationGetID(CreateRakeReanim(aRake->mPosX, aRake->mPosY, 0)); // Lmao gotta pass in the right coords
 	aRake->mGridItemState = GridItemState::GRIDITEM_STATE_RAKE_ATTRACTING;
+	return aRake;
 }
 
 void Board::InitLawnMowers()
 {
+    InitLawnMowersImpl(false);
+}
+
+void Board::InitLawnMowersReady()
+{
+    InitLawnMowersImpl(true);
+}
+
+void Board::InitLawnMowersImpl(bool theReady)
+{
 	GameMode aGameMode = mApp->mGameMode;
+	// Explicit ready initialization mirrors the three native PT sites. Ordinary
+	// initialization retains mode restrictions, hidden state and roll-in position.
 	// levels that never have lawn mowers
-	if (aGameMode == GameMode::GAMEMODE_CHALLENGE_BEGHOULED || aGameMode == GameMode::GAMEMODE_CHALLENGE_BEGHOULED_TWIST ||
+	if (!theReady && (aGameMode == GameMode::GAMEMODE_CHALLENGE_BEGHOULED || aGameMode == GameMode::GAMEMODE_CHALLENGE_BEGHOULED_TWIST ||
 		aGameMode == GameMode::GAMEMODE_CHALLENGE_ZEN_GARDEN || aGameMode == GameMode::GAMEMODE_TREE_OF_WISDOM ||
 		aGameMode == GameMode::GAMEMODE_CHALLENGE_LAST_STAND || aGameMode == GameMode::GAMEMODE_CHALLENGE_ZOMBIQUARIUM ||
-		mApp->IsSquirrelLevel() || mApp->IsIZombieLevel() || (StageHasRoof() && !mApp->mPlayerInfo->mPurchases[StoreItem::STORE_ITEM_ROOF_CLEANER]))
+		mApp->IsSquirrelLevel() || mApp->IsIZombieLevel() || (StageHasRoof() && !mApp->mPlayerInfo->mPurchases[StoreItem::STORE_ITEM_ROOF_CLEANER])))
 		return;
 
 	for (int aRow = 0; aRow < MAX_GRID_SIZE_Y; aRow++)
 	{
 		if ((aGameMode == GameMode::GAMEMODE_CHALLENGE_RESODDED && aRow <= 4) ||
-			(mApp->IsAdventureMode() && mLevel == 35) ||   // no row check here, so adventure 4-5 gets mowers on all 6 rows
-			(!mApp->IsScaryPotterLevel() && mPlantRow[aRow] != PlantRowType::PLANTROW_DIRT))  // Scary Potter levels only have dirt rows, so they get no mowers
+			(!theReady && mApp->IsAdventureMode() && mLevel == 35) ||   // no row check here, so adventure 4-5 gets mowers on all 6 rows
+			((theReady || !mApp->IsScaryPotterLevel()) && mPlantRow[aRow] != PlantRowType::PLANTROW_DIRT))  // Scary Potter levels only have dirt rows, so they get no mowers
 		{
 			LawnMower* aLawnMower = mLawnMowers.DataArrayAlloc();
-			aLawnMower->LawnMowerInitialize(aRow);
-			aLawnMower->mVisible = false;
+			aLawnMower->LawnMowerInitializeAt(aRow, theReady ? -21.0f : -160.0f);
+			aLawnMower->mVisible = theReady;
 		}
 	}
 }
@@ -2836,15 +2872,15 @@ PlantingReason Board::CanPlantAt(int theGridX, int theGridY, SeedType theSeedTyp
 	}
 
 	// the easy planting cheat skips the upgrade requirement
-	if (!mApp->mEasyPlantingCheat && Plant::IsUpgrade(theSeedType))
+	if (!mApp->mEasyPlantingCheat && !PvzpNative::gModifiers.upgradePlantingUnrestricted && Plant::IsUpgrade(theSeedType))
 	{
 		return PlantingReason::PLANTING_NEEDS_UPGRADE;
 	}
-	if (theSeedType == SeedType::SEED_COBCANNON && !IsValidCobCannonSpot(theGridX, theGridY))
+	if (mApp->mEasyPlantingCheat && theSeedType == SeedType::SEED_COBCANNON && !IsValidCobCannonSpot(theGridX, theGridY))
 	{
 		return PlantingReason::PLANTING_NEEDS_UPGRADE;
 	}
-	else if (theSeedType == SeedType::SEED_CATTAIL && aGridSquare != GridSquareType::GRIDSQUARE_POOL)
+	else if (mApp->mEasyPlantingCheat && theSeedType == SeedType::SEED_CATTAIL && aGridSquare != GridSquareType::GRIDSQUARE_POOL)
 	{
 		return PlantingReason::PLANTING_NOT_HERE;
 	}
@@ -6213,11 +6249,11 @@ void Board::DrawGameObjects(Graphics* g)
 		}
 		else if (mApp->mGameScene == GameScenes::SCENE_PLAYING || mApp->mGameScene == GameScenes::SCENE_ZOMBIES_WON)
 		{
-			aZPos = MakeRenderOrder(RenderLayer::RENDER_LAYER_UI_BOTTOM, 0, 1);
+			aZPos = PvzpNative::gModifiers.seedBankTopmost ? 699999 : MakeRenderOrder(RenderLayer::RENDER_LAYER_UI_BOTTOM, 0, 1);
 		}
 		else if (mCutScene->IsAfterSeedChooser() || mCutScene->IsInShovelTutorial() || mHelpIndex == AdviceType::ADVICE_CLICK_TO_CONTINUE)
 		{
-			aZPos = MakeRenderOrder(RenderLayer::RENDER_LAYER_UI_BOTTOM, 0, 1);
+			aZPos = PvzpNative::gModifiers.seedBankTopmost ? 699999 : MakeRenderOrder(RenderLayer::RENDER_LAYER_UI_BOTTOM, 0, 1);
 		}
 		else
 		{
@@ -9274,7 +9310,7 @@ void Board::UpdateGridItems()
 			{
 				aGridItem->mGridItemCounter--;
 			}
-			if (aGridItem->mGridItemCounter == 0)
+			if (aGridItem->mGridItemCounter == 0 || PvzpNative::gModifiers.cratersExpireImmediately)
 			{
 				aGridItem->GridItemDie();
 			}
@@ -9285,6 +9321,7 @@ void Board::UpdateGridItems()
 
 bool Board::PlantingRequirementsMet(SeedType theSeedType)
 {
+	if (PvzpNative::gModifiers.upgradePlantingUnrestricted) return true;
 	switch (theSeedType)
 	{
 	case SeedType::SEED_GATLINGPEA:			return CountPlantByType(SeedType::SEED_REPEATER);

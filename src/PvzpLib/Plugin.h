@@ -16,7 +16,7 @@
 
 namespace PvzpPlugin
 {
-inline constexpr std::uint32_t AbiVersion = 5;
+inline constexpr std::uint32_t AbiVersion = 6;
 
 struct LayoutEntry
 {
@@ -57,6 +57,14 @@ struct Host
     bool enabled = false;
     bool stopRequested = false;
     bool shutdownAttempted = false;
+#if defined(_WIN32) && (defined(_M_X64) || defined(__x86_64__))
+    // Owned bootstrap endpoint; no game object addresses or query results.
+    void* controlPipe = nullptr;
+    std::uint32_t controlStarted = 0;
+    bool controlAttempted = false;
+    bool controlConnected = false;
+    bool controlReplied = false;
+#endif
 };
 
 PVZP_API bool ValidateLayout(const LayoutEntry* entries, std::uint32_t count);

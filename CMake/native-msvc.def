@@ -1,4 +1,20 @@
 EXPORTS
+    ??0Zombie@@QEAA@XZ
+    ??1Zombie@@QEAA@XZ
+    ?InitLawnMowers@Board@@QEAAXXZ
+    ?StartMower@LawnMower@@QEAAXXZ
+    ?InitLawnMowersReady@Board@@QEAAXXZ
+    ?ProcessDeleteQueue@EffectSystem@@QEAAXXZ
+    ?IZombieSetupPlant@Challenge@@QEAAXPEAVPlant@@@Z
+    ?ProcessDeleteQueue@Board@@QEAAXXZ
+    ?PlaceRake@Board@@QEAAXXZ
+    ?PlaceRakeAt@Board@@QEAAPEAVGridItem@@HH@Z
+    ?GraveDangerSpawnGraveAt@Challenge@@QEAAXHH@Z
+    ?Rand@Sexy@@YAHXZ
+    ?BuildCurrentZombieWaves@PvzpNative@@YAXPEAVBoard@@I@Z
+    ?IsFlagWave@Board@@QEAA_NH@Z
+    ?RemoveCutsceneZombies@Board@@QEAAXXZ
+    ?SetPacketCount@SeedBank@@QEAAXH@Z
     ?AddACrater@Board@@QEAAPEAVGridItem@@HH@Z
     ?AddAGraveStone@Board@@QEAAPEAVGridItem@@HH@Z
     ?AddALadder@Board@@QEAAPEAVGridItem@@HH@Z
@@ -95,3 +111,15 @@ EXPORTS
     ?PlayFoley@LawnApp@@QEAAXW4FoleyType@@@Z
     ?IsWallnutBowlingLevel@LawnApp@@QEAA_NXZ
     ?AddCoin@Board@@QEAAPEAVCoin@@HHW4CoinType@@W4CoinMotion@@@Z
+
+    ?ApplyBurn@Zombie@@QEAAXXZ
+    ?BlowAwayFliers@Plant@@QEAAXXZ
+    ?FindTargetZombie@Plant@@QEAAPEAVZombie@@HW4PlantWeapon@@@Z
+    ?StartMindControlled@Zombie@@QEAAXXZ
+    ?TakeDamage@Zombie@@QEAAXHI@Z
+    ?Update@LawnMower@@QEAAXXZ
+    ?UpdateChomper@Plant@@QEAAXXZ
+    ?FadeOutLevel@Board@@QEAAXXZ
+    ?DoPauseDialog@LawnApp@@QEAAXXZ
+    ?ButtonDepress@LawnApp@@UEAAXH@Z
+    ?GetSurvivalFlagsCompleted@Board@@QEAAHXZ

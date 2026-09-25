@@ -139,7 +139,7 @@ extern bool			gDebug;
 void				PrintF(const char *text, ...) SEXY_FORMAT_ATTRIBUTE(1, 2);
 void				LogError(const char* theFormat, ...) SEXY_FORMAT_ATTRIBUTE(1, 2);
 
-int					Rand();
+PVZP_API int					Rand();
 int					Rand(int range);
 float				Rand(float range);
 PVZP_API void				SRand(ulong theSeed);
