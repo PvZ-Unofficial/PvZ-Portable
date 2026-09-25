@@ -123,3 +123,9 @@ EXPORTS
     ?DoPauseDialog@LawnApp@@QEAAXXZ
     ?ButtonDepress@LawnApp@@UEAAXH@Z
     ?GetSurvivalFlagsCompleted@Board@@QEAAHXZ
+
+    ?HouseEntryPauseEnabled@PvzpNative@@YA_NXZ
+    ?SetHouseEntryPause@PvzpNative@@YAX_N@Z
+    ?TakeHouseEntry@PvzpNative@@YA_NXZ
+    ?ClearFastMode@PvzpNative@@YAXXZ
+    ?EnsureMusicTune@PvzpNative@@YAXH@Z

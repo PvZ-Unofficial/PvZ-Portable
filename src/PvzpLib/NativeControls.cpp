@@ -646,3 +646,15 @@ void RestoreAll()
 }
 
 }
+
+namespace PvzpNative {
+    namespace { bool sHouseEntryPause=false; bool sHouseEntryOccurred=false; }
+    bool HouseEntryPauseEnabled(){return sHouseEntryPause;}
+    void SetHouseEntryPause(bool enabled){sHouseEntryPause=enabled;sHouseEntryOccurred=false;}
+    bool TakeHouseEntry(){const bool hit=sHouseEntryOccurred;sHouseEntryOccurred=false;return hit;}
+    bool InterceptHouseEntry(){if(!sHouseEntryPause)return false;sHouseEntryOccurred=true;return true;}
+}
+
+namespace PvzpNative {void ClearFastMode(){gFastMo=false;}}
+
+namespace PvzpNative {void EnsureMusicTune(std::int32_t tune){if(gLawnApp&&gLawnApp->mMusic&&tune>=1&&tune<=13)gLawnApp->mMusic->MakeSureMusicIsPlaying(static_cast<MusicTune>(tune));}}

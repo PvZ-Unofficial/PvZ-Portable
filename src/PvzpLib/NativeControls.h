@@ -194,3 +194,14 @@ namespace PvzpNative
 	void EndRowPick();
 	bool CreditProducedSun(Board* board, int coinType);
 }
+
+namespace PvzpNative {
+    PVZP_API bool HouseEntryPauseEnabled();
+    PVZP_API void SetHouseEntryPause(bool enabled);
+    PVZP_API bool TakeHouseEntry();
+    bool InterceptHouseEntry();
+}
+
+namespace PvzpNative {PVZP_API void ClearFastMode();}
+
+namespace PvzpNative {PVZP_API void EnsureMusicTune(std::int32_t tune);}

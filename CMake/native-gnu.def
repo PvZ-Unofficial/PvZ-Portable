@@ -125,3 +125,9 @@ EXPORTS
     _ZN7LawnApp13DoPauseDialogEv
     _ZN7LawnApp13ButtonDepressEi
     _ZN5Board25GetSurvivalFlagsCompletedEv
+
+    _ZN10PvzpNative22HouseEntryPauseEnabledEv
+    _ZN10PvzpNative18SetHouseEntryPauseEb
+    _ZN10PvzpNative14TakeHouseEntryEv
+    _ZN10PvzpNative13ClearFastModeEv
+    _ZN10PvzpNative15EnsureMusicTuneEi
