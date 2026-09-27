@@ -186,11 +186,17 @@ void SafePoint()
         return;
     }
     if (State().module)
+    {
 #ifdef _WIN32
-        FreeLibrary(static_cast<HMODULE>(State().module));
+        // Process teardown still runs Rust TLS destructors registered in this
+        // DLL. Keep its code mapped until Windows has finished those callbacks.
+        // An ordinary stop while the game is alive still unloads here.
+        if (!gLawnApp->mShutdown)
+            FreeLibrary(static_cast<HMODULE>(State().module));
 #else
         SDL_UnloadObject(State().module);
 #endif
+    }
     State().module = nullptr;
     State().shutdownPlugin = nullptr;
 }
