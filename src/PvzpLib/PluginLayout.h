@@ -65,7 +65,7 @@ inline const LayoutEntry Layout[] = {
     PVZP_LAYOUT_FIELD(Rect, mY)
     PVZP_LAYOUT_FIELD(Rect, mWidth)
     PVZP_LAYOUT_FIELD(Rect, mHeight)
-#if defined(__GNUC__) && defined(__x86_64__)
+#if defined(__GNUC__) && (defined(__x86_64__) || defined(__aarch64__))
     PVZP_LAYOUT_FIELD(GameObject, mAbiLayoutPadding)
 #endif
 };

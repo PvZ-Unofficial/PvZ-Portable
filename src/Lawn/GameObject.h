@@ -43,8 +43,8 @@ public:
 	bool                            mVisible;
 	int32_t                         mRow;
 	int32_t                         mRenderOrder;
-#if defined(__GNUC__) && defined(__x86_64__)
-	// The GNU x64 SDK reserves base tail padding rather than reusing it in
+#if defined(__GNUC__) && (defined(__x86_64__) || defined(__aarch64__))
+	// The Itanium 64-bit SDK reserves base tail padding rather than reusing it in
 	// derived entities. This is a native ABI rule, independent of plugins.
 	uint32_t                        mAbiLayoutPadding;
 #endif
