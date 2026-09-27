@@ -13,6 +13,8 @@ if(CMAKE_SIZEOF_VOID_P EQUAL 8 AND ((WIN32 AND _pvzp_x64) OR UNIX))
     endif()
     if(APPLE)
         enable_language(OBJCXX)
+        # Keep game symbols referenced only by dynamically loaded SDK clients.
+        target_link_options(pvz-portable PRIVATE "-Wl,-export_dynamic")
         target_sources(pvz-portable PRIVATE src/PvzpLib/CursorImage.mm)
         target_link_libraries(pvz-portable PRIVATE "-framework AppKit")
     elseif(CMAKE_SYSTEM_NAME STREQUAL "Linux")
