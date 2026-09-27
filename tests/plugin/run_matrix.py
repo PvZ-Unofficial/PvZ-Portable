@@ -22,6 +22,7 @@ includes = [args.sdk / "src", args.sdk / "src/SexyAppFramework",
 includes.extend(Path(s) for s in (args.sdk / "sdl-include.txt").read_text().split(";") if s)
 base = "attach,initialize,validated"
 cases = [
+    ("paused_cursor", ["PVZP_TEST_PAUSED_CURSOR"], base + ",cursor-passed,shutdown,unload"),
     ("normal", [], base + ",update,shutdown,unload"),
     ("invalid_update", ["PVZP_TEST_INVALID_UPDATE"], base + ",update,shutdown,unload"),
     ("version", ["PVZP_TEST_BAD_VERSION"], "attach,unload"),

@@ -231,6 +231,7 @@ namespace PvzpNative {
 				if (gAdvancedPauseRefreshCursor && gLawnApp && gLawnApp->mBoard)
 				{
 					gLawnApp->mBoard->UpdateCursor();
+					gLawnApp->mBoard->mCursorObject->Update();
 					gLawnApp->mBoard->mCursorPreview->Update();
 				}
 				return false;

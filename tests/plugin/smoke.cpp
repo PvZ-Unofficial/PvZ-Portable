@@ -1,5 +1,11 @@
 #include "PvzpLib/Plugin.h"
 #include "PvzpLib/PluginLayout.h"
+#ifdef PVZP_TEST_PAUSED_CURSOR
+#include "PvzpLib/NativeControls.h"
+#include "Lawn/CursorObject.h"
+#include "Lawn/SeedPacket.h"
+#include "widget/WidgetManager.h"
+#endif
 #ifdef _WIN32
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
@@ -49,7 +55,48 @@ static void Record(const char* message)
 
 static int Update(std::uint8_t, std::uint64_t)
 {
+#ifdef PVZP_TEST_PAUSED_CURSOR
+    static int step = 0, clock = 0, cooldown = 0;
+    if (!gLawnApp->mLoadingThreadCompleted) return 0;
+    if (step == 0) {
+        gLawnApp->PreNewGame(static_cast<GameMode>(13), false);
+        ++step;
+        return 0;
+    }
+    auto* board = gLawnApp->mBoard;
+    auto* mouse = gLawnApp->mWidgetManager.get();
+    if (step == 1) {
+        gLawnApp->mGameScene = GameScenes::SCENE_PLAYING;
+        PvzpNative::gAdvancedPause = true;
+        mouse->mMouseIn = true;
+        mouse->mLastMouseX = 200;
+        mouse->mLastMouseY = 300;
+        board->mCursorObject->mCursorType = CursorType::CURSOR_TYPE_PLANT_FROM_BANK;
+        board->mCursorObject->mType = SeedType::SEED_ICESHROOM;
+        clock = board->mMainCounter;
+        cooldown = board->mSeedBank->mSeedPackets[0].mRefreshCounter;
+        ++step;
+        return 0;
+    }
+    const int x = step == 2 ? 200 : 600;
+    const int y = step == 2 ? 300 : 450;
+    if (board->mCursorObject->mX != x - 25 || board->mCursorObject->mY != y - 35
+        || board->mMainCounter != clock || board->mSeedBank->mSeedPackets[0].mRefreshCounter != cooldown) {
+        RECORD("cursor-failed");
+        PvzpNative::gAdvancedPause = false;
+        PvzpPlugin::RequestStop();
+        return 0;
+    }
+    if (step++ == 2) {
+        mouse->mLastMouseX = 600;
+        mouse->mLastMouseY = 450;
+        return 0;
+    }
+    PvzpNative::gAdvancedPause = false;
+    RECORD("cursor-passed");
+#else
     RECORD("update");
+#endif
 #ifdef PVZP_TEST_INVALID_UPDATE
     return -1;
 #endif
