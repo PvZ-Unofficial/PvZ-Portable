@@ -91,13 +91,30 @@ static void BuildUtf8ArgsFromWin32(int& argc, char**& argv)
 int main(int argc, char** argv)
 {
 #if defined(PVZP_BUILD_PLUGIN_TESTS) && !defined(_WIN32)
-    if (argc == 3 && std::strcmp(argv[1], "--probe-plugin") == 0)
+    if (argc >= 3 && std::strcmp(argv[1], "--probe-plugin") == 0)
     {
         void* module = dlopen(argv[2], RTLD_NOW | RTLD_LOCAL);
         if (!module) { std::fprintf(stderr, "%s\n", dlerror()); return 1; }
         auto version = reinterpret_cast<std::uint32_t (*)()>(dlsym(module, "pvzp_plugin_abi_version"));
-        const bool valid = version && version() == PvzpPlugin::AbiVersion
+        bool valid = version && version() == PvzpPlugin::AbiVersion
             && dlsym(module, "pvzp_plugin_initialize") && dlsym(module, "pvzp_plugin_shutdown");
+        std::vector<void*> modules;
+        if (valid && argc > 3) {
+            struct Descriptor { unsigned char magic[8]; std::uint32_t abi, size; unsigned char sdk[32]; std::uint32_t kind, managed; void* dispatch; };
+            auto identity = reinterpret_cast<const unsigned char* (*)()>(dlsym(module, "rsvz_sdk_sha256"));
+            valid = identity != nullptr;
+            for (int i = 3; valid && i < argc; ++i) {
+                void* candidate = dlopen(argv[i], RTLD_NOW | RTLD_LOCAL);
+                if (!candidate) { std::fprintf(stderr, "%s\n", dlerror()); valid = false; break; }
+                modules.push_back(candidate);
+                auto descriptor = reinterpret_cast<const Descriptor* (*)()>(dlsym(candidate, "rsvz_module_descriptor"));
+                const Descriptor* value = descriptor ? descriptor() : nullptr;
+                valid = value && std::memcmp(value->magic, "RSVZMOD1", 8) == 0 && value->abi == 1
+                    && value->size == sizeof(Descriptor) && value->kind <= 1 && value->dispatch
+                    && std::memcmp(value->sdk, identity(), 32) == 0;
+            }
+        }
+        for (auto it = modules.rbegin(); it != modules.rend(); ++it) dlclose(*it);
         dlclose(module);
         std::puts(valid ? "plugin probe passed" : "plugin probe failed");
         return valid ? 0 : 1;
