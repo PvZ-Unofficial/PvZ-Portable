@@ -115,6 +115,15 @@ PvZ-Portable 自身错误的 bug。年度版与原版的版本差异改动记录
 - 修改文件：`src/PvzpLib/Plugin.cpp`、`docs/plugin-sdk.md`。
 - 修改提交号：`4237eeafe420e1183f09e483da236e6d8a9fa19c`；RSVZ 回归测试提交：`4fbc90972bbe0c560092d72e2e26e80dd79e0a10`。
 
+## B14. 高级暂停时手持植物不跟随鼠标
+
+- 问题介绍：`PvzpNative::BeforeUpdate` 的高级暂停分支仅调用 `Board::UpdateCursor` 与 `CursorPreview::Update`，漏掉实际更新手持对象坐标的 `CursorObject::Update`，图像停留在暂停前的位置。
+- 证据：引入于 `2c39bfad` 的原生控制实现；RSVZ 1051 高级暂停显式更新 cursor object 与 preview。本问题属于新增 Portable 控制能力的遗漏，不涉及年度版与原版规则差异。
+- 修正：保留原鼠标样式与落点预览更新，补充手持对象更新，仍跳过战场逻辑。
+- 验证：独立 C++ 插件在真实 Portable 实例中开启高级暂停，将鼠标位置依次设为 (200,300)、(600,450)，断言手持寒冰菇坐标分别为鼠标位置减 (25,35)，且战场主计数器、首卡冷却计数器不变；插件正常卸载，游戏继续存活。证据：`target/paused-cursor/result.json`；回归入口 `tests/plugin/run_matrix.py` 的 `paused_cursor`。
+- 修改文件：`src/PvzpLib/NativeControls.cpp`、`tests/plugin/smoke.cpp`、`tests/plugin/run_matrix.py`。
+- 修改提交号：`53f9de2d7999dc47e201b9ab978b27d8e3659b96`。
+
 ## 记录格式
 
 <!--
