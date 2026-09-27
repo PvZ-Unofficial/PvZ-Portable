@@ -104,6 +104,17 @@ PvZ-Portable 自身错误的 bug。年度版与原版的版本差异改动记录
 - 验证：MSVC、MinGW 最终构建通过；MSVC 激进跳帧 10 轮 Full 与 1051 完全一致，共 425584 帧，记录在 RSVZ `target/pe96-witness-20260914/rounding-fixed-7/portable/diff.txt`。
 - 修改提交号：`0390f6bafa77cac39aa45a927e647fdccd9761a2`。
 
+## B13. Windows 退出时提前卸载插件宿主导致 TLS 析构崩溃
+
+- 状态：已修复，Windows MSVC Release 的真实退出及修改器共存回归通过。
+- 问题：`PvzpPlugin::SafePoint()` 在整个游戏退出时先 FreeLibrary 卸载共享宿主，随后 Rust 运行库在进程终止阶段调用仍登记着的 TLS 析构函数，跳到已卸载代码。这是本工作区插件加载器的生命周期错误，不属于官方游戏版本差异。
+- 证据：调试器栈为 `ntdll!LdrShutdownProcess → std::sys::thread_local::destructors → <Unloaded_rsvz_native_host.dll>+0x16e80`，异常码 `0xC0000005`；未插桩原始 EXE 同样复现。完整 GUI 连接组三次退出耗时中位数为 2235.6 ms，且均异常退出。
+- 修正：Windows 游戏退出时保持停止、撤销回调和状态恢复，利用既有 `mShutdown` 状态把 DLL 物理回收交给进程终止流程，保证 TLS 析构代码仍存在。游戏运行中的普通插件停止及修改器模块卸载维持原行为；无新增线程、状态缓存或 ABI 变化，Unix 卸载路径未改。
+- 验证：未连接、仅修改器模块、完整 GUI 各 3 次均退出码 0；完整 GUI 耗时 590.3–835.8 ms，中位数 618.7 ms。两种加载顺序的共享宿主测试均验证修改器 DLL 独立卸载、普通脚本继续、两个模块卸载后游戏存活，最后正常退出；独立 C++ 插件仍在 RequestStop 后产生 `shutdown,unload` 且游戏继续存活。
+- 证据位置：`target/exit-timing/fixed/`、`target/logs/exit-lifecycle-build.log`；RSVZ `target/exit-lifecycle-coexist/{modifier-first,script-first}/result.json`。共存测试以正常 WM_CLOSE 和退出码断言收尾，不再仅靠强制终止实例。
+- 修改文件：`src/PvzpLib/Plugin.cpp`、`docs/plugin-sdk.md`。
+- 修改提交号：`4237eeafe420e1183f09e483da236e6d8a9fa19c`；RSVZ 回归测试提交：`4fbc90972bbe0c560092d72e2e26e80dd79e0a10`。
+
 ## 记录格式
 
 <!--
