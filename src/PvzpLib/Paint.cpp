@@ -1,6 +1,7 @@
 // Native overlay resources belong to this App/plugin and are destroyed during
 // explicit plugin revocation, outside both loader lock and the paint callback.
 #include "Paint.h"
+#include "CursorImage.h"
 #include "LawnApp.h"
 #include "Lawn/Board.h"
 #include "Lawn/CursorObject.h"
@@ -30,6 +31,10 @@ namespace PvzpPlugin {
 namespace {
 Sexy::Graphics* canvas = nullptr; // Borrowed only for the dynamic Paint scope.
 Sexy::Rect originalClip;
+std::vector<std::unique_ptr<Sexy::MemoryImage>> rasterImages;
+#if defined(__linux__) || defined(__APPLE__)
+std::array<std::unique_ptr<Sexy::MemoryImage>, 2> nativeCursors;
+#endif
 #if defined(_WIN32)
 struct Font {
     std::u16string family;
@@ -110,9 +115,6 @@ Sexy::Color Color(std::uint32_t value) {
 
 bool SetPaintCallback(PaintCallback callback) {
     if (!gLawnApp || canvas || !gLawnApp->mPlugin.validated) return false;
-#if !defined(_WIN32)
-    if (callback) return false;
-#endif
     if (callback && (gLawnApp->mPlugin.stopRequested || gLawnApp->mPlugin.shutdownAttempted)) return false;
     gLawnApp->mPlugin.paintCallback = callback;
     if (!callback) ClearPaint();
@@ -121,6 +123,10 @@ bool SetPaintCallback(PaintCallback callback) {
 void ClearPaint() {
     if (canvas) return; // Host callback-depth gate prevents physical revocation here.
     if (gLawnApp) gLawnApp->mPlugin.paintCallback = nullptr;
+    rasterImages.clear();
+#if defined(__linux__) || defined(__APPLE__)
+    for (auto& cursor : nativeCursors) cursor.reset();
+#endif
     if (gLawnApp && gLawnApp->mWidgetManager) gLawnApp->mWidgetManager->MarkAllDirty();
 #if defined(_WIN32)
     delete resources; resources = nullptr;
@@ -188,6 +194,21 @@ bool PaintRect(int x, int y, int width, int height, std::uint32_t argb) {
     x = std::max(x, 0); y = std::max(y, 0);
     if (right <= x || bottom <= y) return true;
     canvas->SetColor(Color(argb)); canvas->FillRect(x, y, static_cast<int>(right-x), static_cast<int>(bottom-y));
+    return true;
+}
+std::uint32_t PaintCreateImage(const std::uint32_t* pixels, int width, int height) {
+    if (!canvas || !pixels || width <= 0 || height <= 0 || width > 4096 || height > 4096) return 0;
+    try {
+        auto image = std::make_unique<Sexy::MemoryImage>(gLawnApp);
+        image->SetBits(const_cast<std::uint32_t*>(pixels), width, height, true);
+        rasterImages.push_back(std::move(image));
+        return static_cast<std::uint32_t>(rasterImages.size());
+    } catch (...) { return 0; }
+}
+bool PaintImage(std::uint32_t id, int x, int y, std::uint32_t argb) {
+    if (!canvas || !id || id > rasterImages.size()) return false;
+    canvas->SetColor(Color(argb)); canvas->SetColorizeImages(true);
+    canvas->DrawImage(rasterImages[id - 1].get(), x, y);
     return true;
 }
 bool PaintClip(bool enabled, int x, int y, int width, int height) {
@@ -282,6 +303,26 @@ bool PaintCursor(int x,int y,bool hand) {
         canvas->SetColor(Sexy::Color(255,255,255,255));canvas->SetColorizeImages(true);
         canvas->DrawImage(image.get(),x,y);return true;
     }catch(...){return false;}
+#elif defined(__linux__) || defined(__APPLE__)
+    try {
+        auto& image = nativeCursors[hand];
+        if (!image) {
+            int width = 0, height = 0;
+            std::vector<std::uint32_t> pixels;
+            if (!NativeCursorImage(hand, pixels, width, height)) return false;
+            for (auto& pixel : pixels) {
+                const auto alpha = pixel >> 24;
+                if (alpha && alpha < 255) {
+                    const auto channel = [alpha](std::uint32_t value) { return std::min(255u, value * 255 / alpha); };
+                    pixel = alpha << 24 | channel((pixel >> 16) & 255) << 16 | channel((pixel >> 8) & 255) << 8 | channel(pixel & 255);
+                }
+            }
+            image = std::make_unique<Sexy::MemoryImage>(gLawnApp);
+            image->SetBits(pixels.data(), width, height, true);
+        }
+        canvas->SetColor(Sexy::Color(255,255,255,255)); canvas->SetColorizeImages(true);
+        canvas->DrawImage(image.get(),x,y); return true;
+    } catch (...) { return false; }
 #else
     return false;
 #endif

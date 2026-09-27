@@ -24,6 +24,12 @@
 #include "PvzpLib/PvzpStringFile.h"
 #include <cstdlib>
 #include <vector>
+#if defined(PVZP_BUILD_PLUGIN_TESTS) && !defined(_WIN32)
+#include "PvzpLib/Plugin.h"
+#include <dlfcn.h>
+#include <cstdio>
+#include <cstring>
+#endif
 using namespace Sexy;
 
 #ifdef _WIN32
@@ -84,6 +90,19 @@ static void BuildUtf8ArgsFromWin32(int& argc, char**& argv)
 
 int main(int argc, char** argv)
 {
+#if defined(PVZP_BUILD_PLUGIN_TESTS) && !defined(_WIN32)
+    if (argc == 3 && std::strcmp(argv[1], "--probe-plugin") == 0)
+    {
+        void* module = dlopen(argv[2], RTLD_NOW | RTLD_LOCAL);
+        if (!module) { std::fprintf(stderr, "%s\n", dlerror()); return 1; }
+        auto version = reinterpret_cast<std::uint32_t (*)()>(dlsym(module, "pvzp_plugin_abi_version"));
+        const bool valid = version && version() == PvzpPlugin::AbiVersion
+            && dlsym(module, "pvzp_plugin_initialize") && dlsym(module, "pvzp_plugin_shutdown");
+        dlclose(module);
+        std::puts(valid ? "plugin probe passed" : "plugin probe failed");
+        return valid ? 0 : 1;
+    }
+#endif
 #ifdef __SWITCH__
 	consoleDebugInit(debugDevice_SVC);
 #endif

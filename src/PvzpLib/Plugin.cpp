@@ -3,6 +3,8 @@
 #include "PluginLayout.h"
 #include "PvzpDebug.h"
 #include "NativeControls.h"
+#include <SDL_loadso.h>
+#include <cstdlib>
 
 #if defined(_WIN32) && (defined(_M_X64) || defined(__x86_64__))
 #define WIN32_LEAN_AND_MEAN
@@ -15,7 +17,12 @@
 
 namespace PvzpPlugin
 {
-static bool LoadPath(const wchar_t* path, bool dependenciesBesidePlugin);
+#ifdef _WIN32
+using PluginPathChar = wchar_t;
+#else
+using PluginPathChar = char;
+#endif
+static bool LoadPath(const PluginPathChar* path, bool dependenciesBesidePlugin);
 namespace
 {
     Host& State() { return gLawnApp->mPlugin; }
@@ -163,7 +170,6 @@ void SafePoint()
         return;
     State().enabled = false;
     State().shutdownAttempted = true;
-#if defined(_WIN32) && (defined(_M_X64) || defined(__x86_64__))
     std::int32_t result = 0;
     if (State().shutdownPlugin)
     {
@@ -180,42 +186,60 @@ void SafePoint()
         return;
     }
     if (State().module)
+#ifdef _WIN32
         FreeLibrary(static_cast<HMODULE>(State().module));
+#else
+        SDL_UnloadObject(State().module);
+#endif
     State().module = nullptr;
     State().shutdownPlugin = nullptr;
-#else
-    Revoke();
-    State().validated = false;
-#endif
 }
 
-static bool LoadPath(const wchar_t* path, bool dependenciesBesidePlugin)
+static bool LoadPath(const PluginPathChar* path, bool dependenciesBesidePlugin)
 {
-#if defined(_WIN32) && (defined(_M_X64) || defined(__x86_64__))
     if (State().module || State().callbackDepth || State().initializing)
         return false;
     if (!path || !*path)
         return false;
     State().shutdownAttempted = false;
     State().stopRequested = false;
+#ifdef _WIN32
     State().module = dependenciesBesidePlugin
         ? LoadLibraryExW(path, nullptr, LOAD_WITH_ALTERED_SEARCH_PATH)
         : LoadLibraryW(path);
+#else
+    (void)dependenciesBesidePlugin;
+    State().module = SDL_LoadObject(path);
+#endif
     if (!State().module)
     {
+#ifdef _WIN32
         PvzpTraceAndLogLn("Plugin load failed with Windows error %lu", GetLastError());
+#else
+        PvzpTraceAndLogLn("Plugin load failed: %s", SDL_GetError());
+#endif
         return false;
     }
+#ifdef _WIN32
     auto version = reinterpret_cast<std::uint32_t (*)()>(GetProcAddress(static_cast<HMODULE>(State().module), "pvzp_plugin_abi_version"));
     auto initialize = reinterpret_cast<std::int32_t (*)()>(GetProcAddress(static_cast<HMODULE>(State().module), "pvzp_plugin_initialize"));
     State().shutdownPlugin = reinterpret_cast<std::int32_t (*)()>(GetProcAddress(static_cast<HMODULE>(State().module), "pvzp_plugin_shutdown"));
+#else
+    auto version = reinterpret_cast<std::uint32_t (*)()>(SDL_LoadFunction(State().module, "pvzp_plugin_abi_version"));
+    auto initialize = reinterpret_cast<std::int32_t (*)()>(SDL_LoadFunction(State().module, "pvzp_plugin_initialize"));
+    State().shutdownPlugin = reinterpret_cast<std::int32_t (*)()>(SDL_LoadFunction(State().module, "pvzp_plugin_shutdown"));
+#endif
     bool compatible = false;
     try { compatible = version && initialize && State().shutdownPlugin && version() == AbiVersion; }
     catch (...) {}
     if (!compatible)
     {
         PvzpTraceAndLogLn("Plugin ABI mismatch or missing entry point");
+#ifdef _WIN32
         FreeLibrary(static_cast<HMODULE>(State().module));
+#else
+        SDL_UnloadObject(State().module);
+#endif
         State().module = nullptr;
         State().shutdownPlugin = nullptr;
         return false;
@@ -238,17 +262,20 @@ static bool LoadPath(const wchar_t* path, bool dependenciesBesidePlugin)
     }
     State().enabled = true;
     return true;
-#else
-    (void)path;
-    (void)dependenciesBesidePlugin;
-    return false;
-#endif
 }
+
+#if defined(__linux__) || defined(__APPLE__)
+void PollUnixControl();
+void CloseUnixControl();
+bool LoadUnixPath(const char* path) { return LoadPath(path, true); }
+#endif
 
 void Load()
 {
 #if defined(_WIN32) && (defined(_M_X64) || defined(__x86_64__))
     LoadPath(_wgetenv(L"PVZP_PLUGIN"), false);
+#else
+    LoadPath(std::getenv("PVZP_PLUGIN"), false);
 #endif
 }
 
@@ -257,6 +284,8 @@ std::int32_t Update(std::uint8_t replaced, std::uint64_t rounds)
     SafePoint();
 #if defined(_WIN32) && (defined(_M_X64) || defined(__x86_64__))
     PollExternalLoad();
+#elif defined(__linux__) || defined(__APPLE__)
+    PollUnixControl();
 #endif
     if (!State().enabled || State().callbackDepth || !State().updateCallback)
         return 0;
@@ -284,6 +313,9 @@ void BoardDestroying()
 
 void Shutdown()
 {
+#if defined(__linux__) || defined(__APPLE__)
+    CloseUnixControl();
+#endif
     RequestStop();
     SafePoint();
 #if defined(_WIN32) && (defined(_M_X64) || defined(__x86_64__))

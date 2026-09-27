@@ -31,4 +31,5 @@ bool				LawnLoadGame(Board* theBoard, const std::string& theFilePath);
 bool				LawnSaveGame(Board* theBoard, const std::string& theFilePath);
 
 bool LawnSerializeGame(Board* theBoard, std::vector<unsigned char>& bytes);
+bool LawnLoadGameBytes(Board* theBoard, const unsigned char* bytes, std::size_t length);
 #endif

@@ -66,6 +66,8 @@ struct Host
     bool controlAttempted = false;
     bool controlConnected = false;
     bool controlReplied = false;
+#elif defined(__linux__) || defined(__APPLE__)
+    void* unixControl = nullptr;
 #endif
 };
 

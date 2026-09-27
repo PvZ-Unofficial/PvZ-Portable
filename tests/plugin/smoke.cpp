@@ -1,5 +1,6 @@
 #include "PvzpLib/Plugin.h"
 #include "PvzpLib/PluginLayout.h"
+#ifdef _WIN32
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
 
@@ -28,6 +29,24 @@ BOOL WINAPI DllMain(HINSTANCE, DWORD reason, LPVOID reserved)
     return TRUE;
 }
 
+#define PLUGIN_EXPORT __declspec(dllexport)
+#else
+#include <cstdio>
+#include <cstdlib>
+#define PLUGIN_EXPORT __attribute__((visibility("default")))
+static void Record(const char* message)
+{
+    const char* path = std::getenv("PVZP_TEST_REPORT");
+    if (!path) return;
+    if (FILE* file = std::fopen(path, "a"))
+    {
+        std::fprintf(file, "%s\n", message);
+        std::fclose(file);
+    }
+}
+#define RECORD(text) Record(text)
+#endif
+
 static int Update(std::uint8_t, std::uint64_t)
 {
     RECORD("update");
@@ -39,7 +58,7 @@ static int Update(std::uint8_t, std::uint64_t)
     return 0;
 }
 
-extern "C" __declspec(dllexport) std::uint32_t pvzp_plugin_abi_version()
+extern "C" PLUGIN_EXPORT std::uint32_t pvzp_plugin_abi_version()
 {
 #ifdef PVZP_TEST_BAD_VERSION
     return 0;
@@ -47,7 +66,7 @@ extern "C" __declspec(dllexport) std::uint32_t pvzp_plugin_abi_version()
     return PvzpPlugin::AbiVersion;
 }
 
-extern "C" __declspec(dllexport) std::int32_t pvzp_plugin_initialize()
+extern "C" PLUGIN_EXPORT std::int32_t pvzp_plugin_initialize()
 {
     RECORD("initialize");
     if (PvzpPlugin::SetUpdateCallback(Update))
@@ -78,7 +97,7 @@ extern "C" __declspec(dllexport) std::int32_t pvzp_plugin_initialize()
     return 0;
 }
 
-extern "C" __declspec(dllexport) std::int32_t pvzp_plugin_shutdown()
+extern "C" PLUGIN_EXPORT std::int32_t pvzp_plugin_shutdown()
 {
     RECORD("shutdown");
 #ifdef PVZP_TEST_SHUTDOWN_FAILURE

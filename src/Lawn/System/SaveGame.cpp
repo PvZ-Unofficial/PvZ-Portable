@@ -2255,16 +2255,13 @@ static void FixBoardAfterLoad(Board* theBoard)
 	theBoard->mApp->mMusic->mMusicInterface = theBoard->mApp->mMusicInterface.get();
 }
 
-static bool LawnLoadGameV4(Board* theBoard, const std::string& theFilePath)
+bool LawnLoadGameBytes(Board* theBoard, const unsigned char* bytes, std::size_t length)
 {
-	Buffer aBuffer;
-	if (!gSexyAppBase->ReadBufferFromFile(theFilePath, &aBuffer, false))
-		return false;
-	if (static_cast<uint32_t>(aBuffer.GetDataLen()) < sizeof(SaveFileHeaderV4))
+	if (!bytes || length < sizeof(SaveFileHeaderV4))
 		return false;
 
 	SaveFileHeaderV4 aHeader;
-	memcpy(&aHeader, aBuffer.GetDataPtr(), sizeof(aHeader));
+	memcpy(&aHeader, bytes, sizeof(aHeader));
 	aHeader.mVersion = FromLE32(aHeader.mVersion);
 	aHeader.mPayloadSize = FromLE32(aHeader.mPayloadSize);
 	aHeader.mPayloadCrc = FromLE32(aHeader.mPayloadCrc);
@@ -2272,10 +2269,10 @@ static bool LawnLoadGameV4(Board* theBoard, const std::string& theFilePath)
 		return false;
 	if (aHeader.mVersion != SAVE_FILE_V4_OLD_RESOURCE_VERSION && aHeader.mVersion != SAVE_FILE_V4_VERSION)
 		return false;
-	if (aHeader.mPayloadSize > static_cast<uint32_t>(aBuffer.GetDataLen()) - sizeof(SaveFileHeaderV4))
+	if (aHeader.mPayloadSize > length - sizeof(SaveFileHeaderV4))
 		return false;
 
-	unsigned char* aPayload = (unsigned char*)aBuffer.GetDataPtr() + sizeof(SaveFileHeaderV4);
+	const unsigned char* aPayload = bytes + sizeof(SaveFileHeaderV4);
 	uint32_t aCrc = crc32(0, (Bytef*)aPayload, aHeader.mPayloadSize);
 	if (aCrc != aHeader.mPayloadCrc)
 		return false;
@@ -2304,6 +2301,13 @@ static bool LawnLoadGameV4(Board* theBoard, const std::string& theFilePath)
 	FixBoardAfterLoad(theBoard);
 	theBoard->mApp->mGameScene = GameScenes::SCENE_PLAYING;
 	return true;
+}
+
+static bool LawnLoadGameV4(Board* theBoard, const std::string& theFilePath)
+{
+    Buffer buffer;
+    return gSexyAppBase->ReadBufferFromFile(theFilePath, &buffer, false)
+        && LawnLoadGameBytes(theBoard, buffer.GetDataPtr(), buffer.GetDataLen());
 }
 
 bool LawnLoadGame(Board* theBoard, const std::string& theFilePath)

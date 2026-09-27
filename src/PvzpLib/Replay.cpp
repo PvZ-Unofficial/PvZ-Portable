@@ -2,6 +2,9 @@
 #if defined(_WIN32)
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
+#else
+#include <unistd.h>
+#include <cerrno>
 #endif
 #include "NativeControls.h"
 #include "PvzpParticle.h"
@@ -39,22 +42,29 @@ int AnimationFrameCount(int kind) noexcept {
 }
 bool SaveCheckpoint(std::uintptr_t file) noexcept
 {
-#if defined(_WIN32)
     try {
         if (!file || !gLawnApp || !gLawnApp->mBoard || gLawnApp->mGameScene!=GameScenes::SCENE_PLAYING || gLawnApp->mBoard->mPaused || (gLawnApp->mWidgetManager && gLawnApp->mWidgetManager->mBaseModalWidget)) return false;
         std::vector<unsigned char> bytes;
-        if (!LawnSerializeGame(gLawnApp->mBoard,bytes) || bytes.size()>MAXDWORD) return false;
+        if (!LawnSerializeGame(gLawnApp->mBoard,bytes) || bytes.size()>std::numeric_limits<std::uint32_t>::max()) return false;
+#if defined(_WIN32)
         DWORD written=0;
         return WriteFile(reinterpret_cast<HANDLE>(file),bytes.data(),static_cast<DWORD>(bytes.size()),&written,nullptr) && written==bytes.size();
-    } catch (...) {return false;}
 #else
-    return false;
+        std::size_t offset = 0;
+        while (offset < bytes.size()) {
+            const auto written = write(static_cast<int>(file), bytes.data() + offset, bytes.size() - offset);
+            if (written < 0 && errno == EINTR) continue;
+            if (written <= 0) return false;
+            offset += written;
+        }
+        return true;
 #endif
+    } catch (...) {return false;}
 }
-bool RestoreCheckpoint(const char* path, std::int32_t mode) noexcept
+static bool Restore(const char* path, const unsigned char* bytes, std::size_t length, std::int32_t mode) noexcept
 {
     try {
-        if (!path || mode<0 || mode>=GameMode::NUM_GAME_MODES || !gLawnApp || !gLawnApp->mBoard ||
+        if ((!path && !bytes) || mode<0 || mode>=GameMode::NUM_GAME_MODES || !gLawnApp || !gLawnApp->mBoard ||
             gLawnApp->mGameScene != GameScenes::SCENE_PLAYING || gLawnApp->mBoard->mPaused || (gLawnApp->mWidgetManager && gLawnApp->mWidgetManager->mBaseModalWidget))
             return false;
         // A replay replacement must not turn a saved result into a newly
@@ -65,7 +75,17 @@ bool RestoreCheckpoint(const char* path, std::int32_t mode) noexcept
         gLawnApp->MakeNewBoard();
         gLawnApp->mBoardResult = result;
         gLawnApp->ProcessReplaySafeDeletes();
-        return gLawnApp->mBoard && gLawnApp->mBoard->LoadGame(std::string(path));
+        if (!gLawnApp->mBoard) return false;
+        if (path) return gLawnApp->mBoard->LoadGame(std::string(path));
+        if (!LawnLoadGameBytes(gLawnApp->mBoard, bytes, length)) return false;
+        gLawnApp->mBoard->LoadBackgroundImages();
+        gLawnApp->ClearUpdateBacklog();
+        gLawnApp->mBoard->ResetFPSStats();
+        gLawnApp->mBoard->UpdateLayers();
+        return true;
     } catch (...) { return false; }
 }
+bool RestoreCheckpoint(const char* path, std::int32_t mode) noexcept { return Restore(path, nullptr, 0, mode); }
+bool RestoreCheckpointBytes(const unsigned char* bytes, std::size_t length, std::int32_t mode) noexcept { return Restore(nullptr, bytes, length, mode); }
+
 }
