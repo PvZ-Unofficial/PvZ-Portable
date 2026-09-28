@@ -1856,6 +1856,7 @@ bool SexyAppBase::DrawDirtyStuff()
 		if (drewScreen)
         {
             Graphics overlay(mGLInterface->GetScreenImage());
+            overlay.Translate(-mScreenBounds.mX, -mScreenBounds.mY);
             PvzpPlugin::Paint(overlay);
             Redraw(nullptr);
         }
@@ -2937,11 +2938,7 @@ int SexyAppBase::InitGLInterface()
 	DemoSyncRefreshRate();
 	if (aResult)
 	{
-		mScreenBounds.mX = ( mWidth - mGLInterface->mWidth ) / 2;
-		mScreenBounds.mY = ( mHeight - mGLInterface->mHeight ) / 2;
-		mScreenBounds.mWidth = mGLInterface->mWidth;
-		mScreenBounds.mHeight = mGLInterface->mHeight;
-		mWidgetManager->Resize(mScreenBounds, mGLInterface->mPresentationRect);
+		mGLInterface->UpdateViewport();
 		PostGLInterfaceInitHook();
 	}
 	return aResult;

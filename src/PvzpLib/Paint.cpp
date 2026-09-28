@@ -189,9 +189,9 @@ bool PaintSize(std::uint32_t* width, std::uint32_t* height) {
 bool PaintRect(int x, int y, int width, int height, std::uint32_t argb) {
     if (!canvas) return false;
     if (width <= 0 || height <= 0) return true;
-    const auto right = std::min<std::int64_t>(static_cast<std::int64_t>(x) + width, gLawnApp->mWidth);
+    const auto right = std::min<std::int64_t>(static_cast<std::int64_t>(x) + width, gLawnApp->mScreenBounds.mX + gLawnApp->mScreenBounds.mWidth);
     const auto bottom = std::min<std::int64_t>(static_cast<std::int64_t>(y) + height, gLawnApp->mHeight);
-    x = std::max(x, 0); y = std::max(y, 0);
+    x = std::max(x, gLawnApp->mScreenBounds.mX); y = std::max(y, 0);
     if (right <= x || bottom <= y) return true;
     canvas->SetColor(Color(argb)); canvas->FillRect(x, y, static_cast<int>(right-x), static_cast<int>(bottom-y));
     return true;

@@ -605,7 +605,7 @@ bool SexyAppBase::ProcessDeferredMessages(bool singleMessage)
 				case SDL_WINDOWEVENT:
 					if (event.window.event == SDL_WINDOWEVENT_CLOSE)
 						CloseRequestAsync();
-					else if (event.window.event == SDL_WINDOWEVENT_RESIZED)
+					else if (event.window.event == SDL_WINDOWEVENT_RESIZED || event.window.event == SDL_WINDOWEVENT_SIZE_CHANGED)
 					{
 						mGLInterface->UpdateViewport();
 						mWidgetManager->Resize(mScreenBounds, mGLInterface->mPresentationRect);
@@ -642,6 +642,7 @@ bool SexyAppBase::ProcessDeferredMessages(bool singleMessage)
 						break;
 
 					case SDL_WINDOWEVENT_RESIZED:
+                    case SDL_WINDOWEVENT_SIZE_CHANGED:
 						mGLInterface->UpdateViewport();
 						mWidgetManager->Resize(mScreenBounds, mGLInterface->mPresentationRect);
 						mWidgetManager->MarkAllDirty();

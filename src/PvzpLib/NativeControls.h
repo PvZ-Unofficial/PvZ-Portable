@@ -9,6 +9,11 @@ class Zombie;
 namespace Sexy { class Graphics; }
 
 namespace PvzpNative {
+    PVZP_API bool WindowExpanded();
+    PVZP_API void SetWindowExpanded(bool enabled);
+    PVZP_API double WindowScale();
+    PVZP_API void SetWindowScale(double scale);
+    PVZP_API int WindowViewWidth();
     PVZP_API bool WindowResizable();
     PVZP_API void SetWindowResizable(bool enabled);
     PVZP_API void BuildCurrentZombieWaves(Board* board, std::uint32_t seed);

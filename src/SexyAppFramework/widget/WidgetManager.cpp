@@ -329,8 +329,9 @@ void WidgetManager::RemoveBaseModal(Widget* theWidget)
 
 void WidgetManager::Resize(const Rect& theMouseDestRect, const Rect& theMouseSourceRect)
 {
-	mWidth = theMouseDestRect.mWidth + 2 * theMouseDestRect.mX;
-	mHeight = theMouseDestRect.mHeight + 2 * theMouseDestRect.mY;
+	// Logical layout stays fixed; the visible region need not be symmetric.
+	mWidth = mApp->mWidth;
+	mHeight = mApp->mHeight;
 	mMouseDestRect = theMouseDestRect;
 	mMouseSourceRect = theMouseSourceRect;
 }

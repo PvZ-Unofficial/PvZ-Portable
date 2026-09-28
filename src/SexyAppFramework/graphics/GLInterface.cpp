@@ -36,6 +36,17 @@
 #include <cstring>
 #include <mutex>
 #include <vector>
+#include <algorithm>
+#include <cmath>
+#include <stdexcept>
+#include "widget/WidgetManager.h"
+
+#if !defined(__SWITCH__) && !defined(__EMSCRIPTEN__)
+SDL_Rect GetGameSafeArea(SDL_Window* window);
+double GetGameWindowDpiScale(SDL_Window* window);
+#else
+static double GetGameWindowDpiScale(SDL_Window*) { return 1.0; }
+#endif
 
 constexpr const int MAX_VERTICES = 16384;
 
@@ -1120,31 +1131,86 @@ GLImage* GLInterface::GetScreenImage() { return mScreenImage; }
 
 void GLInterface::UpdateViewport()
 {
-	int vx = 0, vy = 0, vw, vh;
-
-#ifdef __SWITCH__
-	int width = 1280, height = 720;
-#else
-	int width, height;
-	SDL_GL_GetDrawableSize((SDL_Window*)mApp->mWindow, &width, &height);
+    auto* window = static_cast<SDL_Window*>(mApp->mWindow);
+    int windowWidth, windowHeight, pixelWidth, pixelHeight;
+    SDL_GetWindowSize(window, &windowWidth, &windowHeight);
+    SDL_GL_GetDrawableSize(window, &pixelWidth, &pixelHeight);
+    if (windowWidth <= 0 || windowHeight <= 0 || pixelWidth <= 0 || pixelHeight <= 0)
+        return;
+    SDL_Rect safe{0, 0, windowWidth, windowHeight};
+#if !defined(__SWITCH__) && !defined(__EMSCRIPTEN__)
+    safe = GetGameSafeArea(window);
 #endif
+    if (safe.w <= 0 || safe.h <= 0) return;
+    const double dpi = GetGameWindowDpiScale(window);
+    const bool forced = (SDL_GetWindowFlags(window) & (SDL_WINDOW_FULLSCREEN | SDL_WINDOW_MAXIMIZED)) != 0
+        || (mWindowScale > 0 && windowHeight != int(std::lround(600 * mWindowScale * dpi)));
+    if (mWindowScale == 0.0) mWindowScale = forced ? 1.0 : windowHeight / 600.0 / dpi;
+    const bool sameRegion = windowWidth == int(std::lround(mWindowViewWidth * mWindowScale * dpi))
+        && windowHeight == int(std::lround(600 * mWindowScale * dpi));
+    const int viewWidth = mExpanded ? (sameRegion ? mWindowViewWidth : std::clamp(int(std::lround(safe.w * 600.0 / safe.h)), 800, 1400)) : 800;
+    const int left = std::clamp(400 - viewWidth / 2, -220, 1180 - viewWidth);
+    const double scale = std::min(safe.w / double(viewWidth), safe.h / 600.0);
+    const int width = int(std::lround(viewWidth * scale));
+    const int height = int(std::lround(600 * scale));
+    mPresentationRect = Rect(safe.x + (safe.w - width) / 2, safe.y + (safe.h - height) / 2, width, height);
+    mApp->mScreenBounds = Rect(left, 0, viewWidth, 600);
+    if (mScreenImage) { mScreenImage->mWidth = viewWidth; mScreenImage->mHeight = 600; }
+    // Input uses SDL window coordinates; only the GL viewport uses drawable pixels.
+    const auto& r = mPresentationRect;
+    glViewport(r.mX * pixelWidth / windowWidth,
+        (windowHeight - r.mY - r.mHeight) * pixelHeight / windowHeight,
+        r.mWidth * pixelWidth / windowWidth, r.mHeight * pixelHeight / windowHeight);
+    float ortho[16];
+    MakeOrthoMatrix(0, float(viewWidth), 600, 0, -10, 10, ortho);
+    glUseProgram(gProgram);
+    glUniformMatrix4fv(gUfViewProjMtx, 1, GL_FALSE, ortho);
+    mApp->mWidgetManager->Resize(mApp->mScreenBounds, mPresentationRect);
+#if !defined(__ANDROID__) && !defined(__IPHONEOS__)
+    if (!forced) {
+        mWindowViewWidth = viewWidth;
+        if (mExpanded) {
+            const int fixedHeight = int(std::lround(600 * mWindowScale * dpi));
+            SDL_SetWindowMinimumSize(window, int(std::lround(800 * mWindowScale * dpi)), fixedHeight);
+            SDL_SetWindowMaximumSize(window, int(std::lround(1400 * mWindowScale * dpi)), fixedHeight);
+        }
+    }
+#endif
+}
 
-	vw = width; vh = height;
+void GLInterface::SetWindowScale(double scale)
+{
+    if (!std::isfinite(scale) || scale <= 0)
+        throw std::invalid_argument("game window scale must be finite and positive");
+    auto* window = static_cast<SDL_Window*>(mApp->mWindow);
+    const double requestedWidth = mWindowViewWidth * scale * GetGameWindowDpiScale(window);
+    const double requestedHeight = 600 * scale * GetGameWindowDpiScale(window);
+    SDL_Rect area{};
+    int top = 0, left = 0, bottom = 0, right = 0;
+    SDL_GetWindowBordersSize(window, &top, &left, &bottom, &right);
+    if (SDL_GetDisplayUsableBounds(SDL_GetWindowDisplayIndex(window), &area) != 0 ||
+        requestedWidth + left + right > area.w || requestedHeight + top + bottom > area.h)
+        throw std::invalid_argument("selected game window scale does not fit the display");
+    const int width = int(std::lround(requestedWidth));
+    const int height = int(std::lround(requestedHeight));
+    mWindowScale = scale;
+    SDL_SetWindowMinimumSize(window, 1, 1);
+    SDL_SetWindowMaximumSize(window, width, height);
+    SDL_SetWindowSize(window, width, height);
+    UpdateViewport();
+    mApp->mWidgetManager->MarkAllDirty();
+}
 
-	// Letterbox to 4:3
-	if (width * 3 > height * 4)
-	{
-		vw = height * 4 / 3;
-		vx = (width - vw) / 2;
-	}
-	else if (width * 3 < height * 4)
-	{
-		vh = width * 3 / 4;
-		vy = (height - vh) / 2;
-	}
-
-	glViewport(vx, vy, vw, vh);
-	mPresentationRect = Rect(vx, vy, vw, vh);
+void GLInterface::SetExpanded(bool enabled)
+{
+    mExpanded = enabled;
+    auto* window = static_cast<SDL_Window*>(mApp->mWindow);
+    SDL_SetWindowMinimumSize(window, 1, 1);
+    SDL_Rect bounds{};
+    if (SDL_GetDisplayUsableBounds(SDL_GetWindowDisplayIndex(window), &bounds) == 0)
+        SDL_SetWindowMaximumSize(window, bounds.w, bounds.h);
+    UpdateViewport();
+    mApp->mWidgetManager->MarkAllDirty();
 }
 
 int GLInterface::Init(bool IsWindowed)

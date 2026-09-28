@@ -1,4 +1,5 @@
 #include "NativeControls.h"
+#include "graphics/GLInterface.h"
 #include <SDL.h>
 #include <stdexcept>
 
@@ -35,6 +36,11 @@
 
 
 namespace PvzpNative {
+    bool WindowExpanded() { return gLawnApp->mGLInterface->mExpanded; }
+    void SetWindowExpanded(bool enabled) { gLawnApp->mGLInterface->SetExpanded(enabled); }
+    double WindowScale() { return gLawnApp->mGLInterface->mWindowScale; }
+    void SetWindowScale(double scale) { gLawnApp->mGLInterface->SetWindowScale(scale); }
+    int WindowViewWidth() { return gLawnApp->mScreenBounds.mWidth; }
     bool WindowResizable()
     {
         return gLawnApp && gLawnApp->mWindow &&

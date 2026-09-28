@@ -115,11 +115,46 @@ public class PvZPortableActivity extends SDLActivity {
         }
     }
 
+    private volatile int[] gameSafeInsets = new int[]{0, 0, 0, 0};
+    private static native void nativeViewportChanged();
+    public int[] getGameSafeInsets() { return gameSafeInsets; }
+
+    private void updateGameSafeInsets(WindowInsets insets) {
+        int left, top, right, bottom;
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+            android.graphics.Insets safe = insets.getInsets(WindowInsets.Type.systemBars() | WindowInsets.Type.displayCutout());
+            left = safe.left; top = safe.top; right = safe.right; bottom = safe.bottom;
+        } else {
+            left = insets.getSystemWindowInsetLeft(); top = insets.getSystemWindowInsetTop();
+            right = insets.getSystemWindowInsetRight(); bottom = insets.getSystemWindowInsetBottom();
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P && insets.getDisplayCutout() != null) {
+                android.view.DisplayCutout cutout = insets.getDisplayCutout();
+                left = Math.max(left, cutout.getSafeInsetLeft()); top = Math.max(top, cutout.getSafeInsetTop());
+                right = Math.max(right, cutout.getSafeInsetRight()); bottom = Math.max(bottom, cutout.getSafeInsetBottom());
+            }
+        }
+        // Insets are relative to the decor; SDL may already occupy an inset surface.
+        if (mSurface != null && mSurface.getWidth() > 0 && mSurface.getHeight() > 0) {
+            int[] location = new int[2];
+            mSurface.getLocationInWindow(location);
+            View decor = getWindow().getDecorView();
+            right = Math.max(0, location[0] + mSurface.getWidth() - (decor.getWidth() - right));
+            bottom = Math.max(0, location[1] + mSurface.getHeight() - (decor.getHeight() - bottom));
+            left = Math.max(0, left - location[0]); top = Math.max(0, top - location[1]);
+        }
+        int[] next = new int[]{left, top, right, bottom};
+        if (!java.util.Arrays.equals(gameSafeInsets, next)) {
+            gameSafeInsets = next;
+            nativeViewportChanged();
+        }
+    }
+
     private void setupImeLayoutAdjustment() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
             getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_ADJUST_NOTHING); // legacy adjustPan is inert with edge-to-edge on R+
             View content = findViewById(android.R.id.content);
             content.setOnApplyWindowInsetsListener((v, insets) -> {
+                updateGameSafeInsets(insets);
                 int shift = 0;
                 if (insets.isVisible(WindowInsets.Type.ime()) && mTextEdit != null) {
                     int imeBottom = insets.getInsets(WindowInsets.Type.ime()).bottom;
@@ -134,6 +169,10 @@ public class PvZPortableActivity extends SDLActivity {
             });
         } else {
             getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_ADJUST_PAN);
+            findViewById(android.R.id.content).setOnApplyWindowInsetsListener((v, insets) -> {
+                updateGameSafeInsets(insets);
+                return v.onApplyWindowInsets(insets);
+            });
         }
     }
 

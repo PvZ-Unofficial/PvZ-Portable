@@ -103,7 +103,7 @@ else()
 	list(APPEND PLAT_INCLUDES
 		${CMAKE_CURRENT_SOURCE_DIR}/src/SexyAppFramework/platform/default
 	)
-	if(APPLE AND NOT IOS)
+	if(APPLE)
 		enable_language(OBJCXX)
 		list(APPEND SOURCES src/SexyAppFramework/platform/default/WindowAspect.mm)
 	endif()

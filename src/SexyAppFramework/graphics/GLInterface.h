@@ -217,6 +217,11 @@ public:
 
 	GLImage*				GetScreenImage();
 	void					UpdateViewport();
+	bool                    mExpanded = true;
+	double                  mWindowScale = 0.0;
+	int                     mWindowViewWidth = 800;
+	void                    SetWindowScale(double scale);
+	void                    SetExpanded(bool enabled);
 	int						Init(bool IsWindowed);
 	bool					Redraw(Rect* theClipRect = nullptr);
 	void					SetVideoOnlyDraw(bool videoOnly);
