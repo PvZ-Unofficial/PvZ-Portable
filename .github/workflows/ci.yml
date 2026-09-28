@@ -2,7 +2,7 @@ name: CI build
 
 on:
   push:
-    branches: [ "main" ]
+    branches: [ "main", "codex/unix-platforms" ]
     tags: [ "*" ]
   pull_request:
     branches: [ "main" ]
@@ -23,7 +23,7 @@ env:
 
 jobs:
   build-archlinux:
-    if: ${{ github.event_name != 'workflow_dispatch' || inputs.platforms == 'all' || contains(format(',{0},', inputs.platforms), ',linux,') }}
+    if: ${{ (github.ref != 'refs/heads/codex/unix-platforms' || github.event_name == 'workflow_dispatch') && (github.event_name != 'workflow_dispatch' || inputs.platforms == 'all' || contains(format(',{0},', inputs.platforms), ',linux,')) }}
     name: Build for Arch Linux (x86_64)
     runs-on: ubuntu-latest
     container: archlinux:base-devel
@@ -76,7 +76,7 @@ jobs:
         path: dist/
 
   build-linux-static:
-    if: ${{ github.event_name != 'workflow_dispatch' || inputs.platforms == 'all' || contains(format(',{0},', inputs.platforms), ',linux,') }}
+    if: ${{ (github.ref != 'refs/heads/codex/unix-platforms' || github.event_name == 'workflow_dispatch') && (github.event_name != 'workflow_dispatch' || inputs.platforms == 'all' || contains(format(',{0},', inputs.platforms), ',linux,')) }}
     name: Build for Linux (x86_64, static)
     runs-on: ubuntu-latest
     container: quay.io/pypa/manylinux_2_34_x86_64 # Old glibc baseline with a recent toolchain
@@ -296,7 +296,7 @@ jobs:
         path: dist/
 
   build-windows-msys2-ucrt64:
-    if: ${{ github.event_name != 'workflow_dispatch' || inputs.platforms == 'all' || contains(format(',{0},', inputs.platforms), ',windows,') }}
+    if: ${{ (github.ref != 'refs/heads/codex/unix-platforms' || github.event_name == 'workflow_dispatch') && (github.event_name != 'workflow_dispatch' || inputs.platforms == 'all' || contains(format(',{0},', inputs.platforms), ',windows,')) }}
     name: Build for Windows (MSYS2 UCRT64)
     runs-on: windows-latest
     steps:
@@ -339,7 +339,7 @@ jobs:
         path: dist/
 
   build-windows-msvc-x64:
-    if: ${{ github.event_name != 'workflow_dispatch' || inputs.platforms == 'all' || contains(format(',{0},', inputs.platforms), ',windows,') }}
+    if: ${{ (github.ref != 'refs/heads/codex/unix-platforms' || github.event_name == 'workflow_dispatch') && (github.event_name != 'workflow_dispatch' || inputs.platforms == 'all' || contains(format(',{0},', inputs.platforms), ',windows,')) }}
     name: Build for Windows (MSVC x64)
     runs-on: windows-latest
     steps:
@@ -392,7 +392,7 @@ jobs:
 
   # 32-bit coverage build: catches pointer-size/alignment assumptions.
   build-windows-msvc-x86:
-    if: ${{ github.event_name != 'workflow_dispatch' || inputs.platforms == 'all' || contains(format(',{0},', inputs.platforms), ',windows,') }}
+    if: ${{ (github.ref != 'refs/heads/codex/unix-platforms' || github.event_name == 'workflow_dispatch') && (github.event_name != 'workflow_dispatch' || inputs.platforms == 'all' || contains(format(',{0},', inputs.platforms), ',windows,')) }}
     name: Build for Windows (MSVC x86)
     runs-on: windows-latest
     steps:
@@ -482,7 +482,7 @@ jobs:
   #           ./build/pvz-portable.elf
 
   build-macos:
-    if: ${{ github.event_name != 'workflow_dispatch' || inputs.platforms == 'all' || contains(format(',{0},', inputs.platforms), ',macos,') }}
+    if: ${{ (github.ref != 'refs/heads/codex/unix-platforms' || github.event_name == 'workflow_dispatch') && (github.event_name != 'workflow_dispatch' || inputs.platforms == 'all' || contains(format(',{0},', inputs.platforms), ',macos,')) }}
     name: Build for macOS (aarch64)
     runs-on: macos-latest
     steps:
@@ -763,7 +763,7 @@ jobs:
         path: dist/
 
   build-wasm:
-    if: ${{ github.event_name != 'workflow_dispatch' || inputs.platforms == 'all' || contains(format(',{0},', inputs.platforms), ',wasm,') }}
+    if: ${{ (github.ref != 'refs/heads/codex/unix-platforms' || github.event_name == 'workflow_dispatch') && (github.event_name != 'workflow_dispatch' || inputs.platforms == 'all' || contains(format(',{0},', inputs.platforms), ',wasm,')) }}
     name: Build for WebAssembly (Emscripten)
     runs-on: ubuntu-latest
     steps:
