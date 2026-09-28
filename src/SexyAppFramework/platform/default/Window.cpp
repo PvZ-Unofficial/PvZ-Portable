@@ -39,6 +39,8 @@
 
 using namespace Sexy;
 
+void SetGameWindowAspect(SDL_Window* window);
+
 void SexyAppBase::MakeWindow()
 {
 	if (mWindow)
@@ -50,6 +52,7 @@ void SexyAppBase::MakeWindow()
 		// For Wayland's icon support on the game window
 		SDL_SetHint(SDL_HINT_APP_ID, "io.github.wszqkzqk.pvz-portable");
 		SDL_SetHint(SDL_HINT_MOUSE_FOCUS_CLICKTHROUGH, "1");
+		SDL_SetHint(SDL_HINT_WINDOW_FRAME_USABLE_WHILE_CURSOR_HIDDEN, "1");
 
 #if (defined(__ANDROID__) && !defined(__TERMUX__)) || defined(__IPHONEOS__)
 		SDL_SetHint(SDL_HINT_ORIENTATIONS, "LandscapeLeft LandscapeRight");
@@ -123,6 +126,7 @@ void SexyAppBase::MakeWindow()
 
 		mWindow = (void*)window.release();
 		mContext = (void*)context.release();
+		SetGameWindowAspect(static_cast<SDL_Window*>(mWindow));
 	}
 
 	if (mGLInterface == nullptr)

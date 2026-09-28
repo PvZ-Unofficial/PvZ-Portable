@@ -97,11 +97,16 @@ else()
 	endif()
 	list(APPEND SOURCES
 		${CMAKE_CURRENT_SOURCE_DIR}/src/SexyAppFramework/platform/default/Window.cpp
+		${CMAKE_CURRENT_SOURCE_DIR}/src/SexyAppFramework/platform/default/WindowAspect.cpp
 		${CMAKE_CURRENT_SOURCE_DIR}/src/SexyAppFramework/platform/default/Input.cpp
 	)
 	list(APPEND PLAT_INCLUDES
 		${CMAKE_CURRENT_SOURCE_DIR}/src/SexyAppFramework/platform/default
 	)
+	if(APPLE AND NOT IOS)
+		enable_language(OBJCXX)
+		list(APPEND SOURCES src/SexyAppFramework/platform/default/WindowAspect.mm)
+	endif()
 endif()
 
 if(CMAKE_BUILD_TYPE AND CMAKE_BUILD_TYPE MATCHES "^[Dd][Ee][Bb][Uu][Gg]$")
@@ -252,7 +257,7 @@ if (WIN32)
 			OBJECT_DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/icon.ico"
 	)
 
-	target_link_libraries(pvz-portable PRIVATE ws2_32 user32 gdi32 winmm imm32 shlwapi)
+	target_link_libraries(pvz-portable PRIVATE ws2_32 user32 gdi32 winmm imm32 shlwapi comctl32)
 	target_compile_definitions(pvz-portable PRIVATE WINDOWS)
 
 	if(NOT CONSOLE)
@@ -320,5 +325,16 @@ elseif (IOS)
 	endif()
 endif()
 
+
+if(APPLE AND NOT IOS)
+	target_link_libraries(pvz-portable PRIVATE "-framework AppKit")
+elseif(CMAKE_SYSTEM_NAME STREQUAL "Linux")
+	find_package(X11 QUIET)
+	if(X11_FOUND)
+		target_compile_definitions(pvz-portable PRIVATE PVZP_X11_WINDOW_ASPECT)
+		target_include_directories(pvz-portable PRIVATE ${X11_INCLUDE_DIR})
+		target_link_libraries(pvz-portable PRIVATE ${X11_LIBRARIES})
+	endif()
+endif()
 
 include(CMake/PluginSdk.cmake)

@@ -1,4 +1,5 @@
 #include "NativeControls.h"
+#include <SDL.h>
 #include <stdexcept>
 
 
@@ -34,6 +35,16 @@
 
 
 namespace PvzpNative {
+    bool WindowResizable()
+    {
+        return gLawnApp && gLawnApp->mWindow &&
+            (SDL_GetWindowFlags(static_cast<SDL_Window*>(gLawnApp->mWindow)) & SDL_WINDOW_RESIZABLE);
+    }
+    void SetWindowResizable(bool enabled)
+    {
+        if (gLawnApp && gLawnApp->mWindow)
+            SDL_SetWindowResizable(static_cast<SDL_Window*>(gLawnApp->mWindow), enabled ? SDL_TRUE : SDL_FALSE);
+    }
     static Sexy::MTRand* gPickerRandom = nullptr;
 
     void BuildCurrentZombieWaves(Board* board, std::uint32_t seed)

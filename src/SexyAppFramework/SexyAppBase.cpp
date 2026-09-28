@@ -2437,6 +2437,9 @@ void SexyAppBase::ResetCustomCursorCache()
 
 void SexyAppBase::EnforceCursor()
 {
+	// The window manager owns border/resize cursors outside our client area.
+	if (mWindow && SDL_GetMouseFocus() != static_cast<SDL_Window*>(mWindow))
+		return;
 	if (PvzpNative::FastForwardPerformance() >= 2)
 		return;
 	int aCursorNum = mSEHOccured ? CURSOR_POINTER : mCursorNum;

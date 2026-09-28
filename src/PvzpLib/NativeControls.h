@@ -9,6 +9,8 @@ class Zombie;
 namespace Sexy { class Graphics; }
 
 namespace PvzpNative {
+    PVZP_API bool WindowResizable();
+    PVZP_API void SetWindowResizable(bool enabled);
     PVZP_API void BuildCurrentZombieWaves(Board* board, std::uint32_t seed);
     enum class CommonDance : std::int32_t { Default = -1, None = 0, Fast = 1, Slow = 2 };
 	struct RandomState
